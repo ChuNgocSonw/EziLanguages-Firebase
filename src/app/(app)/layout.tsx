@@ -108,6 +108,15 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </SheetContent>
           </Sheet>
 
+          {isSidebarCollapsed && (
+             <div className="hidden md:block">
+                <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold">
+                    <Logo className="h-6 w-6 text-primary" />
+                    <span>Ezi Languages</span>
+                </Link>
+             </div>
+          )}
+
           <div className="w-full flex-1">
             {/* Can add a search bar here if needed */}
           </div>
