@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { User, Settings, LogOut, Menu } from 'lucide-react';
 import { Logo } from '@/components/icons';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { MainNav } from '@/components/main-nav';
 import { AuthProvider } from '@/context/auth-provider';
 import { useAuth } from '@/hooks/use-auth';
@@ -72,6 +72,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigation Menu</SheetTitle>
+              </SheetHeader>
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
                   href="#"
