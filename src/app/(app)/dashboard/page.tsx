@@ -41,7 +41,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Continue Learning</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent>
             <p>Your next recommended lesson is "Mastering Past Tense".</p>
           </CardContent>
         </Card>
