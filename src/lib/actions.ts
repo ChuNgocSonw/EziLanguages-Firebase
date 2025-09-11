@@ -13,9 +13,5 @@ export async function generateQuizQuestions(topic: GenerateQuizQuestionsInput): 
 export async function chatWithTutor(input: ChatWithTutorInput): Promise<ChatWithTutorOutput> {
   // Add any server-side validation or logging here
   const result = await chatWithTutorFlow(input);
-  // Ensure default values for new fields if the model doesn't return them
-  return {
-    isTranslation: false,
-    ...result,
-  };
+  return result;
 }

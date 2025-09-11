@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const ChatWithTutorInputSchema = z.object({
   text: z.string().describe('The user input text.'),
+  language: z.string().optional().describe("The language for the explanation. Can be 'English' or 'Vietnamese'."),
 });
 export type ChatWithTutorInput = z.infer<typeof ChatWithTutorInputSchema>;
 
@@ -53,6 +54,8 @@ There are three modes of interaction:
 
 Analyze the user's input and respond in the appropriate mode.
 
+IMPORTANT: The user has specified that the explanation should be in the following language: {{{language}}}. All text in the 'explanation' field MUST be in this language. The text in the 'response' field should remain in the language of the original correction, answer, or translation.
+
 Input Text: {{{text}}}
 `,
 });
@@ -64,7 +67,10 @@ const chatWithTutorFlow = ai.defineFlow(
     outputSchema: ChatWithTutorOutputSchema,
   },
   async input => {
-    const {output} = await chatWithTutorPrompt(input);
+    const {output} = await chatWithTutorPrompt({
+        ...input,
+        language: input.language || 'English', // Default to English if not provided
+    });
     return output!;
   }
 );

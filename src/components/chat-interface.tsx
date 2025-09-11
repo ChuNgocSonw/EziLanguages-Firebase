@@ -9,6 +9,8 @@ import { SendHorizonal, Bot, User, CornerDownLeft, Sparkles, HelpCircle, Languag
 import { chatWithTutor } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { Card } from "./ui/card";
+import { Label } from "./ui/label";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 interface Message {
   role: "user" | "bot";
@@ -18,6 +20,8 @@ interface Message {
   isCorrection?: boolean;
   isTranslation?: boolean;
 }
+
+type ExplanationLanguage = "English" | "Vietnamese";
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
@@ -31,6 +35,7 @@ export default function ChatInterface() {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [explanationLanguage, setExplanationLanguage] = useState<ExplanationLanguage>("English");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -43,7 +48,7 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     try {
-      const result = await chatWithTutor({ text: inputValue });
+      const result = await chatWithTutor({ text: inputValue, language: explanationLanguage });
       const botMessage: Message = {
         role: "bot",
         response: result.response,
@@ -145,7 +150,7 @@ export default function ChatInterface() {
             )}
           </div>
         </ScrollArea>
-        <div className="border-t bg-card p-4">
+        <div className="border-t bg-card p-4 space-y-4">
           <form onSubmit={handleSendMessage} className="relative">
             <Textarea
               value={inputValue}
@@ -165,6 +170,24 @@ export default function ChatInterface() {
                 </Button>
             </div>
           </form>
+           <div className="flex items-center gap-4">
+              <Label className="text-sm font-medium">Explanation Language:</Label>
+              <RadioGroup 
+                defaultValue="English" 
+                className="flex items-center gap-4"
+                onValueChange={(value: ExplanationLanguage) => setExplanationLanguage(value)}
+                disabled={isLoading}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="English" id="lang-en" />
+                  <Label htmlFor="lang-en" className="cursor-pointer">English</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Vietnamese" id="lang-vi" />
+                  <Label htmlFor="lang-vi" className="cursor-pointer">Tiếng Việt</Label>
+                </div>
+              </RadioGroup>
+            </div>
         </div>
     </Card>
   );
