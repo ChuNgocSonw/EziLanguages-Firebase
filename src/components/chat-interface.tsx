@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SendHorizonal, Bot, CornerDownLeft, Sparkles, HelpCircle, Languages, Loader2 } from "lucide-react";
+import { SendHorizonal, Bot, CornerDownLeft, Sparkles, HelpCircle, Languages, Loader2, Trash2 } from "lucide-react";
 import { chatWithTutor } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { Card } from "./ui/card";
@@ -13,6 +13,18 @@ import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { useAuth } from "@/hooks/use-auth";
 import type { ChatMessage } from "@/lib/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 type ExplanationLanguage = "English" | "Vietnamese";
 
@@ -25,16 +37,18 @@ const suggestedPrompts = [
 interface ChatInterfaceProps {
     chatId: string | null;
     onNewChat: (newChatId: string) => void;
+    onChatDeleted: () => void;
 }
 
-export default function ChatInterface({ chatId, onNewChat }: ChatInterfaceProps) {
+export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [explanationLanguage, setExplanationLanguage] = useState<ExplanationLanguage>("English");
   const viewportRef = useRef<HTMLDivElement>(null);
-  const { getChatMessages, saveChatMessage } = useAuth();
+  const { getChatMessages, saveChatMessage, deleteChatSession } = useAuth();
+  const { toast } = useToast();
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
 
   useEffect(() => {
@@ -157,8 +171,50 @@ export default function ChatInterface({ chatId, onNewChat }: ChatInterfaceProps)
     return <HelpCircle className="h-4 w-4 shrink-0 mt-0.5" />;
   }
 
+  const handleConfirmDelete = async () => {
+    if (!currentChatId) return;
+    try {
+      await deleteChatSession(currentChatId);
+      toast({
+        title: "Chat Deleted",
+        description: "The chat session has been successfully deleted.",
+      });
+      onChatDeleted();
+    } catch (error) {
+      toast({
+        title: "Deletion Failed",
+        description: "Could not delete the chat session. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card className="flex-1 flex flex-col h-full">
+        {currentChatId && (
+          <div className="flex items-center justify-end p-2 border-b">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Chat
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete this chat session and all of its messages.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
         <ScrollArea className="flex-1 p-4" viewportRef={viewportRef}>
           {isHistoryLoading ? (
              <div className="flex justify-center items-center h-full">
