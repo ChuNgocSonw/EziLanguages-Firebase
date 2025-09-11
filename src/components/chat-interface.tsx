@@ -147,7 +147,7 @@ export default function ChatInterface() {
                          {message.suggestions && (
                             <div className="pt-2">
                                 <p className="text-sm font-medium mb-2">Try asking:</p>
-                                <div className="flex flex-col sm:flex-row gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     {message.suggestions.map((suggestion, i) => (
                                         <Button
                                             key={i}
