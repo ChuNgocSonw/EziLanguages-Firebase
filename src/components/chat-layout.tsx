@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -35,7 +36,7 @@ export default function ChatLayout() {
       const chatList = await getChatList();
       setChats(chatList);
     } catch (error) {
-      console.error("Failed to fetch chat list:", error);
+        console.error("Failed to fetch chat list:", error);
     } finally {
       setIsLoading(false);
     }
@@ -101,15 +102,18 @@ export default function ChatLayout() {
             ) : (
               <div className="flex flex-col gap-2 pr-2">
                 {chats.map((chat) => (
-                  <div key={chat.id} className="group flex items-center">
+                  <div
+                    key={chat.id}
+                    className={cn(
+                      "group flex items-center justify-between rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary",
+                      selectedChatId === chat.id && "bg-muted text-primary font-semibold"
+                    )}
+                  >
                     <button
                       onClick={() => handleSelectChat(chat.id)}
-                      className={cn(
-                        "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-muted-foreground transition-all hover:bg-muted hover:text-primary",
-                        selectedChatId === chat.id && "bg-muted text-primary font-semibold"
-                      )}
+                      className="flex items-center gap-3 w-full overflow-hidden text-left"
                     >
-                      <MessageSquare className="h-5 w-5" />
+                      <MessageSquare className="h-5 w-5 shrink-0" />
                       <span className="truncate flex-1">{chat.title}</span>
                     </button>
                     <AlertDialogTrigger asChild>
