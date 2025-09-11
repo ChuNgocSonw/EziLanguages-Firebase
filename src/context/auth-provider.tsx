@@ -10,6 +10,7 @@ import {
   signOut,
   updateProfile,
   sendEmailVerification,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { LoginFormData, SignupFormData } from '@/lib/types';
@@ -21,6 +22,7 @@ export interface AuthContextType {
   logIn: (data: LoginFormData) => Promise<void>;
   logOut: () => Promise<void>;
   updateUserProfile: (displayName: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,6 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const sendPasswordReset = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
 
   const value: AuthContextType = {
     user,
@@ -80,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logIn,
     logOut,
     updateUserProfile,
+    sendPasswordReset,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

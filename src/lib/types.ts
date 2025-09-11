@@ -20,6 +20,11 @@ export const loginSchema = z.object({
 });
 export type LoginFormData = z.infer<typeof loginSchema>;
 
+export const forgotPasswordSchema = z.object({
+    email: z.string().email("Invalid email address."),
+});
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+
 export const profileSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters."),
 });
