@@ -1,4 +1,4 @@
-"use server";
+'use server';
 
 import { generateQuizQuestions as generateQuizQuestionsFlow } from "@/ai/flows/generate-quiz-questions";
 import { chatWithTutor as chatWithTutorFlow } from "@/ai/flows/chatbot-grammar-correction";
@@ -12,5 +12,10 @@ export async function generateQuizQuestions(topic: GenerateQuizQuestionsInput): 
 
 export async function chatWithTutor(input: ChatWithTutorInput): Promise<ChatWithTutorOutput> {
   // Add any server-side validation or logging here
-  return chatWithTutorFlow(input);
+  const result = await chatWithTutorFlow(input);
+  // Ensure default values for new fields if the model doesn't return them
+  return {
+    isTranslation: false,
+    ...result,
+  };
 }

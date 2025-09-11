@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SendHorizonal, Bot, User, CornerDownLeft, Sparkles, HelpCircle } from "lucide-react";
+import { SendHorizonal, Bot, User, CornerDownLeft, Sparkles, HelpCircle, Languages } from "lucide-react";
 import { chatWithTutor } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { Card } from "./ui/card";
@@ -16,15 +16,17 @@ interface Message {
   response?: string;
   explanation?: string;
   isCorrection?: boolean;
+  isTranslation?: boolean;
 }
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'bot',
-      response: "Hello! How are you today? Ask me about vocabulary or just chat.",
-      explanation: "This is a standard greeting. You can start a conversation or ask a question like 'What does ubiquitous mean?'",
+      response: "Hello! How are you today? Ask me about vocabulary, request a translation, or just chat.",
+      explanation: "You can start a conversation, ask 'What does ubiquitous mean?', or 'Translate 'good morning' to Vietnamese'.",
       isCorrection: false,
+      isTranslation: false,
     }
   ]);
   const [inputValue, setInputValue] = useState("");
@@ -47,6 +49,7 @@ export default function ChatInterface() {
         response: result.response,
         explanation: result.explanation,
         isCorrection: result.isCorrection,
+        isTranslation: result.isTranslation,
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -56,6 +59,7 @@ export default function ChatInterface() {
         response: "Sorry, I encountered an error. Please try again.",
         explanation: "There was a technical issue with the AI service.",
         isCorrection: false,
+        isTranslation: false,
       }
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -78,6 +82,12 @@ export default function ChatInterface() {
       handleSendMessage(e);
     }
   };
+
+  const getBotMessageIcon = (message: Message) => {
+    if (message.isCorrection) return <Sparkles className="h-4 w-4 shrink-0 mt-0.5" />;
+    if (message.isTranslation) return <Languages className="h-4 w-4 shrink-0 mt-0.5" />;
+    return <HelpCircle className="h-4 w-4 shrink-0 mt-0.5" />;
+  }
 
   return (
     <Card className="flex-1 flex flex-col h-full max-h-[calc(100vh-12rem)]">
@@ -105,7 +115,7 @@ export default function ChatInterface() {
                     <div className="space-y-2">
                         <p className="font-semibold">{message.response}</p>
                         <p className="text-sm text-muted-foreground italic flex items-start gap-2 pt-2">
-                           {message.isCorrection ? <Sparkles className="h-4 w-4 shrink-0 mt-0.5" /> : <HelpCircle className="h-4 w-4 shrink-0 mt-0.5" />}
+                           {getBotMessageIcon(message)}
                           <span>{message.explanation}</span>
                         </p>
                     </div>
