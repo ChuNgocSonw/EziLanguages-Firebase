@@ -5,24 +5,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SendHorizonal, Bot, User, CornerDownLeft, Sparkles } from "lucide-react";
-import { correctGrammar } from "@/lib/actions";
+import { SendHorizonal, Bot, User, CornerDownLeft, Sparkles, HelpCircle } from "lucide-react";
+import { chatWithTutor } from "@/lib/actions";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "./ui/card";
+import { Card } from "./ui/card";
 
 interface Message {
   role: "user" | "bot";
   original?: string;
-  corrected?: string;
+  response?: string;
   explanation?: string;
+  isCorrection?: boolean;
 }
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'bot',
-      corrected: "Hello! How are you today? Let's practice some English.",
-      explanation: "This is a standard greeting."
+      response: "Hello! How are you today? Ask me about vocabulary or just chat.",
+      explanation: "This is a standard greeting. You can start a conversation or ask a question like 'What does ubiquitous mean?'",
+      isCorrection: false,
     }
   ]);
   const [inputValue, setInputValue] = useState("");
@@ -39,19 +41,21 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     try {
-      const result = await correctGrammar({ text: inputValue });
+      const result = await chatWithTutor({ text: inputValue });
       const botMessage: Message = {
         role: "bot",
-        corrected: result.correctedText,
+        response: result.response,
         explanation: result.explanation,
+        isCorrection: result.isCorrection,
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error("Error correcting grammar:", error);
+      console.error("Error with AI Tutor:", error);
       const errorMessage: Message = {
         role: 'bot',
-        corrected: "Sorry, I encountered an error. Please try again.",
-        explanation: "There was a technical issue with the AI service."
+        response: "Sorry, I encountered an error. Please try again.",
+        explanation: "There was a technical issue with the AI service.",
+        isCorrection: false,
       }
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -99,9 +103,9 @@ export default function ChatInterface() {
                   {message.role === "user" && <p>{message.original}</p>}
                   {message.role === "bot" && (
                     <div className="space-y-2">
-                        <p className="font-semibold">{message.corrected}</p>
+                        <p className="font-semibold">{message.response}</p>
                         <p className="text-sm text-muted-foreground italic flex items-start gap-2 pt-2">
-                          <Sparkles className="h-4 w-4 shrink-0 mt-0.5" />
+                           {message.isCorrection ? <Sparkles className="h-4 w-4 shrink-0 mt-0.5" /> : <HelpCircle className="h-4 w-4 shrink-0 mt-0.5" />}
                           <span>{message.explanation}</span>
                         </p>
                     </div>

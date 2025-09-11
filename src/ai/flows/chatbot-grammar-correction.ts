@@ -1,50 +1,64 @@
 'use server';
 
 /**
- * @fileOverview Implements a Genkit flow for chatbot grammar correction.
+ * @fileOverview Implements a Genkit flow for a language tutor chatbot.
  *
- * - correctGrammar - A function that corrects grammar and suggests better sentence structures.
- * - CorrectGrammarInput - The input type for the correctGrammar function.
- * - CorrectGrammarOutput - The return type for the correctGrammar function.
+ * - chatWithTutor - A function that corrects grammar and answers vocabulary questions.
+ * - ChatWithTutorInput - The input type for the chatWithTutor function.
+ * - ChatWithTutorOutput - The return type for the chatWithTutor function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const CorrectGrammarInputSchema = z.object({
-  text: z.string().describe('The input text to be corrected.'),
+const ChatWithTutorInputSchema = z.object({
+  text: z.string().describe('The user input text.'),
 });
-export type CorrectGrammarInput = z.infer<typeof CorrectGrammarInputSchema>;
+export type ChatWithTutorInput = z.infer<typeof ChatWithTutorInputSchema>;
 
-const CorrectGrammarOutputSchema = z.object({
-  correctedText: z.string().describe('The corrected text with suggested improvements.'),
-  explanation: z.string().describe('An explanation of the grammar corrections and suggestions.'),
+const ChatWithTutorOutputSchema = z.object({
+  response: z.string().describe('The AI tutor\'s response. This could be a corrected sentence or an answer to a question.'),
+  explanation: z.string().describe('An explanation of the grammar corrections, vocabulary, or the answer provided.'),
+  isCorrection: z.boolean().describe('Set to true if the response is primarily a grammar correction of a conversational sentence. Set to false if it is a direct answer to a question.'),
 });
-export type CorrectGrammarOutput = z.infer<typeof CorrectGrammarOutputSchema>;
+export type ChatWithTutorOutput = z.infer<typeof ChatWithTutorOutputSchema>;
 
-export async function correctGrammar(input: CorrectGrammarInput): Promise<CorrectGrammarOutput> {
-  return correctGrammarFlow(input);
+export async function chatWithTutor(input: ChatWithTutorInput): Promise<ChatWithTutorOutput> {
+  return chatWithTutorFlow(input);
 }
 
-const correctGrammarPrompt = ai.definePrompt({
-  name: 'correctGrammarPrompt',
-  input: {schema: CorrectGrammarInputSchema},
-  output: {schema: CorrectGrammarOutputSchema},
-  prompt: `You are an AI grammar correction tool. You will receive text as input, correct any grammar mistakes, and suggest improved sentence structures.
+const chatWithTutorPrompt = ai.definePrompt({
+  name: 'chatWithTutorPrompt',
+  input: {schema: ChatWithTutorInputSchema},
+  output: {schema: ChatWithTutorOutputSchema},
+  prompt: `You are an AI language tutor. Your role is to help users practice a language.
+
+There are two modes of interaction:
+
+1.  **Grammar Correction**: If the user's input is a conversational sentence, your primary job is to correct any grammatical errors.
+    - Provide the corrected sentence in the 'response' field.
+    - Provide a concise explanation of the corrections in the 'explanation' field.
+    - Set 'isCorrection' to true.
+
+2.  **Vocabulary/Grammar Questions**: If the user asks a direct question (e.g., "What does 'eloquent' mean?", "How do I use 'in spite of'?"), your job is to answer it directly.
+    - Provide the answer in the 'response' field.
+    - Provide a clear, helpful explanation or definition in the 'explanation' field.
+    - Set 'isCorrection' to false.
+
+Analyze the user's input and respond in the appropriate mode.
 
 Input Text: {{{text}}}
-
-Corrected Text & Explanation:`,
+`,
 });
 
-const correctGrammarFlow = ai.defineFlow(
+const chatWithTutorFlow = ai.defineFlow(
   {
-    name: 'correctGrammarFlow',
-    inputSchema: CorrectGrammarInputSchema,
-    outputSchema: CorrectGrammarOutputSchema,
+    name: 'chatWithTutorFlow',
+    inputSchema: ChatWithTutorInputSchema,
+    outputSchema: ChatWithTutorOutputSchema,
   },
   async input => {
-    const {output} = await correctGrammarPrompt(input);
+    const {output} = await chatWithTutorPrompt(input);
     return output!;
   }
 );
