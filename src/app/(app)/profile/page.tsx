@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,27 +15,44 @@ import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ProfilePage() {
-  const { user, updateUserProfile } = useAuth();
+  const { user, userProfile, updateUserProfile, updateUserAppData } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user?.displayName || "",
+      name: "",
       age: 0,
       language: "EN",
     },
   });
 
+  useEffect(() => {
+    if (userProfile) {
+      form.reset({
+        name: userProfile.name || user?.displayName || "",
+        age: userProfile.age || 0,
+        language: userProfile.language as "EN" | "JP" | "KR" | "VI" || "EN",
+      });
+    }
+  }, [userProfile, user, form]);
+
   const onSubmit = async (data: ProfileFormData) => {
     setIsLoading(true);
     try {
-      // Note: Only updating the name for now as per current auth setup.
-      await updateUserProfile(data.name);
+      if (data.name !== user?.displayName) {
+        await updateUserProfile(data.name);
+      }
+      
+      await updateUserAppData({
+        age: data.age,
+        language: data.language,
+      });
+
       toast({
         title: "Profile Updated",
-        description: "Your name has been successfully updated.",
+        description: "Your profile has been successfully updated.",
       });
     } catch (error: any) {
       toast({
@@ -83,7 +100,7 @@ export default function ProfilePage() {
                   <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Your age" {...field} />
+                      <Input type="number" placeholder="Your age" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -95,7 +112,7 @@ export default function ProfilePage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Learning Language</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                         <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a language" />

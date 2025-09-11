@@ -34,6 +34,9 @@ export type ProfileFormData = z.infer<typeof profileSchema>;
 
 export interface UserProfile {
   name: string;
+  email: string;
+  age: number;
+  language: string;
   xp: number;
   streak: number;
   badges: string[];
