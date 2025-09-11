@@ -83,7 +83,7 @@ export default function ProfilePage() {
                   <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Your age" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                      <Input type="number" placeholder="Your age" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
