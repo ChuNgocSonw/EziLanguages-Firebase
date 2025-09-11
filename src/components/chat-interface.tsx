@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -19,16 +20,24 @@ interface Message {
   explanation?: string;
   isCorrection?: boolean;
   isTranslation?: boolean;
+  suggestions?: string[];
 }
 
 type ExplanationLanguage = "English" | "Vietnamese";
+
+const suggestedPrompts = [
+    "Correct this for me: She don't like coffee.",
+    "What does 'eloquent' mean?",
+    "How do you say 'good morning' in Japanese?",
+];
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'bot',
-      response: "Hello! How are you today? Ask me about vocabulary, request a translation, or just chat.",
-      explanation: "You can start a conversation, ask 'What does ubiquitous mean?', or 'Translate 'good morning' to Vietnamese'.",
+      response: "Hello! How can I help you practice your language skills today?",
+      explanation: "You can start a conversation, ask for a translation, or ask a vocabulary question.",
+      suggestions: suggestedPrompts,
       isCorrection: false,
       isTranslation: false,
     }
@@ -38,17 +47,16 @@ export default function ChatInterface() {
   const [explanationLanguage, setExplanationLanguage] = useState<ExplanationLanguage>("English");
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim() || isLoading) return;
+  const sendMessage = async (messageText: string) => {
+    if (!messageText.trim() || isLoading) return;
 
-    const userMessage: Message = { role: "user", original: inputValue };
+    const userMessage: Message = { role: "user", original: messageText };
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setIsLoading(true);
 
     try {
-      const result = await chatWithTutor({ text: inputValue, language: explanationLanguage });
+      const result = await chatWithTutor({ text: messageText, language: explanationLanguage });
       const botMessage: Message = {
         role: "bot",
         response: result.response,
@@ -56,7 +64,11 @@ export default function ChatInterface() {
         isCorrection: result.isCorrection,
         isTranslation: result.isTranslation,
       };
-      setMessages((prev) => [...prev, botMessage]);
+       setMessages((prev) => {
+        // Hide suggestions after the first user message
+        const updatedMessages = prev.map(msg => ({ ...msg, suggestions: undefined }));
+        return [...updatedMessages, botMessage];
+      });
     } catch (error) {
       console.error("Error with AI Tutor:", error);
       const errorMessage: Message = {
@@ -70,7 +82,16 @@ export default function ChatInterface() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(inputValue);
   };
+
+  const handleSuggestionClick = (suggestion: string) => {
+      sendMessage(suggestion);
+  }
 
   useEffect(() => {
     if (viewportRef.current) {
@@ -123,6 +144,25 @@ export default function ChatInterface() {
                            {getBotMessageIcon(message)}
                           <span>{message.explanation}</span>
                         </p>
+                         {message.suggestions && (
+                            <div className="pt-2">
+                                <p className="text-sm font-medium mb-2">Try asking:</p>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    {message.suggestions.map((suggestion, i) => (
+                                        <Button
+                                            key={i}
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-xs h-auto py-1.5"
+                                            onClick={() => handleSuggestionClick(suggestion)}
+                                            disabled={isLoading}
+                                        >
+                                            {suggestion}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                   )}
                 </div>
