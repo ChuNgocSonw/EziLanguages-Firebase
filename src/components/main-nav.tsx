@@ -8,6 +8,7 @@ import {
   Headphones,
   LayoutDashboard,
   MessageSquare,
+  User,
 } from 'lucide-react';
 
 const navItems = [
@@ -16,6 +17,7 @@ const navItems = [
   { href: '/reading', icon: BookOpen, label: 'Reading' },
   { href: '/listening', icon: Headphones, label: 'Listening' },
   { href: '/quizzes', icon: ClipboardList, label: 'Quizzes' },
+  { href: '/profile', icon: User, label: 'Profile' },
 ];
 
 export function MainNav({ isMobile = false }: { isMobile?: boolean }) {
