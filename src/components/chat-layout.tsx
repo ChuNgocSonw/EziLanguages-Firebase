@@ -87,7 +87,7 @@ export default function ChatLayout() {
   };
 
   return (
-    <>
+    <AlertDialog>
       <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4 h-full">
         <div className="hidden md:flex flex-col gap-4 border-r pr-4">
           <Button onClick={handleNewChat} className="bg-accent hover:bg-accent/90">
@@ -132,20 +132,18 @@ export default function ChatLayout() {
           <ChatInterface chatId={selectedChatId} onNewChat={handleNewChatCreated} />
         </div>
       </div>
-      <AlertDialog open={!!chatToDelete} onOpenChange={(open) => !open && setChatToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the chat session and all of its messages.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setChatToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the chat session and all of its messages.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setChatToDelete(null)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
