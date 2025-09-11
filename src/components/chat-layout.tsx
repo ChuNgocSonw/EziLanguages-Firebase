@@ -101,7 +101,7 @@ export default function ChatLayout() {
             ) : (
               <div className="flex flex-col gap-2 pr-2">
                 {chats.map((chat) => (
-                  <div key={chat.id} className="relative group">
+                  <div key={chat.id} className="group flex items-center">
                     <button
                       onClick={() => handleSelectChat(chat.id)}
                       className={cn(
@@ -116,7 +116,7 @@ export default function ChatLayout() {
                        <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
                           onClick={(e) => handleDeleteClick(e, chat.id)}
                         >
                           <Trash2 className="h-4 w-4" />
