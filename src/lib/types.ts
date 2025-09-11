@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Timestamp } from "firebase/firestore";
 
 export interface QuizQuestion {
   question: string;
@@ -40,4 +41,16 @@ export interface UserProfile {
   xp: number;
   streak: number;
   badges: string[];
+}
+
+export interface ChatMessage {
+  id?: string;
+  role: "user" | "bot";
+  original?: string;
+  response?: string;
+  explanation?: string;
+  isCorrection?: boolean;
+  isTranslation?: boolean;
+  suggestions?: string[];
+  timestamp: Timestamp;
 }

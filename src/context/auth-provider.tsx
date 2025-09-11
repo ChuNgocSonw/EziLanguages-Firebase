@@ -13,8 +13,8 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile } from '@/lib/types';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage } from '@/lib/types';
 
 export interface AuthContextType {
   user: User | null;
@@ -26,6 +26,8 @@ export interface AuthContextType {
   updateUserProfile: (displayName: string) => Promise<void>;
   updateUserAppData: (data: Partial<UserProfile>) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
+  getChatHistory: () => Promise<ChatMessage[]>;
+  saveChatMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -115,6 +117,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email);
   };
 
+  const getChatHistory = async (): Promise<ChatMessage[]> => {
+    if (!auth.currentUser) return [];
+    const chatHistoryRef = collection(db, "users", auth.currentUser.uid, "chatHistory");
+    const q = query(chatHistoryRef, orderBy("timestamp", "asc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage));
+  };
+
+  const saveChatMessage = async (message: Omit<ChatMessage, 'id' | 'timestamp'>) => {
+    if (!auth.currentUser) return;
+    const chatHistoryRef = collection(db, "users", auth.currentUser.uid, "chatHistory");
+    await addDoc(chatHistoryRef, {
+      ...message,
+      timestamp: serverTimestamp(),
+    });
+  };
 
   const value: AuthContextType = {
     user,
@@ -126,6 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateUserProfile,
     updateUserAppData,
     sendPasswordReset,
+    getChatHistory,
+    saveChatMessage,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
