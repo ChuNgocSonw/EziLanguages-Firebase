@@ -26,7 +26,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, loading, logOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
 
   useEffect(() => {
