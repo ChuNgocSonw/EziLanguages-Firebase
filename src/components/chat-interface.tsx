@@ -24,7 +24,7 @@ const suggestedPrompts = [
 
 interface ChatInterfaceProps {
     chatId: string | null;
-    onNewChat: () => void;
+    onNewChat: (newChatId: string) => void;
 }
 
 export default function ChatInterface({ chatId, onNewChat }: ChatInterfaceProps) {
@@ -88,7 +88,7 @@ export default function ChatInterface({ chatId, onNewChat }: ChatInterfaceProps)
         const result = await saveChatMessage(null, userMessage);
         newChatId = result.chatId;
         setCurrentChatId(newChatId); // Update state for subsequent messages
-        onNewChat(); // Notify parent to refresh chat list
+        onNewChat(newChatId); // Notify parent to refresh and select the new chat
       } else {
         await saveChatMessage(newChatId, userMessage);
       }

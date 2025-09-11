@@ -33,15 +33,16 @@ export default function ChatLayout() {
 
   const handleNewChat = () => {
     setSelectedChatId(null);
-    fetchChats(); // Refresh the chat list
   };
 
   const handleSelectChat = (chatId: string) => {
     setSelectedChatId(chatId);
   };
   
-  const handleRefreshChatList = () => {
-    fetchChats();
+  const handleNewChatCreated = (newChatId: string) => {
+    fetchChats().then(() => {
+      setSelectedChatId(newChatId);
+    });
   }
 
   return (
@@ -75,7 +76,7 @@ export default function ChatLayout() {
         </ScrollArea>
       </div>
       <div className="flex flex-col h-full">
-        <ChatInterface chatId={selectedChatId} onNewChat={handleRefreshChatList} />
+        <ChatInterface chatId={selectedChatId} onNewChat={handleNewChatCreated} />
       </div>
     </div>
   );
