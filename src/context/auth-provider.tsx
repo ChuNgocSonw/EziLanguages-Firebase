@@ -7,10 +7,9 @@ import {
   User,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
   signOut,
   updateProfile,
-  GoogleAuthProvider,
+  sendEmailVerification,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { LoginFormData, SignupFormData } from '@/lib/types';
@@ -43,15 +42,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { name, email, password } = data;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
-    setUser(userCredential.user);
-    router.push('/dashboard');
+    await sendEmailVerification(userCredential.user);
+    await signOut(auth); // Log out user until they are verified
+    router.push('/verify-email');
   };
 
   const logIn = async (data: LoginFormData) => {
     const { email, password } = data;
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     setUser(userCredential.user);
-    router.push('/dashboard');
+    if (userCredential.user.emailVerified) {
+        router.push('/dashboard');
+    } else {
+        router.push('/verify-email');
+    }
   };
 
   const logOut = async () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -25,14 +25,25 @@ import { cn } from '@/lib/utils';
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, loading, logOut } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+
+    if (!user) {
       router.push('/login');
+      return;
     }
-  }, [user, loading, router]);
+
+    if (!user.emailVerified) {
+        // Allow access to profile page to manage account, but not others
+        if (pathname !== '/profile') {
+            router.push('/verify-email');
+        }
+    }
+  }, [user, loading, router, pathname]);
 
   if (loading || !user) {
     return (
@@ -152,6 +163,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           </DropdownMenu>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+          {!user.emailVerified && (
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md mb-4" role="alert">
+              <p className="font-bold">Verification Required</p>
+              <p>Your email is not verified. Please check your inbox for a verification link to unlock all features.</p>
+            </div>
+          )}
           {children}
         </main>
       </div>
