@@ -1,8 +1,13 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Flame, Star, Trophy } from "lucide-react";
 import PageHeader from "@/components/page-header";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+
   const stats = [
     { title: "Daily Streak", value: "5 days", icon: Flame, color: "text-orange-500" },
     { title: "Experience Points", value: "1,250 XP", icon: Star, color: "text-yellow-500" },
@@ -13,7 +18,7 @@ export default function DashboardPage() {
   return (
     <>
       <PageHeader
-        title="Welcome Back, Alex!"
+        title={`Welcome Back, ${user?.displayName || 'User'}!`}
         description="Here's a snapshot of your language learning journey. Keep up the great work!"
       />
       
