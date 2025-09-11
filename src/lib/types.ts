@@ -27,6 +27,8 @@ export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export const profileSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters."),
+    age: z.number().min(0, "Age must be a positive number.").optional(),
+    language: z.enum(["EN", "JP", "KR", "VI"]).optional(),
 });
 export type ProfileFormData = z.infer<typeof profileSchema>;
 

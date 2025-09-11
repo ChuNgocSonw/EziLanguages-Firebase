@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { profileSchema, ProfileFormData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ProfilePage() {
   const { user, updateUserProfile } = useAuth();
@@ -22,12 +23,15 @@ export default function ProfilePage() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user?.displayName || "",
+      age: 0,
+      language: "EN",
     },
   });
 
   const onSubmit = async (data: ProfileFormData) => {
     setIsLoading(true);
     try {
+      // Note: Only updating the name for now as per current auth setup.
       await updateUserProfile(data.name);
       toast({
         title: "Profile Updated",
@@ -54,7 +58,7 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
-          <CardDescription>Update your display name.</CardDescription>
+          <CardDescription>Update your display name, age, and learning language.</CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -68,6 +72,42 @@ export default function ProfilePage() {
                     <FormControl>
                       <Input placeholder="Your name" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="age"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Age</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="Your age" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="language"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Learning Language</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a language" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="EN">English</SelectItem>
+                            <SelectItem value="JP">Japanese</SelectItem>
+                            <SelectItem value="KR">Korean</SelectItem>
+                            <SelectItem value="VI">Vietnamese</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
