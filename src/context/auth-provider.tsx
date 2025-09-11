@@ -20,7 +20,6 @@ export interface AuthContextType {
   loading: boolean;
   signUp: (data: SignupFormData) => Promise<void>;
   logIn: (data: LoginFormData) => Promise<void>;
-  logInWithGoogle: () => Promise<void>;
   logOut: () => Promise<void>;
   updateUserProfile: (displayName: string) => Promise<void>;
 }
@@ -54,13 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userCredential.user);
     router.push('/dashboard');
   };
-  
-  const logInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    const userCredential = await signInWithPopup(auth, provider);
-    setUser(userCredential.user);
-    router.push('/dashboard');
-  };
 
   const logOut = async () => {
     await signOut(auth);
@@ -82,7 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     signUp,
     logIn,
-    logInWithGoogle,
     logOut,
     updateUserProfile,
   };
