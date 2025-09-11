@@ -195,7 +195,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
           <div className="flex items-center justify-end p-2 border-b">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                <Button variant="destructive" size="sm">
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Chat
                 </Button>
