@@ -36,7 +36,7 @@ export default function ChatInterface() {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [explanationLanguage, setExplanationLanguage] = useState<ExplanationLanguage>("English");
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,9 +73,9 @@ export default function ChatInterface() {
   };
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
+    if (viewportRef.current) {
+      viewportRef.current.scrollTo({
+        top: viewportRef.current.scrollHeight,
         behavior: 'smooth',
       });
     }
@@ -96,7 +96,7 @@ export default function ChatInterface() {
 
   return (
     <Card className="flex-1 flex flex-col h-full max-h-[calc(100vh-12rem)]">
-        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+        <ScrollArea className="flex-1 p-4" viewportRef={viewportRef}>
           <div className="space-y-6">
             {messages.map((message, index) => (
               <div
