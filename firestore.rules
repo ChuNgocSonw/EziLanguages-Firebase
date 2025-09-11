@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rules for the main user profile document
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+
+      // Rules for the 'chats' subcollection
+      // Allow a user to manage their own chat sessions.
+      match /chats/{chatId} {
+        allow list, create, delete: if request.auth != null && request.auth.uid == userId;
+
+        // Rules for the 'messages' sub-subcollection
+        // Allow a user to read, create, and delete messages within their own chat session.
+        match /messages/{messageId} {
+          allow read, create, delete: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+    }
+  }
+}
