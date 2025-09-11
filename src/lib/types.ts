@@ -43,6 +43,12 @@ export interface UserProfile {
   badges: string[];
 }
 
+export interface ChatSession {
+    id: string;
+    title: string;
+    createdAt: Timestamp;
+}
+
 export interface ChatMessage {
   id?: string;
   role: "user" | "bot";

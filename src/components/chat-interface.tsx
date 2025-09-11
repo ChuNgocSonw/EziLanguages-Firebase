@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SendHorizonal, Bot, User, CornerDownLeft, Sparkles, HelpCircle, Languages, Loader2 } from "lucide-react";
+import { SendHorizonal, Bot, CornerDownLeft, Sparkles, HelpCircle, Languages, Loader2 } from "lucide-react";
 import { chatWithTutor } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { Card } from "./ui/card";
@@ -22,98 +22,105 @@ const suggestedPrompts = [
     "How do you say 'good morning' in Japanese?",
 ];
 
-export default function ChatInterface() {
+interface ChatInterfaceProps {
+    chatId: string | null;
+    onNewChat: () => void;
+}
+
+export default function ChatInterface({ chatId, onNewChat }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [explanationLanguage, setExplanationLanguage] = useState<ExplanationLanguage>("English");
   const viewportRef = useRef<HTMLDivElement>(null);
-  const { getChatHistory, saveChatMessage } = useAuth();
+  const { getChatMessages, saveChatMessage } = useAuth();
+  const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
 
   useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        const history = await getChatHistory();
-        if (history.length === 0) {
-            // Add initial bot message if there's no history
-            setMessages([
-              {
-                role: 'bot',
-                response: "Hello! How can I help you practice your language skills today?",
-                explanation: "You can start a conversation, ask for a translation, or ask a vocabulary question.",
-                suggestions: suggestedPrompts,
-                isCorrection: false,
-                isTranslation: false,
-                timestamp: new Date() as any, // Temporary timestamp
-              }
-            ]);
-        } else {
+    setCurrentChatId(chatId);
+    if (chatId) {
+        const loadHistory = async () => {
+          setIsHistoryLoading(true);
+          try {
+            const history = await getChatMessages(chatId);
             setMessages(history);
-        }
-      } catch (error) {
-        console.error("Failed to load chat history:", error);
-         // Show initial message even if history fails to load
-         setMessages([
-           {
-             role: 'bot',
-             response: "Hello! I'm having trouble loading your history, but we can still chat.",
-             explanation: "You can start a conversation, ask for a translation, or ask a vocabulary question.",
-             suggestions: suggestedPrompts,
-             isCorrection: false,
-             isTranslation: false,
-             timestamp: new Date() as any, 
-           }
-         ]);
-      } finally {
+          } catch (error) {
+            console.error("Failed to load chat history:", error);
+            setMessages([]);
+          } finally {
+            setIsHistoryLoading(false);
+          }
+        };
+        loadHistory();
+    } else {
+        setMessages([
+          {
+            role: 'bot',
+            response: "Hello! How can I help you practice your language skills today?",
+            explanation: "You can start a conversation, ask for a translation, or ask a vocabulary question.",
+            suggestions: suggestedPrompts,
+            isCorrection: false,
+            isTranslation: false,
+            timestamp: new Date() as any, 
+          }
+        ]);
         setIsHistoryLoading(false);
-      }
-    };
-    loadHistory();
-  }, [getChatHistory]);
+    }
+  }, [chatId, getChatMessages]);
 
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
 
+    let newChatId = currentChatId;
+
     const userMessage: Omit<ChatMessage, 'id' | 'timestamp'> = { role: "user", original: messageText };
     setMessages((prev) => {
-        // Hide suggestions after the first user message
         const updatedMessages = prev.map(msg => ({ ...msg, suggestions: undefined }));
-        // Add a temporary user message for immediate UI feedback
         return [...updatedMessages, { ...userMessage, timestamp: new Date() as any }];
     });
     setInputValue("");
     setIsLoading(true);
 
     try {
-      await saveChatMessage(userMessage);
-      const result = await chatWithTutor({ text: messageText, language: explanationLanguage });
+      if (!newChatId) {
+        // This is the first message of a new chat
+        const result = await saveChatMessage(null, userMessage);
+        newChatId = result.chatId;
+        setCurrentChatId(newChatId); // Update state for subsequent messages
+        onNewChat(); // Notify parent to refresh chat list
+      } else {
+        await saveChatMessage(newChatId, userMessage);
+      }
+      
+      const aiResult = await chatWithTutor({ text: messageText, language: explanationLanguage });
       
       const botMessage: Omit<ChatMessage, 'id' | 'timestamp'> = {
         role: "bot",
-        response: result.response,
-        explanation: result.explanation,
-        isCorrection: result.isCorrection,
-        isTranslation: result.isTranslation,
+        response: aiResult.response,
+        explanation: aiResult.explanation,
+        isCorrection: aiResult.isCorrection,
+        isTranslation: aiResult.isTranslation,
       };
-      await saveChatMessage(botMessage);
+      await saveChatMessage(newChatId, botMessage);
       
-      // Replace temporary message with final one from history to get correct timestamp
-      const history = await getChatHistory();
+      const history = await getChatMessages(newChatId);
       setMessages(history);
       
     } catch (error) {
       console.error("Error with AI Tutor:", error);
-      const errorMessage: Omit<ChatMessage, 'id' | 'timestamp'> = {
-        role: 'bot',
-        response: "Sorry, I encountered an error. Please try again.",
-        explanation: "There was a technical issue with the AI service.",
-        isCorrection: false,
-        isTranslation: false,
+      if (newChatId) {
+        const errorMessage: Omit<ChatMessage, 'id' | 'timestamp'> = {
+            role: 'bot',
+            response: "Sorry, I encountered an error. Please try again.",
+            explanation: "There was a technical issue with the AI service.",
+            isCorrection: false,
+            isTranslation: false,
+        }
+        await saveChatMessage(newChatId, errorMessage);
+        const history = await getChatMessages(newChatId);
+        setMessages(history);
       }
-      await saveChatMessage(errorMessage);
-      const history = await getChatHistory();
-      setMessages(history);
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +158,7 @@ export default function ChatInterface() {
   }
 
   return (
-    <Card className="flex-1 flex flex-col h-full max-h-[calc(100vh-12rem)]">
+    <Card className="flex-1 flex flex-col h-full">
         <ScrollArea className="flex-1 p-4" viewportRef={viewportRef}>
           {isHistoryLoading ? (
              <div className="flex justify-center items-center h-full">
@@ -206,12 +213,6 @@ export default function ChatInterface() {
                       </div>
                     )}
                   </div>
-                  {message.role === "user" && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="https://picsum.photos/seed/user/40/40" alt="User" />
-                      <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
-                    </Avatar>
-                  )}
                 </div>
               ))}
               {isLoading && (

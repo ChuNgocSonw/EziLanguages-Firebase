@@ -13,8 +13,8 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage } from '@/lib/types';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession } from '@/lib/types';
 
 export interface AuthContextType {
   user: User | null;
@@ -26,8 +26,9 @@ export interface AuthContextType {
   updateUserProfile: (displayName: string) => Promise<void>;
   updateUserAppData: (data: Partial<UserProfile>) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
-  getChatHistory: () => Promise<ChatMessage[]>;
-  saveChatMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<void>;
+  getChatList: () => Promise<ChatSession[]>;
+  getChatMessages: (chatId: string) => Promise<ChatMessage[]>;
+  saveChatMessage: (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<{ chatId: string }>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -117,21 +118,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email);
   };
 
-  const getChatHistory = async (): Promise<ChatMessage[]> => {
+  const getChatList = async (): Promise<ChatSession[]> => {
     if (!auth.currentUser) return [];
-    const chatHistoryRef = collection(db, "users", auth.currentUser.uid, "chatHistory");
-    const q = query(chatHistoryRef, orderBy("timestamp", "asc"));
+    const chatsRef = collection(db, "users", auth.currentUser.uid, "chats");
+    const q = query(chatsRef, orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatSession));
+  };
+
+  const getChatMessages = async (chatId: string): Promise<ChatMessage[]> => {
+    if (!auth.currentUser) return [];
+    const messagesRef = collection(db, "users", auth.currentUser.uid, "chats", chatId, "messages");
+    const q = query(messagesRef, orderBy("timestamp", "asc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage));
   };
 
-  const saveChatMessage = async (message: Omit<ChatMessage, 'id' | 'timestamp'>) => {
-    if (!auth.currentUser) return;
-    const chatHistoryRef = collection(db, "users", auth.currentUser.uid, "chatHistory");
-    await addDoc(chatHistoryRef, {
+  const saveChatMessage = async (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>): Promise<{ chatId: string }> => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+    
+    let currentChatId = chatId;
+    
+    // If chatId is null, it's a new chat
+    if (!currentChatId) {
+      const chatRef = await addDoc(collection(db, "users", auth.currentUser.uid, "chats"), {
+        title: message.original?.substring(0, 40) || "New Chat",
+        createdAt: serverTimestamp(),
+      });
+      currentChatId = chatRef.id;
+    }
+
+    const messagesRef = collection(db, "users", auth.currentUser.uid, "chats", currentChatId, "messages");
+    await addDoc(messagesRef, {
       ...message,
       timestamp: serverTimestamp(),
     });
+
+    return { chatId: currentChatId };
   };
 
   const value: AuthContextType = {
@@ -144,7 +167,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateUserProfile,
     updateUserAppData,
     sendPasswordReset,
-    getChatHistory,
+    getChatList,
+    getChatMessages,
     saveChatMessage,
   };
 
