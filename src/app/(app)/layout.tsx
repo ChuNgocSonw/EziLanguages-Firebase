@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,17 +13,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Menu } from 'lucide-react';
+import { User, Settings, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { MainNav } from '@/components/main-nav';
 import { AuthProvider } from '@/context/auth-provider';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, loading, logOut } = useAuth();
   const router = useRouter();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -48,17 +51,29 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+    <div className={cn(
+        "grid min-h-screen w-full",
+        isSidebarCollapsed ? "md:grid-cols-[80px_1fr]" : "md:grid-cols-[280px_1fr]",
+        "transition-all duration-300 ease-in-out"
+    )}>
       <div className="hidden border-r bg-card md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold">
               <Logo className="h-6 w-6 text-primary" />
-              <span>Ezi Languages</span>
+              {!isSidebarCollapsed && <span>Ezi Languages</span>}
             </Link>
+             <Button 
+                variant="ghost" 
+                size="icon" 
+                className="ml-auto" 
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+             >
+                {isSidebarCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+             </Button>
           </div>
           <div className="flex-1">
-            <MainNav />
+            <MainNav isCollapsed={isSidebarCollapsed} />
           </div>
         </div>
       </div>
@@ -72,8 +87,8 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
-              <SheetHeader className="sr-only">
-                <SheetTitle>Navigation Menu</SheetTitle>
+              <SheetHeader>
+                 <SheetTitle className="sr-only">Menu</SheetTitle>
               </SheetHeader>
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
