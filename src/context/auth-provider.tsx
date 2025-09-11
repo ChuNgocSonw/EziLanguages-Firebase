@@ -13,7 +13,7 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, deleteDoc } from 'firebase/firestore';
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession } from '@/lib/types';
 
 export interface AuthContextType {
@@ -29,6 +29,7 @@ export interface AuthContextType {
   getChatList: () => Promise<ChatSession[]>;
   getChatMessages: (chatId: string) => Promise<ChatMessage[]>;
   saveChatMessage: (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<{ chatId: string }>;
+  deleteChatSession: (chatId: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -156,6 +157,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return { chatId: currentChatId };
   };
+  
+  const deleteChatSession = async (chatId: string): Promise<void> => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+    
+    const chatRef = doc(db, "users", auth.currentUser.uid, "chats", chatId);
+    const messagesRef = collection(chatRef, "messages");
+
+    const batch = writeBatch(db);
+
+    const messagesSnapshot = await getDocs(messagesRef);
+    messagesSnapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    batch.delete(chatRef);
+
+    await batch.commit();
+  };
 
   const value: AuthContextType = {
     user,
@@ -170,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getChatList,
     getChatMessages,
     saveChatMessage,
+    deleteChatSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
