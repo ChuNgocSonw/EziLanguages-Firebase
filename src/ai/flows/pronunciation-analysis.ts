@@ -74,12 +74,13 @@ const pronunciationAnalysisFlow = ai.defineFlow(
     const analysisPrompt = ai.definePrompt({
         name: 'pronunciationScoringPrompt',
         output: { schema: AnalysisResultSchema },
-        prompt: `You are a pronunciation evaluation expert. Compare the "Original Text" with the "User's Pronunciation (Transcribed Text)".
+        prompt: `You are a strict pronunciation evaluation expert. Your task is to meticulously compare the "Original Text" with the "User's Pronunciation (Transcribed Text)".
 
-        Your task is to:
-        1.  Determine which words from the "Original Text" were pronounced correctly by the user. A word is correct if it appears in the transcribed text in the correct relative order. Be lenient with minor transcription errors.
-        2.  Calculate an overall accuracy score as a percentage based on the number of correctly pronounced words.
-        3.  Provide a word-by-word analysis. For every word in the "Original Text", indicate if it was pronounced correctly.
+        Your evaluation must be rigorous:
+        1.  Determine which words from the "Original Text" were pronounced correctly. A word is only correct if it is clearly and accurately represented in the transcribed text in the correct sequence.
+        2.  Pay close attention to common pronunciation errors. Penalize words that are likely mispronounced, such as those with dropped sounds, incorrect endings, or that are completely mis-transcribed.
+        3.  Calculate an overall accuracy score as a percentage based on the number of correctly pronounced words.
+        4.  Provide a word-by-word analysis, marking each word from the "Original Text" as either correct or incorrect.
 
         Original Text: "${referenceText}"
         User's Pronunciation (Transcribed Text): "${transcribedText}"
@@ -100,3 +101,4 @@ const pronunciationAnalysisFlow = ai.defineFlow(
     };
   }
 );
+
