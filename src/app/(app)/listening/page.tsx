@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -7,38 +8,193 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Volume2, CheckCircle, XCircle } from "lucide-react";
+import { Volume2, CheckCircle, XCircle, Loader2, ChevronLeft } from "lucide-react";
+import { generateAudio } from "@/lib/actions";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useToast } from "@/hooks/use-toast";
+
+type ExerciseType = 'typing' | 'mcq';
+
+interface BaseExercise {
+    id: string;
+    text: string;
+}
+interface TypingExercise extends BaseExercise {
+    type: 'typing';
+}
+interface McqExercise extends BaseExercise {
+    type: 'mcq';
+    options: string[];
+    answer: string;
+}
+
+type Exercise = TypingExercise | McqExercise;
+
+interface LessonUnit {
+    unit: string;
+    exercises: Exercise[];
+}
+
+const lessons: LessonUnit[] = [
+    {
+        unit: "Unit 1: Basic Greetings",
+        exercises: [
+            { id: "u1e1", type: "typing", text: "Hello, how are you?" },
+            { id: "u1e2", type: "mcq", text: "My name is John.", options: ["My name is John.", "My name is Jane.", "His name is John."], answer: "My name is John." },
+            { id: "u1e3", type: "typing", text: "It is a pleasure to meet you." },
+        ],
+    },
+    {
+        unit: "Unit 2: Everyday Objects",
+        exercises: [
+            { id: "u2e1", type: "mcq", text: "The cat is sleeping on the sofa.", options: ["The dog is sleeping on the sofa.", "The cat is sleeping on the sofa.", "The cat is playing on the sofa."], answer: "The cat is sleeping on the sofa." },
+            { id: "u2e2", type: "typing", text: "There is a book on the table." },
+            { id: "u2e3", type: "mcq", text: "She opened the window to get some fresh air.", options: ["She closed the window.", "He opened the window.", "She opened the window to get some fresh air."], answer: "She opened the window to get some fresh air." },
+        ],
+    },
+];
 
 export default function ListeningPage() {
-    const [typingAnswer, setTypingAnswer] = React.useState("");
-    const [typingResult, setTypingResult] = React.useState<"correct" | "incorrect" | null>(null);
-    const correctTypingAnswer = "The sun rises in the east."
+    const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
+    const [answer, setAnswer] = useState("");
+    const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
+    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+    const { toast } = useToast();
 
-    const [mcqAnswer, setMcqAnswer] = React.useState("");
-    const [mcqResult, setMcqResult] = React.useState<"correct" | "incorrect" | null>(null);
-    const correctMcqAnswer = "option-2";
-    const mcqOptions = [
-        { id: "option-1", label: "She is reading a book." },
-        { id: "option-2", label: "He is playing the guitar." },
-        { id: "option-3", label: "They are watching a movie." },
-    ];
+    const handlePlayAudio = async () => {
+        if (!activeExercise) return;
+        if (audioUrl) {
+            const audio = new Audio(audioUrl);
+            audio.play();
+            return;
+        }
 
-    const checkTypingAnswer = () => {
-        if (typingAnswer.trim().toLowerCase() === correctTypingAnswer.toLowerCase()) {
-            setTypingResult("correct");
-        } else {
-            setTypingResult("incorrect");
+        setIsGeneratingAudio(true);
+        try {
+            const response = await generateAudio(activeExercise.text);
+            if (response.media) {
+                setAudioUrl(response.media);
+                const audio = new Audio(response.media);
+                audio.play();
+            }
+        } catch (error) {
+            console.error("Audio generation failed:", error);
+            toast({
+                title: "Audio Generation Failed",
+                description: "Could not generate audio for this sentence. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsGeneratingAudio(false);
         }
     };
     
-    const checkMcqAnswer = () => {
-        if (mcqAnswer === correctMcqAnswer) {
-            setMcqResult("correct");
-        } else {
-            setMcqResult("incorrect");
+    const checkAnswer = () => {
+        if (!activeExercise) return;
+        let isCorrect = false;
+        if (activeExercise.type === 'typing') {
+            isCorrect = answer.trim().toLowerCase() === activeExercise.text.toLowerCase();
+        } else if (activeExercise.type === 'mcq') {
+            isCorrect = answer === activeExercise.answer;
         }
+        setResult(isCorrect ? "correct" : "incorrect");
     };
+
+    const handleSelectExercise = (exercise: Exercise) => {
+        setActiveExercise(exercise);
+        setAnswer("");
+        setResult(null);
+        setAudioUrl(null);
+    };
+    
+    const handleBackToList = () => {
+        setActiveExercise(null);
+    }
+
+    const renderExercise = () => {
+        if (!activeExercise) return null;
+
+        return (
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={handleBackToList}>
+                            <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        <CardTitle>Listening Exercise</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <p>Click the button to listen, then complete the task below.</p>
+                     <Button variant="outline" onClick={handlePlayAudio} disabled={isGeneratingAudio}>
+                        {isGeneratingAudio ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Volume2 className="mr-2 h-5 w-5" />}
+                        {audioUrl ? "Play Again" : "Play Audio"}
+                     </Button>
+                    {activeExercise.type === 'typing' && (
+                        <Input
+                            placeholder="Type what you hear..."
+                            value={answer}
+                            onChange={(e) => { setAnswer(e.target.value); setResult(null); }}
+                        />
+                    )}
+                    {activeExercise.type === 'mcq' && (
+                        <RadioGroup value={answer} onValueChange={(value) => { setAnswer(value); setResult(null); }}>
+                            {(activeExercise as McqExercise).options.map((option, index) => (
+                                <div key={index} className="flex items-center space-x-2">
+                                    <RadioGroupItem value={option} id={`option-${index}`} />
+                                    <Label htmlFor={`option-${index}`}>{option}</Label>
+                                </div>
+                            ))}
+                        </RadioGroup>
+                    )}
+                </CardContent>
+                <CardFooter className="flex-col items-start gap-4">
+                    <Button onClick={checkAnswer} disabled={!answer} className="bg-accent hover:bg-accent/90">Check Answer</Button>
+                    {result === 'correct' && <div className="flex items-center text-green-600"><CheckCircle className="mr-2 h-5 w-5" /> Correct! Well done.</div>}
+                    {result === 'incorrect' && (
+                         <div className="flex items-center text-destructive">
+                            <XCircle className="mr-2 h-5 w-5" /> 
+                            Not quite. The correct answer was: "{activeExercise.type === 'typing' ? activeExercise.text : (activeExercise as McqExercise).answer}"
+                        </div>
+                    )}
+                </CardFooter>
+            </Card>
+        );
+    }
+
+    const renderLessonList = () => {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Choose a Lesson</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Accordion type="single" collapsible className="w-full">
+                        {lessons.map((lesson, index) => (
+                            <AccordionItem value={`item-${index}`} key={lesson.unit}>
+                                <AccordionTrigger>{lesson.unit}</AccordionTrigger>
+                                <AccordionContent>
+                                    <ul className="space-y-2">
+                                        {lesson.exercises.map((exercise, sIndex) => (
+                                            <li key={sIndex} className="flex justify-between items-center p-2 rounded-md hover:bg-muted">
+                                                <p className="flex-1 mr-4 text-muted-foreground">
+                                                    Exercise {sIndex + 1}: {exercise.type === 'mcq' ? 'Multiple Choice' : 'Type the sentence'}
+                                                </p>
+                                                <Button variant="outline" size="sm" onClick={() => handleSelectExercise(exercise)}>
+                                                    Practice
+                                                </Button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <>
@@ -46,58 +202,7 @@ export default function ListeningPage() {
                 title="Listening Practice"
                 description="Listen to the audio and complete the exercises to test your comprehension."
             />
-
-            <Tabs defaultValue="type-sentence" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="type-sentence">Type the Sentence</TabsTrigger>
-                    <TabsTrigger value="multiple-choice">Multiple Choice</TabsTrigger>
-                </TabsList>
-                <TabsContent value="type-sentence">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Exercise 1: Type what you hear</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <p>Click the button to listen to the sentence, then type it in the box below.</p>
-                            <Button variant="outline"><Volume2 className="mr-2 h-5 w-5" /> Play Audio</Button>
-                            <Input 
-                                placeholder="Type the sentence here..." 
-                                value={typingAnswer} 
-                                onChange={(e) => { setTypingAnswer(e.target.value); setTypingResult(null); }}
-                            />
-                        </CardContent>
-                        <CardFooter className="flex-col items-start gap-4">
-                            <Button onClick={checkTypingAnswer} className="bg-accent hover:bg-accent/90">Check Answer</Button>
-                            {typingResult === 'correct' && <div className="flex items-center text-green-600"><CheckCircle className="mr-2 h-5 w-5" /> Correct! Well done.</div>}
-                            {typingResult === 'incorrect' && <div className="flex items-center text-destructive"><XCircle className="mr-2 h-5 w-5" /> Not quite. The correct answer was: "{correctTypingAnswer}"</div>}
-                        </CardFooter>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="multiple-choice">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Exercise 2: Choose the correct option</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <p>Listen to the audio and select the sentence that matches.</p>
-                            <Button variant="outline"><Volume2 className="mr-2 h-5 w-5" /> Play Audio</Button>
-                             <RadioGroup value={mcqAnswer} onValueChange={(value) => {setMcqAnswer(value); setMcqResult(null); }}>
-                                {mcqOptions.map(option => (
-                                     <div key={option.id} className="flex items-center space-x-2">
-                                        <RadioGroupItem value={option.id} id={option.id} />
-                                        <Label htmlFor={option.id}>{option.label}</Label>
-                                    </div>
-                                ))}
-                            </RadioGroup>
-                        </CardContent>
-                        <CardFooter className="flex-col items-start gap-4">
-                            <Button onClick={checkMcqAnswer} className="bg-accent hover:bg-accent/90">Check Answer</Button>
-                             {mcqResult === 'correct' && <div className="flex items-center text-green-600"><CheckCircle className="mr-2 h-5 w-5" /> Correct! Excellent listening.</div>}
-                            {mcqResult === 'incorrect' && <div className="flex items-center text-destructive"><XCircle className="mr-2 h-5 w-5" /> Incorrect. The correct option was #2.</div>}
-                        </CardFooter>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+            {activeExercise ? renderExercise() : renderLessonList()}
         </>
     );
 }
