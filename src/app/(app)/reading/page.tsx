@@ -4,7 +4,7 @@
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, MicOff, Loader2, BookCheck, X, CheckCircle, Play } from "lucide-react";
+import { Mic, MicOff, Loader2, BookCheck, X, CheckCircle } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import { analyzePronunciation } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
