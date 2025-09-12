@@ -58,6 +58,7 @@ export default function ReadingPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<PronunciationResult | null>(null);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
@@ -65,10 +66,28 @@ export default function ReadingPage() {
 
   useEffect(() => {
     setResult(null);
+    if (recordedAudioUrl) {
+      URL.revokeObjectURL(recordedAudioUrl);
+      setRecordedAudioUrl(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSentence]);
+
+  // Clean up the object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (recordedAudioUrl) {
+        URL.revokeObjectURL(recordedAudioUrl);
+      }
+    };
+  }, [recordedAudioUrl]);
 
   const handleStartRecording = async () => {
     setResult(null);
+    if (recordedAudioUrl) {
+      URL.revokeObjectURL(recordedAudioUrl);
+      setRecordedAudioUrl(null);
+    }
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -82,6 +101,10 @@ export default function ReadingPage() {
           if (!activeSentence) return;
           setIsLoading(true);
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          
+          const audioUrl = URL.createObjectURL(audioBlob);
+          setRecordedAudioUrl(audioUrl);
+          
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = async () => {
@@ -278,7 +301,12 @@ export default function ReadingPage() {
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold mb-1">What you said:</h3>
-                        <p className="text-muted-foreground italic">"{result.transcribedText}"</p>
+                        <div className="flex items-center gap-4">
+                            {recordedAudioUrl && (
+                                <audio controls src={recordedAudioUrl} className="max-w-xs" />
+                            )}
+                        </div>
+                        <p className="text-muted-foreground italic mt-2">"{result.transcribedText}"</p>
                     </div>
                 </div>
             )}
