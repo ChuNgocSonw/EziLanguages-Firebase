@@ -9,7 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Volume2, CheckCircle, XCircle, Loader2, ChevronLeft } from "lucide-react";
+import { Volume2, CheckCircle, XCircle, Loader2, ChevronLeft, BookCheck } from "lucide-react";
 import { generateAudio } from "@/lib/actions";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
@@ -183,6 +183,7 @@ export default function ListeningPage() {
                                                     Exercise {sIndex + 1}: {exercise.type === 'mcq' ? 'Multiple Choice' : 'Type the sentence'}
                                                 </p>
                                                 <Button variant="outline" size="sm" onClick={() => handleSelectExercise(exercise)}>
+                                                    <BookCheck className="mr-2 h-4 w-4" />
                                                     Practice
                                                 </Button>
                                             </li>
