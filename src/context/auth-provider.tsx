@@ -13,9 +13,8 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { auth, db, storage } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt } from '@/lib/types';
 
 export interface AuthContextType {
@@ -205,6 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return { ...prev, pronunciationScores: newScores };
         });
     }
+    // Always resolve the promise even if score is not higher
     return Promise.resolve();
   };
 

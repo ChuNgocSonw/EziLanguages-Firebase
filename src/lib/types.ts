@@ -38,6 +38,7 @@ export interface PronunciationAttempt {
   score: number;
   words: { word: string; correct: boolean }[];
   transcribedText: string;
+  audioDataUri?: string; // To store the Base64 encoded audio
 }
 
 export interface UserProfile {

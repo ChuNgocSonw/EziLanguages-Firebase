@@ -4,7 +4,7 @@
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, MicOff, Loader2, BookCheck, X, CheckCircle } from "lucide-react";
+import { Mic, MicOff, Loader2, BookCheck, X, CheckCircle, PlayCircle } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import { analyzePronunciation } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
@@ -109,8 +109,15 @@ export default function ReadingPage() {
                     audioDataUri: base64Audio,
                     referenceText: activeSentence.text,
                 });
-                setResult(analysisResult);
-                await savePronunciationAttempt(activeSentence.text, analysisResult);
+                
+                // Add the new audio data to the result before saving and setting state
+                const resultWithAudio: PronunciationAttempt = {
+                    ...analysisResult,
+                    audioDataUri: base64Audio,
+                };
+
+                setResult(resultWithAudio);
+                await savePronunciationAttempt(activeSentence.text, resultWithAudio);
             } catch (error: any) {
                 console.error("Pronunciation analysis failed:", error);
                 if (error.message && error.message.includes('overloaded')) {
@@ -170,12 +177,14 @@ export default function ReadingPage() {
     const bestAttempt = userProfile?.pronunciationScores?.[safeKey];
     if (bestAttempt) {
         setResult(bestAttempt);
+        // Set the audio URL from the saved data URI if it exists
+        if (bestAttempt.audioDataUri) {
+          setRecordedAudioUrl(bestAttempt.audioDataUri);
+        } else {
+          setRecordedAudioUrl(null);
+        }
     } else {
         setResult(null);
-    }
-     // Ensure no old audio URL persists
-    if (recordedAudioUrl) {
-        URL.revokeObjectURL(recordedAudioUrl);
         setRecordedAudioUrl(null);
     }
   }
@@ -186,6 +195,10 @@ export default function ReadingPage() {
       if(isRecording) {
         handleStopRecording();
       }
+       if (recordedAudioUrl && recordedAudioUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(recordedAudioUrl);
+      }
+      setRecordedAudioUrl(null);
   }
 
   const getUnitProgress = (unitSentences: string[]) => {
