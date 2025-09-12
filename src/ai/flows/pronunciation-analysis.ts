@@ -51,10 +51,12 @@ const pronunciationAnalysisFlow = ai.defineFlow(
   },
   async ({ audioDataUri, referenceText }) => {
     // 1. Speech-to-Text Transcription
-    const { output: transcribedText } = await ai.generate({
+    const sttResponse = await ai.generate({
         model: sttModel,
         prompt: [{ media: { url: audioDataUri } }],
     });
+    const transcribedText = sttResponse.text;
+
 
     if (!transcribedText) {
         throw new Error("Could not transcribe audio.");
