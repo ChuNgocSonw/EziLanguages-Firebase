@@ -4,7 +4,7 @@
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, MicOff, Loader2, BookCheck, X, CheckCircle } from "lucide-react";
+import { Mic, MicOff, Loader2, BookCheck, X, CheckCircle, Play } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import { analyzePronunciation } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
@@ -51,7 +51,8 @@ type PronunciationResult = {
 };
 
 // Helper to create a Firestore-safe key from a sentence
-const createSafeKey = (sentence: string) => sentence.replace(/\./g, '_');
+const createSafeKey = (sentence: string) => sentence.replace(/[.#$[\]/]/g, '_');
+
 
 export default function ReadingPage() {
   const [activeSentence, setActiveSentence] = useState<PracticeSentence | null>(null);
@@ -62,7 +63,7 @@ export default function ReadingPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
-  const { userProfile, savePronunciationScore } = useAuth();
+  const { userProfile, savePronunciationAttempt } = useAuth();
 
   useEffect(() => {
     setResult(null);
@@ -91,7 +92,7 @@ export default function ReadingPage() {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorderRef.current = new MediaRecorder(stream);
+        mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
         
         mediaRecorderRef.current.ondataavailable = (event) => {
           audioChunksRef.current.push(event.data);
@@ -102,8 +103,8 @@ export default function ReadingPage() {
           setIsLoading(true);
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
           
-          const audioUrl = URL.createObjectURL(audioBlob);
-          setRecordedAudioUrl(audioUrl);
+          const localAudioUrl = URL.createObjectURL(audioBlob);
+          setRecordedAudioUrl(localAudioUrl);
           
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
@@ -115,7 +116,7 @@ export default function ReadingPage() {
                     referenceText: activeSentence.text,
                 });
                 setResult(analysisResult);
-                await savePronunciationScore(activeSentence.text, analysisResult.score);
+                await savePronunciationAttempt(activeSentence.text, analysisResult.score, audioBlob);
             } catch (error) {
                 console.error("Pronunciation analysis failed:", error);
                 toast({
@@ -212,17 +213,22 @@ export default function ReadingPage() {
                                     <ul className="space-y-2">
                                         {lesson.sentences.map((sentence, sIndex) => {
                                             const safeKey = createSafeKey(sentence);
-                                            const bestScore = userProfile?.pronunciationScores?.[safeKey];
+                                            const bestAttempt = userProfile?.pronunciationScores?.[safeKey];
                                             return (
                                                 <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
                                                     <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">{sentence}</p>
                                                     <div className="flex items-center gap-4">
-                                                        {bestScore !== undefined ? (
-                                                            <div className="flex items-center gap-1 text-sm font-semibold text-primary">
+                                                        {bestAttempt ? (
+                                                            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                                                                 <CheckCircle className="h-4 w-4" />
-                                                                <span>{bestScore}%</span>
+                                                                <span>{bestAttempt.score}%</span>
+                                                                {bestAttempt.audioUrl && (
+                                                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => new Audio(bestAttempt.audioUrl).play()}>
+                                                                        <Play className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
                                                             </div>
-                                                        ) : <div className="w-[60px]"></div>}
+                                                        ) : <div className="w-[88px]"></div>}
                                                         <Button variant="outline" size="sm" onClick={() => handleSelectSentence(lesson.unit, sentence)}>
                                                            <BookCheck className="mr-2 h-4 w-4" /> Practice
                                                         </Button>

@@ -34,6 +34,11 @@ export const profileSchema = z.object({
 });
 export type ProfileFormData = z.infer<typeof profileSchema>;
 
+export interface PronunciationAttempt {
+    score: number;
+    audioUrl?: string;
+}
+
 export interface UserProfile {
   name: string;
   email: string;
@@ -42,7 +47,7 @@ export interface UserProfile {
   xp: number;
   streak: number;
   badges: string[];
-  pronunciationScores?: { [sentence: string]: number };
+  pronunciationScores?: { [sentenceKey: string]: PronunciationAttempt };
 }
 
 export interface ChatSession {

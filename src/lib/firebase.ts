@@ -2,6 +2,7 @@
 import { initializeApp }from 'firebase/app';
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -9,7 +10,7 @@ import { getFirestore } from "firebase/firestore";
 const firebaseConfig = {
   "projectId": "studio-194970231-e2328",
   "appId": "1:267081487256:web:bcc84fd82670c0181191ed",
-  "storageBucket": "studio-194970231-e2328.firebasestorage.app",
+  "storageBucket": "studio-194970231-e2328.appspot.com",
   "apiKey": "AIzaSyCQR1gpcwvXIVTCMFw3y5E9ONPEAUB00js",
   "authDomain": "studio-194970231-e2328.firebaseapp.com",
   "measurementId": "",
@@ -20,3 +21,4 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);

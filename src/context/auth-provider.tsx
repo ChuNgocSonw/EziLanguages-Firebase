@@ -13,9 +13,10 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, deleteDoc } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession } from '@/lib/types';
+import { auth, db, storage } from '@/lib/firebase';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt } from '@/lib/types';
 
 export interface AuthContextType {
   user: User | null;
@@ -31,13 +32,14 @@ export interface AuthContextType {
   getChatMessages: (chatId: string) => Promise<ChatMessage[]>;
   saveChatMessage: (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<{ chatId: string }>;
   deleteChatSession: (chatId: string) => Promise<void>;
-  savePronunciationScore: (sentence: string, score: number) => Promise<void>;
+  savePronunciationAttempt: (sentence: string, score: number, audioBlob: Blob) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Helper to create a Firestore-safe key from a sentence
-const createSafeKey = (sentence: string) => sentence.replace(/\./g, '_');
+const createSafeKey = (sentence: string) => sentence.replace(/[.#$[\]/]/g, '_');
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -181,27 +183,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await batch.commit();
   };
 
-  const savePronunciationScore = async (sentence: string, score: number): Promise<void> => {
+  const savePronunciationAttempt = async (sentence: string, score: number, audioBlob: Blob): Promise<void> => {
     if (!auth.currentUser || !userProfile) return;
 
     const safeKey = createSafeKey(sentence);
-    const currentBestScore = userProfile.pronunciationScores?.[safeKey] || 0;
+    const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
     
-    if (score > currentBestScore) {
+    // Only update if the new score is better
+    if (score > (currentBestAttempt?.score || 0)) {
         const userDocRef = doc(db, "users", auth.currentUser.uid);
+        
+        // Upload audio to Firebase Storage
+        const storageRef = ref(storage, `pronunciation/${auth.currentUser.uid}/${safeKey}.webm`);
+        const snapshot = await uploadBytes(storageRef, audioBlob);
+        const audioUrl = await getDownloadURL(snapshot.ref);
+
+        const newAttempt: PronunciationAttempt = {
+            score: score,
+            audioUrl: audioUrl,
+        };
+        
         const fieldPath = `pronunciationScores.${safeKey}`;
+        await updateDoc(userDocRef, { [fieldPath]: newAttempt });
         
-        await updateDoc(userDocRef, {
-            [fieldPath]: score
-        });
-        
+        // Update local state for immediate feedback
         setUserProfile(prev => {
             if (!prev) return null;
-            const newScores = { ...(prev.pronunciationScores || {}), [safeKey]: score };
+            const newScores = { ...(prev.pronunciationScores || {}), [safeKey]: newAttempt };
             return { ...prev, pronunciationScores: newScores };
         });
     }
   };
+
 
   const value: AuthContextType = {
     user,
@@ -217,7 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getChatMessages,
     saveChatMessage,
     deleteChatSession,
-    savePronunciationScore,
+    savePronunciationAttempt,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
