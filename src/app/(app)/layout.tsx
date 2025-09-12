@@ -162,15 +162,17 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
-          {!user.emailVerified && (
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md mb-4" role="alert">
-              <p className="font-bold">Verification Required</p>
-              <p>Your email is not verified. Please check your inbox for a verification link to unlock all features.</p>
-            </div>
-          )}
-          {children}
-        </main>
+        <div className="flex-1 overflow-hidden">
+            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background h-full">
+            {!user.emailVerified && (
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md mb-4" role="alert">
+                <p className="font-bold">Verification Required</p>
+                <p>Your email is not verified. Please check your inbox for a verification link to unlock all features.</p>
+                </div>
+            )}
+            {children}
+            </main>
+        </div>
       </div>
     </div>
   );
