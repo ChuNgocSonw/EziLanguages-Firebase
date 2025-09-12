@@ -53,7 +53,10 @@ const pronunciationAnalysisFlow = ai.defineFlow(
     // 1. Speech-to-Text Transcription
     const sttResponse = await ai.generate({
         model: sttModel,
-        prompt: [{ media: { url: audioDataUri } }],
+        prompt: [
+            { text: "Transcribe the spoken words from the audio. Ignore any background noise and only return the transcribed speech, without any additional comments or descriptions." },
+            { media: { url: audioDataUri } }
+        ],
     });
     const transcribedText = sttResponse.text;
 
