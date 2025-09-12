@@ -36,6 +36,9 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper to create a Firestore-safe key from a sentence
+const createSafeKey = (sentence: string) => sentence.replace(/\./g, '_');
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -181,10 +184,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const savePronunciationScore = async (sentence: string, score: number): Promise<void> => {
     if (!auth.currentUser || !userProfile) return;
 
-    const currentBestScore = userProfile.pronunciationScores?.[sentence] || 0;
+    const safeKey = createSafeKey(sentence);
+    const currentBestScore = userProfile.pronunciationScores?.[safeKey] || 0;
+    
     if (score > currentBestScore) {
         const userDocRef = doc(db, "users", auth.currentUser.uid);
-        const fieldPath = `pronunciationScores.${sentence}`;
+        const fieldPath = `pronunciationScores.${safeKey}`;
         
         await updateDoc(userDocRef, {
             [fieldPath]: score
@@ -192,7 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         setUserProfile(prev => {
             if (!prev) return null;
-            const newScores = { ...(prev.pronunciationScores || {}), [sentence]: score };
+            const newScores = { ...(prev.pronunciationScores || {}), [safeKey]: score };
             return { ...prev, pronunciationScores: newScores };
         });
     }

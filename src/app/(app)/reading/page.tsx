@@ -50,6 +50,9 @@ type PronunciationResult = {
   transcribedText: string;
 };
 
+// Helper to create a Firestore-safe key from a sentence
+const createSafeKey = (sentence: string) => sentence.replace(/\./g, '_');
+
 export default function ReadingPage() {
   const [activeSentence, setActiveSentence] = useState<PracticeSentence | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -148,7 +151,10 @@ export default function ReadingPage() {
 
   const getUnitProgress = (unitSentences: string[]) => {
     if (!userProfile?.pronunciationScores) return 0;
-    const completedCount = unitSentences.filter(sentence => userProfile.pronunciationScores?.[sentence] !== undefined).length;
+    const completedCount = unitSentences.filter(sentence => {
+        const safeKey = createSafeKey(sentence);
+        return userProfile.pronunciationScores?.[safeKey] !== undefined;
+    }).length;
     return (completedCount / unitSentences.length) * 100;
   }
 
@@ -182,7 +188,8 @@ export default function ReadingPage() {
                                 <AccordionContent>
                                     <ul className="space-y-2">
                                         {lesson.sentences.map((sentence, sIndex) => {
-                                            const bestScore = userProfile?.pronunciationScores?.[sentence];
+                                            const safeKey = createSafeKey(sentence);
+                                            const bestScore = userProfile?.pronunciationScores?.[safeKey];
                                             return (
                                                 <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
                                                     <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">{sentence}</p>
