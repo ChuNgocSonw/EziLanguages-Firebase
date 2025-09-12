@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -32,14 +33,18 @@ const generateQuizQuestionsPrompt = ai.definePrompt({
   name: 'generateQuizQuestionsPrompt',
   input: {schema: GenerateQuizQuestionsInputSchema},
   output: {schema: GenerateQuizQuestionsOutputSchema},
-  prompt: `You are a quiz generator.  You will generate multiple choice questions based on the topic the user specifies.
+  prompt: `You are a multilingual quiz generator. Your task is to generate multiple choice questions based on the topic provided by the user.
 
-Generate 5 multiple choice questions on the topic: {{{topic}}}.  Each question should have 4 possible answers, and indicate which answer is correct.
+First, detect the language of the topic: {{{topic}}}.
 
-Your output should be a JSON array of question objects with the following keys:
-question: the text of the question
-options: an array of strings, the possible answers
-answer: the correct answer from the options array.
+Then, generate 5 multiple choice questions on this topic **in the detected language**. For example, if the topic is in Vietnamese, the entire quiz (questions, options, and answer) must be in Vietnamese. If the topic is in English, the entire quiz must be in English.
+
+Each question should have 4 possible answers, and you must indicate which answer is correct.
+
+Your output must be a JSON array of question objects with the following keys:
+- question: the text of the question
+- options: an array of 4 strings, representing the possible answers
+- answer: the correct answer from the options array
 `,
 });
 
