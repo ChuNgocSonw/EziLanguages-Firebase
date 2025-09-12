@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt } from '@/lib/types';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt } from '@/lib/types';
 
 export interface AuthContextType {
   user: User | null;
@@ -33,6 +33,8 @@ export interface AuthContextType {
   deleteChatSession: (chatId: string) => Promise<void>;
   savePronunciationAttempt: (sentence: string, attempt: PronunciationAttempt) => Promise<void>;
   saveListeningScore: (exerciseId: string, isCorrect: boolean) => Promise<void>;
+  saveQuizAttempt: (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>) => Promise<void>;
+  getQuizHistory: () => Promise<QuizAttempt[]>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -192,21 +194,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const safeKey = createSafeKey(sentence);
     const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
     
-    // Only update if the new score is better
     if (attempt.score > (currentBestAttempt?.score || 0)) {
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         
         const fieldPath = `pronunciationScores.${safeKey}`;
         await updateDoc(userDocRef, { [fieldPath]: attempt });
         
-        // Update local state for immediate feedback
         setUserProfile(prev => {
             if (!prev) return null;
             const newScores = { ...(prev.pronunciationScores || {}), [safeKey]: attempt };
             return { ...prev, pronunciationScores: newScores };
         });
     }
-    // Always resolve the promise even if score is not higher
     return Promise.resolve();
   };
 
@@ -231,6 +230,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return Promise.resolve();
   };
 
+  const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<void> => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+    
+    const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
+    await addDoc(historyRef, {
+      ...attempt,
+      completedAt: serverTimestamp(),
+    });
+  };
+
+  const getQuizHistory = async (): Promise<QuizAttempt[]> => {
+    if (!auth.currentUser) return [];
+    const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
+    const q = query(historyRef, orderBy("completedAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+  };
+
 
   const value: AuthContextType = {
     user,
@@ -248,6 +265,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     deleteChatSession,
     savePronunciationAttempt,
     saveListeningScore,
+    saveQuizAttempt,
+    getQuizHistory,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
