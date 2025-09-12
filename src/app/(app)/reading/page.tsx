@@ -61,12 +61,12 @@ export default function ReadingPage() {
   const { userProfile, savePronunciationAttempt } = useAuth();
 
   useEffect(() => {
-    // Clear local audio URL when sentence changes
+    // Clear local audio URL when sentence changes or practice is closed
     if (recordedAudioUrl) {
       URL.revokeObjectURL(recordedAudioUrl);
       setRecordedAudioUrl(null);
     }
-  }, [activeSentence, recordedAudioUrl]);
+  }, [activeSentence]);
 
   // Clean up the object URL on unmount
   useEffect(() => {
@@ -164,6 +164,11 @@ export default function ReadingPage() {
         setResult(bestAttempt);
     } else {
         setResult(null);
+    }
+     // Ensure no old audio URL persists
+    if (recordedAudioUrl) {
+        URL.revokeObjectURL(recordedAudioUrl);
+        setRecordedAudioUrl(null);
     }
   }
   
@@ -305,7 +310,7 @@ export default function ReadingPage() {
                     <div>
                         <h3 className="text-lg font-semibold mb-1">What you said:</h3>
                         <div className="flex items-center gap-4">
-                            {recordedAudioUrl && (
+                             {recordedAudioUrl && !isLoading && (
                                 <audio controls src={recordedAudioUrl} className="max-w-xs" />
                             )}
                         </div>
