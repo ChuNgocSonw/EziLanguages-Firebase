@@ -32,6 +32,7 @@ export interface AuthContextType {
   saveChatMessage: (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<{ chatId: string }>;
   deleteChatSession: (chatId: string) => Promise<void>;
   savePronunciationAttempt: (sentence: string, attempt: PronunciationAttempt) => Promise<void>;
+  saveListeningScore: (exerciseId: string, isCorrect: boolean) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       streak: 0,
       badges: [],
       pronunciationScores: {},
+      listeningScores: {},
     };
 
     await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
@@ -208,6 +210,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return Promise.resolve();
   };
 
+  const saveListeningScore = async (exerciseId: string, isCorrect: boolean): Promise<void> => {
+    if (!auth.currentUser || !userProfile) {
+      return Promise.resolve();
+    }
+
+    const currentScore = userProfile.listeningScores?.[exerciseId];
+
+    if (isCorrect && !currentScore) {
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        const fieldPath = `listeningScores.${exerciseId}`;
+        await updateDoc(userDocRef, { [fieldPath]: true });
+
+        setUserProfile(prev => {
+            if (!prev) return null;
+            const newScores = { ...(prev.listeningScores || {}), [exerciseId]: true };
+            return { ...prev, listeningScores: newScores };
+        });
+    }
+    return Promise.resolve();
+  };
+
 
   const value: AuthContextType = {
     user,
@@ -224,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveChatMessage,
     deleteChatSession,
     savePronunciationAttempt,
+    saveListeningScore,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

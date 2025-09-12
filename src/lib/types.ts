@@ -50,6 +50,7 @@ export interface UserProfile {
   streak: number;
   badges: string[];
   pronunciationScores?: { [sentenceKey: string]: PronunciationAttempt };
+  listeningScores?: { [exerciseId: string]: boolean };
 }
 
 export interface ChatSession {

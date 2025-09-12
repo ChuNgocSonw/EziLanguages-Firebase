@@ -13,6 +13,8 @@ import { Volume2, CheckCircle, XCircle, Loader2, ChevronLeft, BookCheck } from "
 import { generateAudio } from "@/lib/actions";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { Progress } from "@/components/ui/progress";
 
 type ExerciseType = 'typing' | 'mcq';
 
@@ -62,6 +64,7 @@ export default function ListeningPage() {
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
     const { toast } = useToast();
+    const { userProfile, saveListeningScore } = useAuth();
 
     const handlePlayAudio = async () => {
         if (!activeExercise) return;
@@ -100,6 +103,9 @@ export default function ListeningPage() {
             isCorrect = answer === activeExercise.answer;
         }
         setResult(isCorrect ? "correct" : "incorrect");
+        if (isCorrect) {
+            saveListeningScore(activeExercise.id, true);
+        }
     };
 
     const handleSelectExercise = (exercise: Exercise) => {
@@ -111,6 +117,14 @@ export default function ListeningPage() {
     
     const handleBackToList = () => {
         setActiveExercise(null);
+    }
+
+    const getUnitProgress = (unitExercises: Exercise[]) => {
+        if (!userProfile?.listeningScores) return 0;
+        const completedCount = unitExercises.filter(exercise => 
+            userProfile.listeningScores?.[exercise.id]
+        ).length;
+        return (completedCount / unitExercises.length) * 100;
     }
 
     const renderExercise = () => {
@@ -172,26 +186,46 @@ export default function ListeningPage() {
                 </CardHeader>
                 <CardContent>
                     <Accordion type="single" collapsible className="w-full">
-                        {lessons.map((lesson, index) => (
+                        {lessons.map((lesson, index) => {
+                            const progress = getUnitProgress(lesson.exercises);
+                            return (
                             <AccordionItem value={`item-${index}`} key={lesson.unit}>
-                                <AccordionTrigger>{lesson.unit}</AccordionTrigger>
+                                <AccordionTrigger>
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full pr-4">
+                                        <span className="text-left">{lesson.unit}</span>
+                                        <div className="flex items-center gap-2 mt-2 md:mt-0 w-full md:w-48">
+                                            <Progress value={progress} className="h-2 w-full" />
+                                            <span className="text-sm text-muted-foreground font-normal">{Math.round(progress)}%</span>
+                                        </div>
+                                    </div>
+                                </AccordionTrigger>
                                 <AccordionContent>
                                     <ul className="space-y-2">
-                                        {lesson.exercises.map((exercise, sIndex) => (
-                                            <li key={sIndex} className="flex justify-between items-center p-2 rounded-md hover:bg-muted">
-                                                <p className="flex-1 mr-4 text-muted-foreground">
+                                        {lesson.exercises.map((exercise, sIndex) => {
+                                            const isCompleted = userProfile?.listeningScores?.[exercise.id];
+                                            return (
+                                            <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
+                                                <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">
                                                     Exercise {sIndex + 1}: {exercise.type === 'mcq' ? 'Multiple Choice' : 'Type the sentence'}
                                                 </p>
-                                                <Button variant="outline" size="sm" onClick={() => handleSelectExercise(exercise)}>
-                                                    <BookCheck className="mr-2 h-4 w-4" />
-                                                    Practice
-                                                </Button>
+                                                <div className="flex items-center gap-4">
+                                                    {isCompleted ? (
+                                                        <div className="flex items-center gap-2 text-sm font-semibold text-green-600">
+                                                            <CheckCircle className="h-4 w-4" />
+                                                            <span>Completed</span>
+                                                        </div>
+                                                    ) : <div className="w-[100px] md:w-[110px]"></div>}
+                                                    <Button variant="outline" size="sm" onClick={() => handleSelectExercise(exercise)}>
+                                                        <BookCheck className="mr-2 h-4 w-4" />
+                                                        Practice
+                                                    </Button>
+                                                </div>
                                             </li>
-                                        ))}
+                                        )})}
                                     </ul>
                                 </AccordionContent>
                             </AccordionItem>
-                        ))}
+                        )})}
                     </Accordion>
                 </CardContent>
             </Card>
