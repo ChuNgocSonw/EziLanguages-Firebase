@@ -62,16 +62,15 @@ export default function ReadingPage() {
 
   useEffect(() => {
     // Clear local audio URL when sentence changes or practice is closed
-    if (recordedAudioUrl) {
+    if (recordedAudioUrl && recordedAudioUrl.startsWith('blob:')) {
       URL.revokeObjectURL(recordedAudioUrl);
-      setRecordedAudioUrl(null);
     }
   }, [activeSentence]);
 
   // Clean up the object URL on unmount
   useEffect(() => {
     return () => {
-      if (recordedAudioUrl) {
+      if (recordedAudioUrl && recordedAudioUrl.startsWith('blob:')) {
         URL.revokeObjectURL(recordedAudioUrl);
       }
     };
@@ -79,10 +78,10 @@ export default function ReadingPage() {
 
   const handleStartRecording = async () => {
     setResult(null);
-    if (recordedAudioUrl) {
+    if (recordedAudioUrl && recordedAudioUrl.startsWith('blob:')) {
       URL.revokeObjectURL(recordedAudioUrl);
-      setRecordedAudioUrl(null);
     }
+    setRecordedAudioUrl(null);
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
