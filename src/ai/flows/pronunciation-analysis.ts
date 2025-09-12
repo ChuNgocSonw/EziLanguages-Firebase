@@ -62,17 +62,19 @@ const pronunciationAnalysisFlow = ai.defineFlow(
         throw new Error("Could not transcribe audio.");
     }
     
+    // Define the output schema for the analysis part only
+    const AnalysisResultSchema = PronunciationAnalysisOutputSchema.omit({ transcribedText: true });
+
     // 2. Analysis and Scoring
     const analysisPrompt = ai.definePrompt({
         name: 'pronunciationScoringPrompt',
-        output: { schema: PronunciationAnalysisOutputSchema },
+        output: { schema: AnalysisResultSchema },
         prompt: `You are a pronunciation evaluation expert. Compare the "Original Text" with the "User's Pronunciation (Transcribed Text)".
 
         Your task is to:
         1.  Determine which words from the "Original Text" were pronounced correctly by the user. A word is correct if it appears in the transcribed text in the correct relative order. Be lenient with minor transcription errors.
         2.  Calculate an overall accuracy score as a percentage based on the number of correctly pronounced words.
         3.  Provide a word-by-word analysis. For every word in the "Original Text", indicate if it was pronounced correctly.
-        4.  Return the original transcribed text as well.
 
         Original Text: "${referenceText}"
         User's Pronunciation (Transcribed Text): "${transcribedText}"
@@ -85,10 +87,11 @@ const pronunciationAnalysisFlow = ai.defineFlow(
         throw new Error("Could not analyze pronunciation.");
     }
 
-    // Ensure the output contains the transcribed text from the STT model
+    // Combine the direct transcribed text with the analysis result
     return {
-        ...analysisResult,
         transcribedText: transcribedText,
+        score: analysisResult.score,
+        words: analysisResult.words,
     };
   }
 );
