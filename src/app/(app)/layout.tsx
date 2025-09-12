@@ -93,7 +93,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-      <div className="flex flex-col max-h-screen overflow-y-auto">
+      <div className="flex flex-col max-h-screen">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 shrink-0 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
