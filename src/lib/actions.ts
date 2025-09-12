@@ -2,8 +2,12 @@
 
 import { generateQuizQuestions as generateQuizQuestionsFlow } from "@/ai/flows/generate-quiz-questions";
 import { chatWithTutor as chatWithTutorFlow } from "@/ai/flows/chatbot-grammar-correction";
+import { analyzePronunciation as analyzePronunciationFlow } from "@/ai/flows/pronunciation-analysis";
+
 import type { GenerateQuizQuestionsInput, GenerateQuizQuestionsOutput } from "@/ai/flows/generate-quiz-questions";
 import type { ChatWithTutorInput, ChatWithTutorOutput } from "@/ai/flows/chatbot-grammar-correction";
+import type { PronunciationAnalysisInput, PronunciationAnalysisOutput } from "@/ai/flows/pronunciation-analysis";
+
 
 export async function generateQuizQuestions(topic: GenerateQuizQuestionsInput): Promise<GenerateQuizQuestionsOutput> {
   // Add any server-side validation or logging here
@@ -14,4 +18,8 @@ export async function chatWithTutor(input: ChatWithTutorInput): Promise<ChatWith
   // Add any server-side validation or logging here
   const result = await chatWithTutorFlow(input);
   return result;
+}
+
+export async function analyzePronunciation(input: PronunciationAnalysisInput): Promise<PronunciationAnalysisOutput> {
+  return analyzePronunciationFlow(input);
 }
