@@ -61,7 +61,7 @@ export default function ReadingPage() {
   const { userProfile, savePronunciationAttempt } = useAuth();
 
   useEffect(() => {
-    // Clear local audio URL when sentence changes or practice is closed
+    // Clear local audio URL when sentence changes or practice is closed, but only for blob URLs
     if (recordedAudioUrl && recordedAudioUrl.startsWith('blob:')) {
       URL.revokeObjectURL(recordedAudioUrl);
     }
@@ -290,7 +290,7 @@ export default function ReadingPage() {
                 {result.words.map((word, index) => (
                     <span
                     key={index}
-                    className={!word.correct ? "text-destructive underline decoration-wavy" : ""}
+                    className={!word.correct ? "text-destructive font-bold" : ""}
                     >
                     {word.word}{' '}
                     </span>
