@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 import type { Timestamp } from "firebase/firestore";
 
@@ -41,6 +42,7 @@ export interface UserProfile {
   xp: number;
   streak: number;
   badges: string[];
+  pronunciationScores?: { [sentence: string]: number };
 }
 
 export interface ChatSession {

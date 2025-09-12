@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
@@ -30,6 +31,7 @@ export interface AuthContextType {
   getChatMessages: (chatId: string) => Promise<ChatMessage[]>;
   saveChatMessage: (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<{ chatId: string }>;
   deleteChatSession: (chatId: string) => Promise<void>;
+  savePronunciationScore: (sentence: string, score: number) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       xp: 0,
       streak: 0,
       badges: [],
+      pronunciationScores: {},
     };
 
     await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
@@ -140,7 +143,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     let currentChatId = chatId;
     
-    // If chatId is null, it's a new chat
     if (!currentChatId) {
       const chatRef = await addDoc(collection(db, "users", auth.currentUser.uid, "chats"), {
         title: message.original?.substring(0, 40) || "New Chat",
@@ -176,6 +178,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await batch.commit();
   };
 
+  const savePronunciationScore = async (sentence: string, score: number): Promise<void> => {
+    if (!auth.currentUser || !userProfile) return;
+
+    const currentBestScore = userProfile.pronunciationScores?.[sentence] || 0;
+    if (score > currentBestScore) {
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        const fieldPath = `pronunciationScores.${sentence}`;
+        
+        await updateDoc(userDocRef, {
+            [fieldPath]: score
+        });
+        
+        setUserProfile(prev => {
+            if (!prev) return null;
+            const newScores = { ...(prev.pronunciationScores || {}), [sentence]: score };
+            return { ...prev, pronunciationScores: newScores };
+        });
+    }
+  };
+
   const value: AuthContextType = {
     user,
     userProfile,
@@ -190,6 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getChatMessages,
     saveChatMessage,
     deleteChatSession,
+    savePronunciationScore,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
