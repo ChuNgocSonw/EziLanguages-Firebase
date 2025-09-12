@@ -116,7 +116,7 @@ export default function ReadingPage() {
                     referenceText: activeSentence.text,
                 });
                 setResult(analysisResult);
-                await savePronunciationAttempt(activeSentence.text, analysisResult.score, audioBlob);
+                await savePronunciationAttempt(activeSentence.text, analysisResult.score);
             } catch (error) {
                 console.error("Pronunciation analysis failed:", error);
                 toast({
@@ -222,11 +222,6 @@ export default function ReadingPage() {
                                                             <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                                                                 <CheckCircle className="h-4 w-4" />
                                                                 <span>{bestAttempt.score}%</span>
-                                                                {bestAttempt.audioUrl && (
-                                                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => new Audio(bestAttempt.audioUrl).play()}>
-                                                                        <Play className="h-4 w-4" />
-                                                                    </Button>
-                                                                )}
                                                             </div>
                                                         ) : <div className="w-[88px]"></div>}
                                                         <Button variant="outline" size="sm" onClick={() => handleSelectSentence(lesson.unit, sentence)}>

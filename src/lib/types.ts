@@ -36,7 +36,6 @@ export type ProfileFormData = z.infer<typeof profileSchema>;
 
 export interface PronunciationAttempt {
     score: number;
-    audioUrl?: string;
 }
 
 export interface UserProfile {

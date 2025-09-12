@@ -32,7 +32,7 @@ export interface AuthContextType {
   getChatMessages: (chatId: string) => Promise<ChatMessage[]>;
   saveChatMessage: (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<{ chatId: string }>;
   deleteChatSession: (chatId: string) => Promise<void>;
-  savePronunciationAttempt: (sentence: string, score: number, audioBlob: Blob) => Promise<void>;
+  savePronunciationAttempt: (sentence: string, score: number) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -183,11 +183,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await batch.commit();
   };
 
-  const savePronunciationAttempt = async (sentence: string, score: number, audioBlob: Blob): Promise<void> => {
+  const savePronunciationAttempt = async (sentence: string, score: number): Promise<void> => {
     if (!auth.currentUser || !userProfile) {
       return Promise.resolve();
     }
-
+  
     const safeKey = createSafeKey(sentence);
     const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
     
@@ -195,14 +195,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (score > (currentBestAttempt?.score || 0)) {
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         
-        // Upload audio to Firebase Storage
-        const storageRef = ref(storage, `pronunciation/${auth.currentUser.uid}/${safeKey}.webm`);
-        const snapshot = await uploadBytes(storageRef, audioBlob);
-        const audioUrl = await getDownloadURL(snapshot.ref);
-
         const newAttempt: PronunciationAttempt = {
             score: score,
-            audioUrl: audioUrl,
         };
         
         const fieldPath = `pronunciationScores.${safeKey}`;
