@@ -111,13 +111,21 @@ export default function ReadingPage() {
                 });
                 setResult(analysisResult);
                 await savePronunciationAttempt(activeSentence.text, analysisResult);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Pronunciation analysis failed:", error);
-                toast({
-                    title: "Analysis Failed",
-                    description: "Could not analyze the audio. Please try again.",
-                    variant: "destructive",
-                });
+                if (error.message && error.message.includes('overloaded')) {
+                    toast({
+                        title: "AI is busy",
+                        description: "The AI is currently overloaded. Please try again in a moment.",
+                        variant: "destructive",
+                    });
+                } else {
+                    toast({
+                        title: "Analysis Failed",
+                        description: "Could not analyze the audio. Please try again.",
+                        variant: "destructive",
+                    });
+                }
             } finally {
                 setIsLoading(false);
             }

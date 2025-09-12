@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -121,8 +122,15 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
       const history = await getChatMessages(newChatId);
       setMessages(history);
       
-    } catch (error) {
-      console.error("Error with AI Tutor:", error);
+    } catch (error: any) {
+        console.error("Error with AI Tutor:", error);
+        if (error.message && error.message.includes('overloaded')) {
+            toast({
+                title: "AI is busy",
+                description: "The AI is currently overloaded. Please try again in a moment.",
+                variant: "destructive",
+            });
+        }
       if (newChatId) {
         const errorMessage: Omit<ChatMessage, 'id' | 'timestamp'> = {
             role: 'bot',

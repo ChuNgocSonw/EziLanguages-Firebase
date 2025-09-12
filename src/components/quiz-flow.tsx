@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -11,6 +12,7 @@ import type { QuizQuestion } from "@/lib/types";
 import { Loader2, ArrowRight, Check, X, RefreshCw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 type QuizState = "idle" | "loading" | "active" | "finished";
 
@@ -21,6 +23,7 @@ export default function QuizFlow() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleGenerateQuiz = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +36,22 @@ export default function QuizFlow() {
       setCurrentQuestionIndex(0);
       setSelectedAnswers([]);
       setSelectedOption(null);
-    } catch (error) {
-      console.error("Failed to generate quiz:", error);
-      setQuizState("idle");
+    } catch (error: any) {
+        console.error("Failed to generate quiz:", error);
+        if (error.message && error.message.includes('overloaded')) {
+            toast({
+                title: "AI is busy",
+                description: "The AI is currently overloaded. Please try again in a moment.",
+                variant: "destructive",
+            });
+        } else {
+            toast({
+                title: "Quiz Generation Failed",
+                description: "Could not generate a quiz for this topic. Please try again.",
+                variant: "destructive",
+            });
+        }
+        setQuizState("idle");
     }
   };
 
