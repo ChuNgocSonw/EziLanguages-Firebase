@@ -184,7 +184,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const savePronunciationAttempt = async (sentence: string, score: number, audioBlob: Blob): Promise<void> => {
-    if (!auth.currentUser || !userProfile) return;
+    if (!auth.currentUser || !userProfile) {
+      return Promise.resolve();
+    }
 
     const safeKey = createSafeKey(sentence);
     const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
@@ -213,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return { ...prev, pronunciationScores: newScores };
         });
     }
+    return Promise.resolve();
   };
 
 
