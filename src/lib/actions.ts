@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateQuizQuestions as generateQuizQuestionsFlow } from "@/ai/flows/generate-quiz-questions";
@@ -6,7 +7,8 @@ import { analyzePronunciation as analyzePronunciationFlow } from "@/ai/flows/pro
 
 import type { GenerateQuizQuestionsInput, GenerateQuizQuestionsOutput } from "@/ai/flows/generate-quiz-questions";
 import type { ChatWithTutorInput, ChatWithTutorOutput } from "@/ai/flows/chatbot-grammar-correction";
-import type { PronunciationAnalysisInput, PronunciationAnalysisOutput } from "@/ai/flows/pronunciation-analysis";
+import type { PronunciationAnalysisInput } from "@/ai/flows/pronunciation-analysis";
+import type { PronunciationAttempt } from "@/lib/types";
 
 
 export async function generateQuizQuestions(topic: GenerateQuizQuestionsInput): Promise<GenerateQuizQuestionsOutput> {
@@ -20,6 +22,6 @@ export async function chatWithTutor(input: ChatWithTutorInput): Promise<ChatWith
   return result;
 }
 
-export async function analyzePronunciation(input: PronunciationAnalysisInput): Promise<PronunciationAnalysisOutput> {
+export async function analyzePronunciation(input: PronunciationAnalysisInput): Promise<PronunciationAttempt> {
   return analyzePronunciationFlow(input);
 }

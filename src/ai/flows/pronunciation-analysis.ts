@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -12,6 +13,8 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
+import type { PronunciationAttempt } from '@/lib/types';
+
 
 const PronunciationAnalysisInputSchema = z.object({
   audioDataUri: z
@@ -32,10 +35,9 @@ const PronunciationAnalysisOutputSchema = z.object({
         correct: z.boolean().describe('True if the user pronounced the word correctly, false otherwise.'),
     })).describe('An array providing feedback for each word in the original reference text.'),
 });
-export type PronunciationAnalysisOutput = z.infer<typeof PronunciationAnalysisOutputSchema>;
 
 
-export async function analyzePronunciation(input: PronunciationAnalysisInput): Promise<PronunciationAnalysisOutput> {
+export async function analyzePronunciation(input: PronunciationAnalysisInput): Promise<PronunciationAttempt> {
   return pronunciationAnalysisFlow(input);
 }
 

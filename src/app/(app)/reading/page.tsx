@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
+import type { PronunciationAttempt } from "@/lib/types";
 
 const lessons = [
     {
@@ -44,12 +45,6 @@ type PracticeSentence = {
     text: string;
 };
 
-type PronunciationResult = {
-  score: number;
-  words: { word: string; correct: boolean }[];
-  transcribedText: string;
-};
-
 // Helper to create a Firestore-safe key from a sentence
 const createSafeKey = (sentence: string) => sentence.replace(/[.#$[\]/]/g, '_');
 
@@ -58,7 +53,7 @@ export default function ReadingPage() {
   const [activeSentence, setActiveSentence] = useState<PracticeSentence | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<PronunciationResult | null>(null);
+  const [result, setResult] = useState<PronunciationAttempt | null>(null);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -66,13 +61,12 @@ export default function ReadingPage() {
   const { userProfile, savePronunciationAttempt } = useAuth();
 
   useEffect(() => {
-    setResult(null);
+    // Clear local audio URL when sentence changes
     if (recordedAudioUrl) {
       URL.revokeObjectURL(recordedAudioUrl);
       setRecordedAudioUrl(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSentence]);
+  }, [activeSentence, recordedAudioUrl]);
 
   // Clean up the object URL on unmount
   useEffect(() => {
@@ -116,7 +110,7 @@ export default function ReadingPage() {
                     referenceText: activeSentence.text,
                 });
                 setResult(analysisResult);
-                await savePronunciationAttempt(activeSentence.text, analysisResult.score);
+                await savePronunciationAttempt(activeSentence.text, analysisResult);
             } catch (error) {
                 console.error("Pronunciation analysis failed:", error);
                 toast({
@@ -163,6 +157,14 @@ export default function ReadingPage() {
 
   const handleSelectSentence = (unit: string, text: string) => {
     setActiveSentence({ unit, text });
+    // Load previous best result if it exists
+    const safeKey = createSafeKey(text);
+    const bestAttempt = userProfile?.pronunciationScores?.[safeKey];
+    if (bestAttempt) {
+        setResult(bestAttempt);
+    } else {
+        setResult(null);
+    }
   }
   
   const handleClosePractice = () => {

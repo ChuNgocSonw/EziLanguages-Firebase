@@ -32,7 +32,7 @@ export interface AuthContextType {
   getChatMessages: (chatId: string) => Promise<ChatMessage[]>;
   saveChatMessage: (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<{ chatId: string }>;
   deleteChatSession: (chatId: string) => Promise<void>;
-  savePronunciationAttempt: (sentence: string, score: number) => Promise<void>;
+  savePronunciationAttempt: (sentence: string, attempt: PronunciationAttempt) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -183,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await batch.commit();
   };
 
-  const savePronunciationAttempt = async (sentence: string, score: number): Promise<void> => {
+  const savePronunciationAttempt = async (sentence: string, attempt: PronunciationAttempt): Promise<void> => {
     if (!auth.currentUser || !userProfile) {
       return Promise.resolve();
     }
@@ -192,20 +192,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
     
     // Only update if the new score is better
-    if (score > (currentBestAttempt?.score || 0)) {
+    if (attempt.score > (currentBestAttempt?.score || 0)) {
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         
-        const newAttempt: PronunciationAttempt = {
-            score: score,
-        };
-        
         const fieldPath = `pronunciationScores.${safeKey}`;
-        await updateDoc(userDocRef, { [fieldPath]: newAttempt });
+        await updateDoc(userDocRef, { [fieldPath]: attempt });
         
         // Update local state for immediate feedback
         setUserProfile(prev => {
             if (!prev) return null;
-            const newScores = { ...(prev.pronunciationScores || {}), [safeKey]: newAttempt };
+            const newScores = { ...(prev.pronunciationScores || {}), [safeKey]: attempt };
             return { ...prev, pronunciationScores: newScores };
         });
     }

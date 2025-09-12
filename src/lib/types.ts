@@ -35,7 +35,9 @@ export const profileSchema = z.object({
 export type ProfileFormData = z.infer<typeof profileSchema>;
 
 export interface PronunciationAttempt {
-    score: number;
+  score: number;
+  words: { word: string; correct: boolean }[];
+  transcribedText: string;
 }
 
 export interface UserProfile {
