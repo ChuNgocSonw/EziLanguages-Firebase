@@ -93,7 +93,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-      <div className="flex flex-col max-h-screen">
+      <div className="flex flex-col max-h-screen overflow-hidden">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 shrink-0 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
@@ -162,7 +162,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className="flex-1 flex flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+        <main className="flex-1 flex flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background overflow-y-auto">
           {!user.emailVerified && (
               <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md mb-4" role="alert">
               <p className="font-bold">Verification Required</p>
