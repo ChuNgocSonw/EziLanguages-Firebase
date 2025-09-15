@@ -42,7 +42,7 @@ export async function analyzePronunciation(input: PronunciationAnalysisInput): P
 }
 
 
-const sttModel = googleAI.model('gemini-1.5-flash');
+const sttModel = googleAI.model('gemini-2.5-flash');
 const analysisModel = googleAI.model('gemini-2.5-flash');
 
 const pronunciationAnalysisFlow = ai.defineFlow(
@@ -101,4 +101,5 @@ const pronunciationAnalysisFlow = ai.defineFlow(
     };
   }
 );
+
 
