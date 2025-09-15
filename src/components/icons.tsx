@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-export function Logo({ width = 32, height = 32, ...props }) {
+export function Logo({ width = 40, height = 40, ...props }) {
   return (
     <Image
       src="/logo.png"
