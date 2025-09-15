@@ -124,40 +124,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!auth.currentUser || !userProfile) return;
 
       const userDocRef = doc(db, "users", auth.currentUser.uid);
+      
+      // Get the current profile state directly from the provider state
+      const currentProfile = userProfile;
+
       const today = new Date();
-      const lastResetDate = userProfile.weeklyXPResetDate?.toDate();
+      const lastResetDate = currentProfile.weeklyXPResetDate?.toDate();
       const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday
 
-      let newWeeklyXP = userProfile.weeklyXP || 0;
       const updates: any = {};
-      let isNewWeek = false;
 
       if (!lastResetDate || lastResetDate < startOfThisWeek) {
-          // It's a new week, reset the weekly XP
-          isNewWeek = true;
-          newWeeklyXP = xpGained;
+          // It's a new week, reset the weekly XP and set the new reset date
           updates.weeklyXP = xpGained;
           updates.weeklyXPResetDate = Timestamp.fromDate(today);
       } else {
           // Still the same week, increment
-          newWeeklyXP += xpGained;
           updates.weeklyXP = increment(xpGained);
       }
+      
+      try {
+        await updateDoc(userDocRef, updates);
+        
+        // After successful update, fetch the latest profile data to ensure client state is in sync
+        const updatedDoc = await getDoc(userDocRef);
+        if (updatedDoc.exists()) {
+            setUserProfile(updatedDoc.data() as UserProfile);
+        }
 
-      await updateDoc(userDocRef, updates);
-
-      // Update local state immediately
-      setUserProfile(prev => {
-          if (!prev) return null;
-          const updatedProfile: UserProfile = {
-              ...prev,
-              weeklyXP: newWeeklyXP,
-          };
-          if (isNewWeek) {
-              updatedProfile.weeklyXPResetDate = Timestamp.fromDate(today);
-          }
-          return updatedProfile;
-      });
+      } catch (error) {
+        console.error("Failed to update weekly XP:", error);
+      }
   };
 
 
@@ -446,4 +443,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+    
     
