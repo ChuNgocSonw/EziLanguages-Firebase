@@ -220,21 +220,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return 0;
     }
 
-    const currentScore = userProfile.listeningScores?.[exerciseId];
+    const xpEarned = userProfile.listeningScores?.[exerciseId];
     let xpGained = 0;
 
-    if (isCorrect && !currentScore) {
+    if (isCorrect && !xpEarned) {
         xpGained = 10;
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         const fieldPath = `listeningScores.${exerciseId}`;
         await updateDoc(userDocRef, { 
-            [fieldPath]: true,
+            [fieldPath]: xpGained,
             xp: increment(xpGained)
         });
 
         setUserProfile(prev => {
             if (!prev) return null;
-            const newScores = { ...(prev.listeningScores || {}), [exerciseId]: true };
+            const newScores = { ...(prev.listeningScores || {}), [exerciseId]: xpGained };
             return { ...prev, listeningScores: newScores, xp: prev.xp + xpGained };
         });
     }

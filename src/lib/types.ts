@@ -60,7 +60,7 @@ export interface UserProfile {
   streak: number;
   badges: string[];
   pronunciationScores?: { [sentenceKey: string]: PronunciationAttempt };
-  listeningScores?: { [exerciseId: string]: boolean };
+  listeningScores?: { [exerciseId: string]: number }; // Store XP earned instead of boolean
 }
 
 export interface ChatSession {

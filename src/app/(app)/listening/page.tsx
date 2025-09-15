@@ -9,12 +9,13 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Volume2, CheckCircle, XCircle, Loader2, ChevronLeft, BookCheck } from "lucide-react";
+import { Volume2, CheckCircle, XCircle, Loader2, ChevronLeft, BookCheck, Star } from "lucide-react";
 import { generateAudio } from "@/lib/actions";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 type ExerciseType = 'typing' | 'mcq';
 
@@ -216,22 +217,21 @@ export default function ListeningPage() {
                                 <AccordionContent>
                                     <ul className="space-y-2">
                                         {lesson.exercises.map((exercise, sIndex) => {
-                                            const isCompleted = userProfile?.listeningScores?.[exercise.id];
+                                            const xpEarned = userProfile?.listeningScores?.[exercise.id];
                                             return (
                                             <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
                                                 <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">
                                                     Exercise {sIndex + 1}: {exercise.type === 'mcq' ? 'Multiple Choice' : 'Type the sentence'}
                                                 </p>
                                                 <div className="flex items-center gap-4">
-                                                    {isCompleted ? (
-                                                        <div className="flex items-center gap-2 text-sm font-semibold text-green-600">
-                                                            <CheckCircle className="h-4 w-4" />
-                                                            <span>Completed</span>
-                                                        </div>
-                                                    ) : <div className="w-[100px] md:w-[110px]"></div>}
+                                                    {xpEarned ? (
+                                                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                                            <Star className="mr-1 h-3 w-3" /> +{xpEarned} XP
+                                                        </Badge>
+                                                    ) : <div className="w-[88px] md:w-[88px]"></div>}
                                                     <Button variant="outline" size="sm" onClick={() => handleSelectExercise(exercise)}>
                                                         <BookCheck className="mr-2 h-4 w-4" />
-                                                        Practice
+                                                        {xpEarned ? "Practice Again" : "Practice"}
                                                     </Button>
                                                 </div>
                                             </li>

@@ -4,7 +4,7 @@
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, MicOff, Loader2, BookCheck, X, CheckCircle, PlayCircle } from "lucide-react";
+import { Mic, MicOff, Loader2, BookCheck, X, CheckCircle, PlayCircle, Star } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import { analyzePronunciation } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
 import type { PronunciationAttempt } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
 
 const lessons = [
     {
@@ -254,13 +255,17 @@ export default function ReadingPage() {
                                                     <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">{sentence}</p>
                                                     <div className="flex items-center gap-4">
                                                         {bestAttempt ? (
-                                                            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                                                                <CheckCircle className="h-4 w-4" />
-                                                                <span>{bestAttempt.score}%</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300">
+                                                                    Best: {bestAttempt.score}%
+                                                                </Badge>
+                                                                 <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                                                    <Star className="mr-1 h-3 w-3" /> +15 XP
+                                                                </Badge>
                                                             </div>
-                                                        ) : <div className="w-[88px]"></div>}
+                                                        ) : <div className="w-[180px] md:w-[170px]"></div>}
                                                         <Button variant="outline" size="sm" onClick={() => handleSelectSentence(lesson.unit, sentence)}>
-                                                           <BookCheck className="mr-2 h-4 w-4" /> Practice
+                                                           <BookCheck className="mr-2 h-4 w-4" /> {bestAttempt ? "Improve" : "Practice"}
                                                         </Button>
                                                     </div>
                                                 </li>
