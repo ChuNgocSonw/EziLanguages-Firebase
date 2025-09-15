@@ -225,7 +225,7 @@ export default function ListeningPage() {
                                                 </p>
                                                 <div className="flex items-center gap-4">
                                                     {xpEarned ? (
-                                                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
                                                             <Star className="mr-1 h-3 w-3" /> +{xpEarned} XP
                                                         </Badge>
                                                     ) : <div className="w-[88px] md:w-[88px]"></div>}

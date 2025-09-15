@@ -256,10 +256,10 @@ export default function ReadingPage() {
                                                     <div className="flex items-center gap-4">
                                                         {bestAttempt ? (
                                                             <div className="flex items-center gap-2">
-                                                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300">
+                                                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100">
                                                                     Best: {bestAttempt.score}%
                                                                 </Badge>
-                                                                 <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                                                 <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
                                                                     <Star className="mr-1 h-3 w-3" /> +15 XP
                                                                 </Badge>
                                                             </div>
