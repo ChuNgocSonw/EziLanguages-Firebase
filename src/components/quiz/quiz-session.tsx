@@ -245,12 +245,12 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
                     value={numberOfQuestions}
                     onChange={(e) => {
                         const val = parseInt(e.target.value, 10);
-                        if (val > 50) setNumberOfQuestions(50);
+                        if (val > 30) setNumberOfQuestions(30);
                         else if (val < 1) setNumberOfQuestions(1);
                         else setNumberOfQuestions(val);
                     }}
                     min="1"
-                    max="50"
+                    max="30"
                 />
             </div>
           </div>
