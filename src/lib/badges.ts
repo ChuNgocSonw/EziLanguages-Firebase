@@ -10,8 +10,12 @@ export interface Badge {
     condition: (profile: UserProfile, quizHistory?: QuizAttempt[]) => boolean;
 }
 
-export const allBadges: Badge[] = [
-    // --- Easy Badges ---
+export interface BadgeCategory {
+    name: string;
+    badges: Badge[];
+}
+
+const easyBadges: Badge[] = [
     {
         id: 'quiz-1',
         name: 'Quiz Starter',
@@ -47,8 +51,9 @@ export const allBadges: Badge[] = [
         icon: Star,
         condition: (profile) => profile.xp >= 1000,
     },
+];
 
-    // --- Medium Badges ---
+const mediumBadges: Badge[] = [
     {
         id: 'streak-7',
         name: 'Weekly Warrior',
@@ -84,8 +89,9 @@ export const allBadges: Badge[] = [
         icon: Trophy,
         condition: (profile, quizHistory) => (quizHistory?.length || 0) >= 50,
     },
+];
 
-    // --- Hard Badges ---
+const hardBadges: Badge[] = [
     {
         id: 'streak-30',
         name: 'Monthly Master',
@@ -115,3 +121,22 @@ export const allBadges: Badge[] = [
         condition: (profile) => profile.streak >= 100,
     },
 ];
+
+
+export const badgeCategories: BadgeCategory[] = [
+    {
+        name: "Easy",
+        badges: easyBadges,
+    },
+    {
+        name: "Medium",
+        badges: mediumBadges,
+    },
+    {
+        name: "Hard",
+        badges: hardBadges,
+    }
+];
+
+// For the logic, we still need a flat list to check conditions.
+export const allBadges: Badge[] = [...easyBadges, ...mediumBadges, ...hardBadges];

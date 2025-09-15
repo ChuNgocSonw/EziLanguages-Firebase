@@ -14,9 +14,10 @@ import { profileSchema, ProfileFormData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { allBadges } from "@/lib/badges";
+import { badgeCategories } from "@/lib/badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 export default function ProfilePage() {
   const { user, userProfile, updateUserProfile, updateUserAppData } = useAuth();
@@ -155,32 +156,40 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                     <TooltipProvider>
-                        <div className="flex flex-wrap gap-4">
-                            {allBadges.map(badge => {
-                                const Icon = badge.icon;
-                                const isEarned = userProfile?.badges?.includes(badge.id);
-                                return (
-                                    <Tooltip key={badge.id}>
-                                        <TooltipTrigger>
-                                            <div className="flex flex-col items-center gap-2">
-                                                <div className={cn(
-                                                    "p-3 bg-muted rounded-full border-2 transition-all",
-                                                    isEarned ? "border-primary/50" : "border-transparent opacity-40 grayscale"
-                                                )}>
-                                                    <Icon className={cn(
-                                                        "h-8 w-8",
-                                                        isEarned ? "text-primary" : "text-muted-foreground"
-                                                    )} />
-                                                </div>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p className="font-bold">{badge.name}</p>
-                                            <p className="text-sm text-muted-foreground">{badge.description}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                )
-                            })}
+                        <div className="space-y-6">
+                            {badgeCategories.map(category => (
+                                <div key={category.name}>
+                                    <h3 className="font-semibold mb-2">{category.name} Badges</h3>
+                                    <div className="flex flex-wrap gap-4">
+                                        {category.badges.map(badge => {
+                                            const Icon = badge.icon;
+                                            const isEarned = userProfile?.badges?.includes(badge.id);
+                                            return (
+                                                <Tooltip key={badge.id}>
+                                                    <TooltipTrigger>
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            <div className={cn(
+                                                                "p-3 bg-muted rounded-full border-2 transition-all",
+                                                                isEarned ? "border-primary/50" : "border-transparent opacity-40 grayscale"
+                                                            )}>
+                                                                <Icon className={cn(
+                                                                    "h-8 w-8",
+                                                                    isEarned ? "text-primary" : "text-muted-foreground"
+                                                                )} />
+                                                            </div>
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p className="font-bold">{badge.name}</p>
+                                                        <p className="text-sm text-muted-foreground">{badge.description}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            )
+                                        })}
+                                    </div>
+                                    {category.name !== "Hard" && <Separator className="mt-6" />}
+                                </div>
+                            ))}
                         </div>
                     </TooltipProvider>
                 </CardContent>
