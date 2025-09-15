@@ -14,7 +14,7 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt } from '@/lib/types';
 
 export interface AuthContextType {
@@ -198,12 +198,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         
         const fieldPath = `pronunciationScores.${safeKey}`;
-        await updateDoc(userDocRef, { [fieldPath]: attempt });
+        const updates: any = { [fieldPath]: attempt };
+        
+        // Award XP only for new best attempts, not for every attempt
+        updates.xp = increment(15);
+
+        await updateDoc(userDocRef, updates);
         
         setUserProfile(prev => {
             if (!prev) return null;
             const newScores = { ...(prev.pronunciationScores || {}), [safeKey]: attempt };
-            return { ...prev, pronunciationScores: newScores };
+            return { ...prev, pronunciationScores: newScores, xp: prev.xp + 15 };
         });
     }
     return Promise.resolve();
@@ -219,12 +224,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isCorrect && !currentScore) {
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         const fieldPath = `listeningScores.${exerciseId}`;
-        await updateDoc(userDocRef, { [fieldPath]: true });
+        await updateDoc(userDocRef, { 
+            [fieldPath]: true,
+            xp: increment(10)
+        });
 
         setUserProfile(prev => {
             if (!prev) return null;
             const newScores = { ...(prev.listeningScores || {}), [exerciseId]: true };
-            return { ...prev, listeningScores: newScores };
+            return { ...prev, listeningScores: newScores, xp: prev.xp + 10 };
         });
     }
     return Promise.resolve();
@@ -237,6 +245,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await addDoc(historyRef, {
       ...attempt,
       completedAt: serverTimestamp(),
+    });
+    
+    const xpGained = attempt.score * 5;
+    const userDocRef = doc(db, "users", auth.currentUser.uid);
+    await updateDoc(userDocRef, { xp: increment(xpGained) });
+
+    setUserProfile(prev => {
+        if (!prev) return null;
+        return { ...prev, xp: prev.xp + xpGained };
     });
   };
 
