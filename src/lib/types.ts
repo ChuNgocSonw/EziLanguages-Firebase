@@ -58,6 +58,7 @@ export interface UserProfile {
   age: number;
   language: string;
   xp: number;
+  weeklyXP?: number;
   streak: number;
   badges: string[];
   badgeCount: number;

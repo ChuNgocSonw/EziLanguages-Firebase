@@ -90,15 +90,8 @@ export default function LeaderboardPage() {
                     const data = await getLeaderboard('streak');
                     setLeaderboardData(prev => ({ ...prev, streak: data }));
                 } else if (activeTab === "weekly-xp") {
-                    // Mock data for Weekly XP as it's not implemented yet
-                    const mockData: LeaderboardEntry[] = [
-                        { rank: 1, userId: "mock1", name: "Alex Doe", value: 1250 },
-                        { rank: 2, userId: "mock2", name: "Jamie Smith", value: 1100 },
-                        { rank: 3, userId: "mock3", name: "Taylor Brown", value: 950 },
-                    ];
-                     setTimeout(() => { // Simulate network delay
-                        setLeaderboardData(prev => ({ ...prev, "weekly-xp": mockData }));
-                    }, 500);
+                    const data = await getLeaderboard('weeklyXP');
+                    setLeaderboardData(prev => ({ ...prev, "weekly-xp": data }));
                 }
             } catch (error) {
                 console.error(`Failed to fetch ${activeTab} leaderboard:`, error);

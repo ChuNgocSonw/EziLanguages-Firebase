@@ -39,7 +39,7 @@ export interface AuthContextType {
   saveListeningScore: (exerciseId: string, isCorrect: boolean) => Promise<number>;
   saveQuizAttempt: (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>) => Promise<number>;
   getQuizHistory: () => Promise<QuizAttempt[]>;
-  getLeaderboard: (category: 'badgeCount' | 'streak') => Promise<LeaderboardEntry[]>;
+  getLeaderboard: (category: 'badgeCount' | 'streak' | 'weeklyXP') => Promise<LeaderboardEntry[]>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -149,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       age: 0,
       language: "EN",
       xp: 0,
+      weeklyXP: 0,
       streak: 0,
       badges: [],
       badgeCount: 0,
@@ -358,7 +359,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
   };
 
-  const getLeaderboard = async (category: 'badgeCount' | 'streak'): Promise<LeaderboardEntry[]> => {
+  const getLeaderboard = async (category: 'badgeCount' | 'streak' | 'weeklyXP'): Promise<LeaderboardEntry[]> => {
     const usersRef = collection(db, "users");
     const q = query(usersRef, orderBy(category, "desc"), limit(100));
     const querySnapshot = await getDocs(q);
@@ -369,7 +370,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             rank: index + 1,
             userId: doc.id,
             name: data.name,
-            value: data[category],
+            value: data[category] || 0,
         };
     });
   };
