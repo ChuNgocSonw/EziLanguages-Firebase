@@ -54,7 +54,7 @@ function LeaderboardTable({ data, unit }: { data: LeaderboardEntry[] | null, uni
                             </Avatar>
                             <div>
                                 <h4 className={cn("font-semibold", isCurrentUser && "text-primary")}>
-                                    {entry.name}
+                                    {entry.name || (isCurrentUser ? user.displayName : 'Anonymous User')}
                                     {isCurrentUser && " (You)"}
                                 </h4>
                             </div>
