@@ -35,7 +35,7 @@ const generateQuizQuestionsPrompt = ai.definePrompt({
   output: {schema: GenerateQuizQuestionsOutputSchema},
   prompt: `You are a multilingual quiz generator. Your task is to generate multiple choice questions based on the topic provided by the user.
 
-First, detect the language of the topic: {{{topic}}}.
+First, detect the language of the topic: {{{this}}}.
 
 Then, generate 5 multiple choice questions on this topic **in the detected language**. For example, if the topic is in Vietnamese, the entire quiz (questions, options, and answer) must be in Vietnamese. If the topic is in English, the entire quiz must be in English.
 
