@@ -13,7 +13,7 @@ export default function AuthLayout({
         <div className="w-full max-w-md">
           <div className="mb-6 flex justify-center">
               <Link href="/" className="flex items-center gap-2 font-headline font-semibold text-2xl">
-                <Logo className="h-8 w-8 text-primary" />
+                <Logo />
                 <span>Ezi Languages</span>
               </Link>
           </div>

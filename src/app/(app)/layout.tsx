@@ -49,7 +49,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     return (
        <div className="flex items-center justify-center min-h-screen">
           <div className="p-4 rounded-lg flex flex-col items-center gap-4">
-            <Logo className="h-12 w-12 text-primary animate-pulse" />
+            <Logo width={48} height={48} className="animate-pulse" />
             <Skeleton className="h-4 w-48" />
           </div>
       </div>
@@ -75,7 +75,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             )}>
              {!isSidebarCollapsed && (
                 <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold">
-                    <Logo className="h-6 w-6 text-primary" />
+                    <Logo width={24} height={24} />
                     <span>Ezi Languages</span>
                 </Link>
              )}
@@ -111,7 +111,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                   href="#"
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
-                  <Logo className="h-6 w-6 text-primary" />
+                  <Logo width={24} height={24} />
                   <span className="sr-only">Ezi Languages</span>
                 </Link>
                 <MainNav isMobile />
@@ -122,7 +122,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           {isSidebarCollapsed && (
              <div className="hidden md:block">
                 <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold">
-                    <Logo className="h-6 w-6 text-primary" />
+                    <Logo width={24} height={24} />
                     <span>Ezi Languages</span>
                 </Link>
              </div>

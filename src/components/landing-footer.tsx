@@ -9,7 +9,7 @@ export default function LandingFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2 font-headline font-semibold text-xl">
-              <Logo className="h-8 w-8 text-primary" />
+              <Logo />
               <span>Ezi Languages</span>
             </Link>
             <p className="text-muted-foreground">Learn languages smarter, not harder, with AI.</p>
