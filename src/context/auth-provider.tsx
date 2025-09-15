@@ -121,12 +121,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   // Client-side logic to update weekly XP
   const updateWeeklyXP = async (xpGained: number) => {
-      if (!auth.currentUser || !userProfile) return;
+      if (!auth.currentUser) return;
 
       const userDocRef = doc(db, "users", auth.currentUser.uid);
-      
-      // Get the current profile state directly from the provider state
-      const currentProfile = userProfile;
+      const currentProfileDoc = await getDoc(userDocRef);
+      if (!currentProfileDoc.exists()) return;
+
+      const currentProfile = currentProfileDoc.data() as UserProfile;
 
       const today = new Date();
       const lastResetDate = currentProfile.weeklyXPResetDate?.toDate();
@@ -135,18 +136,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const updates: any = {};
 
       if (!lastResetDate || lastResetDate < startOfThisWeek) {
-          // It's a new week, reset the weekly XP and set the new reset date
           updates.weeklyXP = xpGained;
-          updates.weeklyXPResetDate = Timestamp.fromDate(today);
+          updates.weeklyXPResetDate = Timestamp.fromDate(startOfThisWeek);
       } else {
-          // Still the same week, increment
           updates.weeklyXP = increment(xpGained);
       }
       
       try {
         await updateDoc(userDocRef, updates);
         
-        // After successful update, fetch the latest profile data to ensure client state is in sync
         const updatedDoc = await getDoc(userDocRef);
         if (updatedDoc.exists()) {
             setUserProfile(updatedDoc.data() as UserProfile);
@@ -326,11 +324,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         await updateDoc(userDocRef, updates);
 
-        const updatedProfile = {
-            ...userProfile,
-            pronunciationScores: { ...(userProfile.pronunciationScores || {}), [safeKey]: attempt },
-            xp: userProfile.xp + xpGained,
-        };
+        const updatedProfileDoc = await getDoc(userDocRef);
+        const updatedProfile = updatedProfileDoc.data() as UserProfile;
+
         setUserProfile(updatedProfile);
         
         if (xpGained > 0) {
@@ -358,11 +354,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         await updateWeeklyXP(xpGained);
 
-        const updatedProfile = {
-            ...userProfile,
-            listeningScores: { ...(userProfile.listeningScores || {}), [exerciseId]: xpGained },
-            xp: userProfile.xp + xpGained
-        };
+        const updatedProfileDoc = await getDoc(userDocRef);
+        const updatedProfile = updatedProfileDoc.data() as UserProfile;
         setUserProfile(updatedProfile);
         await checkAndAwardBadges(auth.currentUser.uid, updatedProfile);
     }
@@ -370,7 +363,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
-    if (!auth.currentUser || !userProfile) throw new Error("User not authenticated");
+    if (!auth.currentUser) throw new Error("User not authenticated");
     
     const xpGained = attempt.score * 5;
     const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
@@ -380,17 +373,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     const userDocRef = doc(db, "users", auth.currentUser.uid);
-    await updateDoc(userDocRef, { xp: increment(xpGained) });
+
+    // First, update weekly XP which relies on the current server state
     await updateWeeklyXP(xpGained);
 
-    const updatedProfile = {
-        ...userProfile,
-        xp: userProfile.xp + xpGained,
-    };
-    setUserProfile(updatedProfile);
-    
-    const quizHistory = await getQuizHistory();
-    await checkAndAwardBadges(auth.currentUser.uid, updatedProfile, quizHistory);
+    // Then, update the total XP
+    await updateDoc(userDocRef, { xp: increment(xpGained) });
+
+    // After all server updates, fetch the definitive state from the server
+    const updatedProfileDoc = await getDoc(userDocRef);
+    if (updatedProfileDoc.exists()) {
+        const updatedProfile = updatedProfileDoc.data() as UserProfile;
+        // Update the local state with the fresh data from the server
+        setUserProfile(updatedProfile);
+        
+        // Run badge check with the most up-to-date profile
+        const quizHistory = await getQuizHistory();
+        await checkAndAwardBadges(auth.currentUser.uid, updatedProfile, quizHistory);
+    }
 
     return xpGained;
   };
