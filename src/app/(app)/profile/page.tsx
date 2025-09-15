@@ -18,13 +18,11 @@ import { badgeCategories } from "@/lib/badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { Timestamp } from "firebase/firestore";
 
 export default function ProfilePage() {
   const { user, userProfile, updateUserProfile, updateUserAppData } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -74,34 +72,6 @@ export default function ProfilePage() {
       setIsLoading(false);
     }
   };
-
-  const handleResetWeeklyXP = async () => {
-    setIsResetting(true);
-    try {
-      // Set the reset date to 8 days ago to simulate a new week
-      const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 8);
-      
-      await updateUserAppData({
-        weeklyXP: 0,
-        weeklyXPResetDate: Timestamp.fromDate(pastDate),
-      });
-
-      toast({
-        title: "Weekly XP Reset",
-        description: "Your weekly XP has been reset for testing purposes.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Reset Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
 
   return (
     <>
@@ -183,19 +153,6 @@ export default function ProfilePage() {
                     <div className="space-y-2">
                         <FormLabel>Email</FormLabel>
                         <Input value={user?.email || ""} disabled />
-                    </div>
-                     <Separator />
-                      <div className="space-y-2">
-                        <FormLabel>Testing Tools</FormLabel>
-                        <div className="flex gap-4">
-                            <Button type="button" variant="outline" onClick={handleResetWeeklyXP} disabled={isResetting}>
-                                {isResetting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Reset Weekly XP (for Testing)
-                            </Button>
-                        </div>
-                         <p className="text-xs text-muted-foreground">
-                            Use this button to simulate the start of a new week for the leaderboard.
-                        </p>
                     </div>
                     </CardContent>
                     <CardFooter>
