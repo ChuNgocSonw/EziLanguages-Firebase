@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import LeaderboardRanks from "@/components/leaderboard-ranks";
 
 export default function DashboardPage() {
   const { user, userProfile } = useAuth();
@@ -82,14 +83,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Leaderboard</CardTitle>
-          </CardHeader>
-          <CardContent>
-            You are in the top 10% this week!
-          </CardContent>
-        </Card>
+        <LeaderboardRanks />
       </div>
     </>
   );
