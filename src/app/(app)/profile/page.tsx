@@ -30,7 +30,6 @@ export default function ProfilePage() {
       name: "",
       age: 0,
       language: "EN",
-      streak: 0,
     },
   });
 
@@ -40,7 +39,6 @@ export default function ProfilePage() {
         name: userProfile.name || user?.displayName || "",
         age: userProfile.age || 0,
         language: userProfile.language as "EN" | "JP" | "KR" | "VI" || "EN",
-        streak: userProfile.streak || 0,
       });
     }
   }, [userProfile, user, form]);
@@ -55,7 +53,6 @@ export default function ProfilePage() {
       await updateUserAppData({
         age: data.age,
         language: data.language,
-        streak: data.streak,
       });
 
       toast({
@@ -109,19 +106,6 @@ export default function ProfilePage() {
                             <FormLabel>Age</FormLabel>
                             <FormControl>
                             <Input type="number" placeholder="Your age" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="streak"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Daily Streak (Test)</FormLabel>
-                            <FormControl>
-                            <Input type="number" placeholder="Your streak" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
