@@ -82,10 +82,10 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
              <Button 
                 variant="ghost" 
                 size="icon" 
-                className={cn(!isSidebarCollapsed && "ml-auto")}
+                className={cn("h-12 w-12", !isSidebarCollapsed && "ml-auto")}
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
              >
-                {isSidebarCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+                {isSidebarCollapsed ? <PanelLeftOpen className="h-6 w-6" /> : <PanelLeftClose className="h-6 w-6" />}
              </Button>
           </div>
           <div className="flex-1">
