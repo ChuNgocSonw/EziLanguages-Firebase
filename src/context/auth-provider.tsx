@@ -258,31 +258,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const savePronunciationAttempt = async (sentence: string, attempt: PronunciationAttempt): Promise<number> => {
     if (!auth.currentUser || !userProfile) {
-      return 0;
+        return 0;
     }
-  
+
     const safeKey = createSafeKey(sentence);
     const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
     let xpGained = 0;
-    
+
+    // Only save the best score.
     if (attempt.score > (currentBestAttempt?.score || 0)) {
-        xpGained = 15;
         const userDocRef = doc(db, "users", auth.currentUser.uid);
-        
         const fieldPath = `pronunciationScores.${safeKey}`;
         const updates: any = { [fieldPath]: attempt };
-        
-        updates.xp = increment(xpGained);
+
+        // Award XP only for the first time achieving 100%
+        if (attempt.score === 100 && currentBestAttempt?.score !== 100) {
+            xpGained = 15;
+            updates.xp = increment(xpGained);
+        }
 
         await updateDoc(userDocRef, updates);
-        
+
         const updatedProfile = {
             ...userProfile,
             pronunciationScores: { ...(userProfile.pronunciationScores || {}), [safeKey]: attempt },
-            xp: userProfile.xp + xpGained
+            xp: userProfile.xp + xpGained,
         };
         setUserProfile(updatedProfile);
-        await checkAndAwardBadges(auth.currentUser.uid, updatedProfile);
+        
+        if (xpGained > 0) {
+            await checkAndAwardBadges(auth.currentUser.uid, updatedProfile);
+        }
     }
     return xpGained;
   };

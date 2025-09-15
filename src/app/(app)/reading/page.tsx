@@ -121,8 +121,8 @@ export default function ReadingPage() {
                 
                 if (xpGained > 0) {
                     toast({
-                        title: "New High Score!",
-                        description: `You've earned ${xpGained} XP for improving your score.`,
+                        title: "Perfect!",
+                        description: `You've earned ${xpGained} XP for a perfect score.`,
                     });
                 }
 
@@ -259,9 +259,11 @@ export default function ReadingPage() {
                                                                 <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100">
                                                                     Best: {bestAttempt.score}%
                                                                 </Badge>
-                                                                 <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
-                                                                    <Star className="mr-1 h-3 w-3" /> +15 XP
-                                                                </Badge>
+                                                                 {bestAttempt.score === 100 && (
+                                                                     <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
+                                                                        <Star className="mr-1 h-3 w-3" /> +15 XP
+                                                                    </Badge>
+                                                                 )}
                                                             </div>
                                                         ) : <div className="w-[180px] md:w-[170px]"></div>}
                                                         <Button variant="outline" size="sm" onClick={() => handleSelectSentence(lesson.unit, sentence)}>
