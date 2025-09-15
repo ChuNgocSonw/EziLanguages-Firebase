@@ -25,6 +25,7 @@ interface QuizSessionProps {
 export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty>("Medium");
+  const [numberOfQuestions, setNumberOfQuestions] = useState(5);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [quizState, setQuizState] = useState<QuizState>("idle");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -39,7 +40,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     if (!topic.trim()) return;
     setQuizState("loading");
     try {
-      const generatedQuestions = await generateQuizQuestions({ topic, difficulty });
+      const generatedQuestions = await generateQuizQuestions({ topic, difficulty, numberOfQuestions });
       setQuestions(generatedQuestions);
       setQuizState("active");
       setCurrentQuestionIndex(0);
@@ -214,26 +215,44 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
               onChange={(e) => setTopic(e.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label>Difficulty</Label>
-            <RadioGroup 
-              defaultValue="Medium"
-              onValueChange={(value: Difficulty) => setDifficulty(value)}
-              className="flex items-center gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Easy" id="d-easy" />
-                <Label htmlFor="d-easy">Easy</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Medium" id="d-medium" />
-                <Label htmlFor="d-medium">Medium</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Hard" id="d-hard" />
-                <Label htmlFor="d-hard">Hard</Label>
-              </div>
-            </RadioGroup>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label>Difficulty</Label>
+                <RadioGroup 
+                defaultValue="Medium"
+                onValueChange={(value: Difficulty) => setDifficulty(value)}
+                className="flex items-center gap-4"
+                >
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Easy" id="d-easy" />
+                    <Label htmlFor="d-easy">Easy</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Medium" id="d-medium" />
+                    <Label htmlFor="d-medium">Medium</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Hard" id="d-hard" />
+                    <Label htmlFor="d-hard">Hard</Label>
+                </div>
+                </RadioGroup>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="num-questions">Number of Questions</Label>
+                <Input
+                    id="num-questions"
+                    type="number"
+                    value={numberOfQuestions}
+                    onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (val > 50) setNumberOfQuestions(50);
+                        else if (val < 1) setNumberOfQuestions(1);
+                        else setNumberOfQuestions(val);
+                    }}
+                    min="1"
+                    max="50"
+                />
+            </div>
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">

@@ -16,6 +16,7 @@ import {z} from 'genkit';
 const GenerateQuizQuestionsInputSchema = z.object({
   topic: z.string().describe('The topic for the quiz.'),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']).describe('The difficulty level of the quiz.'),
+  numberOfQuestions: z.number().min(1).max(50).describe('The number of questions to generate.'),
 });
 export type GenerateQuizQuestionsInput = z.infer<typeof GenerateQuizQuestionsInputSchema>;
 
@@ -37,7 +38,7 @@ const generateQuizQuestionsPrompt = ai.definePrompt({
   input: {schema: GenerateQuizQuestionsInputSchema},
   output: {schema: GenerateQuizQuestionsOutputSchema},
   prompt: `You are a quiz generator.
-Your ONLY task is to create 5 multiple-choice questions about the following topic, at the specified difficulty level.
+Your ONLY task is to create {{{numberOfQuestions}}} multiple-choice questions about the following topic, at the specified difficulty level.
 The questions and answers MUST be in the same language as the topic.
 Each question MUST have 4 answer options.
 
