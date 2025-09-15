@@ -30,6 +30,7 @@ export default function ProfilePage() {
       name: "",
       age: 0,
       language: "EN",
+      streak: 0,
     },
   });
 
@@ -39,6 +40,7 @@ export default function ProfilePage() {
         name: userProfile.name || user?.displayName || "",
         age: userProfile.age || 0,
         language: userProfile.language as "EN" | "JP" | "KR" | "VI" || "EN",
+        streak: userProfile.streak || 0,
       });
     }
   }, [userProfile, user, form]);
@@ -53,6 +55,7 @@ export default function ProfilePage() {
       await updateUserAppData({
         age: data.age,
         language: data.language,
+        streak: data.streak,
       });
 
       toast({
@@ -106,6 +109,19 @@ export default function ProfilePage() {
                             <FormLabel>Age</FormLabel>
                             <FormControl>
                             <Input type="number" placeholder="Your age" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="streak"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Daily Streak (Test)</FormLabel>
+                            <FormControl>
+                            <Input type="number" placeholder="Your streak" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -170,11 +186,19 @@ export default function ProfilePage() {
                                                         <div className="flex flex-col items-center gap-2">
                                                             <div className={cn(
                                                                 "p-3 bg-muted rounded-full border-2 transition-all",
-                                                                isEarned ? "border-primary/50" : "border-transparent opacity-40 grayscale"
+                                                                isEarned ? {
+                                                                    "border-primary/50": category.name === "Easy",
+                                                                    "border-yellow-500/50": category.name === "Medium",
+                                                                    "border-destructive/50": category.name === "Hard",
+                                                                } : "border-transparent opacity-40 grayscale"
                                                             )}>
                                                                 <Icon className={cn(
                                                                     "h-8 w-8",
-                                                                    isEarned ? "text-primary" : "text-muted-foreground"
+                                                                    isEarned ? {
+                                                                        "text-primary": category.name === "Easy",
+                                                                        "text-yellow-500": category.name === "Medium",
+                                                                        "text-destructive": category.name === "Hard",
+                                                                    } : "text-muted-foreground"
                                                                 )} />
                                                             </div>
                                                         </div>
