@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import type { LeaderboardEntry } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 type LeaderboardCategory = "badgeCount" | "weeklyXP" | "streak";
 
@@ -16,11 +17,11 @@ interface UserRanks {
     streak: number | null;
 }
 
-const RankItem = ({ icon: Icon, label, rank, isLoading }: { icon: React.ElementType, label: string, rank: number | null, isLoading: boolean }) => {
+const RankItem = ({ icon: Icon, label, rank, isLoading, color }: { icon: React.ElementType, label: string, rank: number | null, isLoading: boolean, color?: string }) => {
     return (
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-                <Icon className="h-5 w-5 text-muted-foreground" />
+                <Icon className={cn("h-5 w-5 text-muted-foreground", color)} />
                 <span className="font-medium">{label}</span>
             </div>
             {isLoading ? (
@@ -81,9 +82,9 @@ export default function LeaderboardRanks() {
             <CardDescription>Your current position across all leaderboards.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <RankItem icon={Award} label="All-Time Badges" rank={ranks.badgeCount} isLoading={isLoading} />
-            <RankItem icon={Star} label="Weekly XP" rank={ranks.weeklyXP} isLoading={isLoading} />
-            <RankItem icon={Flame} label="Daily Streak" rank={ranks.streak} isLoading={isLoading} />
+            <RankItem icon={Award} label="All-Time Badges" rank={ranks.badgeCount} isLoading={isLoading} color="text-blue-500" />
+            <RankItem icon={Star} label="Weekly XP" rank={ranks.weeklyXP} isLoading={isLoading} color="text-yellow-500" />
+            <RankItem icon={Flame} label="Daily Streak" rank={ranks.streak} isLoading={isLoading} color="text-orange-500" />
           </CardContent>
         </Card>
     );
