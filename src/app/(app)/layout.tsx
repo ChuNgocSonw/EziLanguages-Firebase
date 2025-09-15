@@ -81,7 +81,8 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
              )}
              <Button 
                 variant="ghost" 
-                className={cn("h-12 w-16", !isSidebarCollapsed && "ml-auto")}
+                size="icon"
+                className={cn(!isSidebarCollapsed && "ml-auto")}
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
              >
                 {isSidebarCollapsed ? <PanelLeftOpen className="h-6 w-6" /> : <PanelLeftClose className="h-6 w-6" />}
