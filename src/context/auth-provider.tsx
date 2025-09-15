@@ -14,9 +14,11 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion } from 'firebase/firestore';
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt } from '@/lib/types';
 import { differenceInCalendarDays } from 'date-fns';
+import { allBadges, Badge } from '@/lib/badges';
+import { useToast } from '@/hooks/use-toast';
 
 
 export interface AuthContextType {
@@ -50,6 +52,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { toast } = useToast();
+
+  const checkAndAwardBadges = useCallback(async (userId: string, profile: UserProfile, quizHistory: QuizAttempt[] = []) => {
+      const earnedBadges: string[] = [];
+      
+      const checkBadge = (badge: Badge) => {
+          if (!profile.badges?.includes(badge.id)) {
+              if (badge.condition(profile, quizHistory)) {
+                  earnedBadges.push(badge.id);
+              }
+          }
+      };
+
+      allBadges.forEach(checkBadge);
+
+      if (earnedBadges.length > 0) {
+          const userDocRef = doc(db, "users", userId);
+          await updateDoc(userDocRef, {
+              badges: arrayUnion(...earnedBadges)
+          });
+          
+          setUserProfile(prev => prev ? { ...prev, badges: [...(prev.badges || []), ...earnedBadges] } : null);
+          
+          earnedBadges.forEach(badgeId => {
+              const badge = allBadges.find(b => b.id === badgeId);
+              if (badge) {
+                  toast({
+                      title: "Badge Unlocked!",
+                      description: `You've earned the "${badge.name}" badge.`,
+                  });
+              }
+          });
+      }
+  }, [toast]);
 
   const updateStreak = useCallback(async (userId: string, currentProfile: UserProfile) => {
     const today = new Date();
@@ -70,13 +106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (newStreak !== currentProfile.streak || !lastActivity) {
       const userDocRef = doc(db, "users", userId);
+      const updatedProfile = { ...currentProfile, streak: newStreak, lastActivityDate: Timestamp.fromDate(today) };
       await updateDoc(userDocRef, {
         streak: newStreak,
         lastActivityDate: Timestamp.fromDate(today),
       });
-      setUserProfile(prev => prev ? { ...prev, streak: newStreak, lastActivityDate: Timestamp.fromDate(today) } : null);
+      setUserProfile(updatedProfile);
+      await checkAndAwardBadges(userId, updatedProfile);
     }
-  }, []);
+  }, [checkAndAwardBadges]);
   
 
   useEffect(() => {
@@ -95,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [updateStreak]);
+  }, [updateStreak, checkAndAwardBadges]);
 
   const signUp = async (data: SignupFormData) => {
     const { name, email, password } = data;
@@ -238,11 +276,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         await updateDoc(userDocRef, updates);
         
-        setUserProfile(prev => {
-            if (!prev) return null;
-            const newScores = { ...(prev.pronunciationScores || {}), [safeKey]: attempt };
-            return { ...prev, pronunciationScores: newScores, xp: prev.xp + xpGained };
-        });
+        const updatedProfile = {
+            ...userProfile,
+            pronunciationScores: { ...(userProfile.pronunciationScores || {}), [safeKey]: attempt },
+            xp: userProfile.xp + xpGained
+        };
+        setUserProfile(updatedProfile);
+        await checkAndAwardBadges(auth.currentUser.uid, updatedProfile);
     }
     return xpGained;
   };
@@ -264,11 +304,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             xp: increment(xpGained)
         });
 
-        setUserProfile(prev => {
-            if (!prev) return null;
-            const newScores = { ...(prev.listeningScores || {}), [exerciseId]: xpGained };
-            return { ...prev, listeningScores: newScores, xp: prev.xp + xpGained };
-        });
+        const updatedProfile = {
+            ...userProfile,
+            listeningScores: { ...(userProfile.listeningScores || {}), [exerciseId]: xpGained },
+            xp: userProfile.xp + xpGained
+        };
+        setUserProfile(updatedProfile);
+        await checkAndAwardBadges(auth.currentUser.uid, updatedProfile);
     }
     return xpGained;
   };
@@ -286,10 +328,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userDocRef = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userDocRef, { xp: increment(xpGained) });
 
-    setUserProfile(prev => {
-        if (!prev) return null;
-        return { ...prev, xp: prev.xp + xpGained };
-    });
+    const updatedProfile = {
+        ...userProfile!,
+        xp: userProfile!.xp + xpGained,
+    };
+    setUserProfile(updatedProfile);
+    
+    const quizHistory = await getQuizHistory();
+    await checkAndAwardBadges(auth.currentUser.uid, updatedProfile, quizHistory);
 
     return xpGained;
   };
