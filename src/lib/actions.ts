@@ -12,9 +12,9 @@ import type { PronunciationAnalysisInput } from "@/ai/flows/pronunciation-analys
 import type { PronunciationAttempt } from "@/lib/types";
 
 
-export async function generateQuizQuestions(topic: GenerateQuizQuestionsInput): Promise<GenerateQuizQuestionsOutput> {
+export async function generateQuizQuestions(input: GenerateQuizQuestionsInput): Promise<GenerateQuizQuestionsOutput> {
   // Add any server-side validation or logging here
-  return generateQuizQuestionsFlow(topic);
+  return generateQuizQuestionsFlow(input);
 }
 
 export async function chatWithTutor(input: ChatWithTutorInput): Promise<ChatWithTutorOutput> {

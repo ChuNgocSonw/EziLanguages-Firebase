@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 
 type QuizState = "idle" | "loading" | "active" | "finished";
+type Difficulty = "Easy" | "Medium" | "Hard";
 
 interface QuizSessionProps {
     onQuizFinish: () => void;
@@ -23,6 +24,7 @@ interface QuizSessionProps {
 
 export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
   const [topic, setTopic] = useState("");
+  const [difficulty, setDifficulty] = useState<Difficulty>("Medium");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [quizState, setQuizState] = useState<QuizState>("idle");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -37,7 +39,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     if (!topic.trim()) return;
     setQuizState("loading");
     try {
-      const generatedQuestions = await generateQuizQuestions(topic);
+      const generatedQuestions = await generateQuizQuestions({ topic, difficulty });
       setQuestions(generatedQuestions);
       setQuizState("active");
       setCurrentQuestionIndex(0);
@@ -199,17 +201,40 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
         <CardHeader>
           <CardTitle className="font-headline">Generate a New Quiz</CardTitle>
           <CardDescription>
-            Enter a topic you'd like to be quizzed on. Our AI will create the questions for you.
+            Enter a topic and select a difficulty. Our AI will create the questions for you.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Label htmlFor="topic">Topic</Label>
-          <Input 
-            id="topic" 
-            placeholder="e.g., French Past Tense, Common English Idioms" 
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-          />
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="topic">Topic</Label>
+            <Input 
+              id="topic" 
+              placeholder="e.g., French Past Tense, Common English Idioms" 
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Difficulty</Label>
+            <RadioGroup 
+              defaultValue="Medium"
+              onValueChange={(value: Difficulty) => setDifficulty(value)}
+              className="flex items-center gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Easy" id="d-easy" />
+                <Label htmlFor="d-easy">Easy</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Medium" id="d-medium" />
+                <Label htmlFor="d-medium">Medium</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Hard" id="d-hard" />
+                <Label htmlFor="d-hard">Hard</Label>
+              </div>
+            </RadioGroup>
+          </div>
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button type="submit" disabled={!topic.trim()} className="bg-accent hover:bg-accent/90">

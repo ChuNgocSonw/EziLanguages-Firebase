@@ -2,18 +2,21 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating multiple choice quiz questions on a specified topic.
+ * @fileOverview This file defines a Genkit flow for generating multiple choice quiz questions on a specified topic and difficulty.
  *
  * It exports:
- * - `generateQuizQuestions`: An async function that takes a topic as input and returns an array of quiz questions.
- * - `GenerateQuizQuestionsInput`: The input type for the `generateQuizQuestions` function, which is a string representing the topic.
+ * - `generateQuizQuestions`: An async function that takes a topic and difficulty as input and returns an array of quiz questions.
+ * - `GenerateQuizQuestionsInput`: The input type for the `generateQuizQuestions` function.
  * - `GenerateQuizQuestionsOutput`: The output type for the `generateQuizQuestions` function, which is an array of quiz question objects.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const GenerateQuizQuestionsInputSchema = z.string().describe('The topic to generate quiz questions for.');
+const GenerateQuizQuestionsInputSchema = z.object({
+  topic: z.string().describe('The topic for the quiz.'),
+  difficulty: z.enum(['Easy', 'Medium', 'Hard']).describe('The difficulty level of the quiz.'),
+});
 export type GenerateQuizQuestionsInput = z.infer<typeof GenerateQuizQuestionsInputSchema>;
 
 const GenerateQuizQuestionsOutputSchema = z.array(
@@ -25,8 +28,8 @@ const GenerateQuizQuestionsOutputSchema = z.array(
 );
 export type GenerateQuizQuestionsOutput = z.infer<typeof GenerateQuizQuestionsOutputSchema>;
 
-export async function generateQuizQuestions(topic: GenerateQuizQuestionsInput): Promise<GenerateQuizQuestionsOutput> {
-  return generateQuizQuestionsFlow(topic);
+export async function generateQuizQuestions(input: GenerateQuizQuestionsInput): Promise<GenerateQuizQuestionsOutput> {
+  return generateQuizQuestionsFlow(input);
 }
 
 const generateQuizQuestionsPrompt = ai.definePrompt({
@@ -34,11 +37,12 @@ const generateQuizQuestionsPrompt = ai.definePrompt({
   input: {schema: GenerateQuizQuestionsInputSchema},
   output: {schema: GenerateQuizQuestionsOutputSchema},
   prompt: `You are a quiz generator.
-Your ONLY task is to create 5 multiple-choice questions about the following topic.
+Your ONLY task is to create 5 multiple-choice questions about the following topic, at the specified difficulty level.
 The questions and answers MUST be in the same language as the topic.
 Each question MUST have 4 answer options.
 
-Topic: {{{this}}}
+Topic: {{{topic}}}
+Difficulty: {{{difficulty}}}
 `,
 });
 
@@ -48,8 +52,8 @@ const generateQuizQuestionsFlow = ai.defineFlow(
     inputSchema: GenerateQuizQuestionsInputSchema,
     outputSchema: GenerateQuizQuestionsOutputSchema,
   },
-  async topic => {
-    const {output} = await generateQuizQuestionsPrompt(topic);
+  async input => {
+    const {output} = await generateQuizQuestionsPrompt(input);
     return output!;
   }
 );
