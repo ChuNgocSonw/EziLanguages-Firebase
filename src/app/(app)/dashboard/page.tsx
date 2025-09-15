@@ -51,7 +51,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
                 <div className="flex items-center gap-4">
-                    <stat.icon className={`h-8 w-8 text-muted-foreground ${stat.color}`} />
+                    <stat.icon className={`h-8 w-8 ${stat.color}`} />
                     <div className="text-3xl font-bold">{stat.value}</div>
                 </div>
             </CardContent>
