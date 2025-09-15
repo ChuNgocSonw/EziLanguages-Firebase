@@ -59,6 +59,7 @@ export interface UserProfile {
   xp: number;
   streak: number;
   badges: string[];
+  lastActivityDate?: Timestamp;
   pronunciationScores?: { [sentenceKey: string]: PronunciationAttempt };
   listeningScores?: { [exerciseId: string]: number }; // Store XP earned instead of boolean
 }

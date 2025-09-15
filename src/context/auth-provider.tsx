@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   onAuthStateChanged,
@@ -14,8 +14,10 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp } from 'firebase/firestore';
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt } from '@/lib/types';
+import { differenceInCalendarDays } from 'date-fns';
+
 
 export interface AuthContextType {
   user: User | null;
@@ -49,13 +51,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const updateStreak = useCallback(async (userId: string, currentProfile: UserProfile) => {
+    const today = new Date();
+    const lastActivity = currentProfile.lastActivityDate?.toDate();
+    let newStreak = currentProfile.streak || 0;
+    
+    if (lastActivity) {
+      const daysDiff = differenceInCalendarDays(today, lastActivity);
+      if (daysDiff === 1) {
+        newStreak += 1; // Continued the streak
+      } else if (daysDiff > 1) {
+        newStreak = 1; // Reset the streak
+      }
+      // If daysDiff is 0, do nothing, they've already been active today.
+    } else {
+      newStreak = 1; // First activity
+    }
+
+    if (newStreak !== currentProfile.streak || !lastActivity) {
+      const userDocRef = doc(db, "users", userId);
+      await updateDoc(userDocRef, {
+        streak: newStreak,
+        lastActivityDate: Timestamp.fromDate(today),
+      });
+      setUserProfile(prev => prev ? { ...prev, streak: newStreak, lastActivityDate: Timestamp.fromDate(today) } : null);
+    }
+  }, []);
+  
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
-          setUserProfile(userDoc.data() as UserProfile);
+          const profileData = userDoc.data() as UserProfile;
+          setUserProfile(profileData);
+          await updateStreak(user.uid, profileData);
         }
       } else {
         setUserProfile(null);
@@ -63,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [updateStreak]);
 
   const signUp = async (data: SignupFormData) => {
     const { name, email, password } = data;
