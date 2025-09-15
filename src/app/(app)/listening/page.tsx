@@ -82,13 +82,21 @@ export default function ListeningPage() {
                 const audio = new Audio(response.media);
                 audio.play();
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Audio generation failed:", error);
-            toast({
-                title: "Audio Generation Failed",
-                description: "Could not generate audio for this sentence. Please try again.",
-                variant: "destructive",
-            });
+             if (error.message && error.message.includes('overloaded')) {
+                toast({
+                    title: "AI is busy",
+                    description: "The AI is currently overloaded. Please try again in a moment.",
+                    variant: "destructive",
+                });
+            } else {
+                toast({
+                    title: "Audio Generation Failed",
+                    description: "Could not generate audio for this sentence. Please try again.",
+                    variant: "destructive",
+                });
+            }
         } finally {
             setIsGeneratingAudio(false);
         }
