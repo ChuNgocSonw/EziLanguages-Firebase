@@ -33,16 +33,12 @@ const generateQuizQuestionsPrompt = ai.definePrompt({
   name: 'generateQuizQuestionsPrompt',
   input: {schema: GenerateQuizQuestionsInputSchema},
   output: {schema: GenerateQuizQuestionsOutputSchema},
-  prompt: `You are an expert quiz generator. Your primary task is to create a quiz based *directly* on the topic provided by the user.
+  prompt: `You are a quiz generator.
+Your ONLY task is to create 5 multiple-choice questions about the following topic.
+The questions and answers MUST be in the same language as the topic.
+Each question MUST have 4 answer options.
 
 Topic: {{{this}}}
-
-Instructions:
-1.  Analyze the provided topic to understand its language and subject matter.
-2.  Generate 5 multiple-choice questions that are **strictly about this topic**.
-3.  The entire quiz (questions, options, and the answer) must be in the same language as the topic. For example, if the topic is in Vietnamese, the quiz must be in Vietnamese.
-4.  Each question must have 4 possible answer options.
-5.  You must specify the correct answer for each question.
 `,
 });
 
