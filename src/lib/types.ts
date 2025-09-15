@@ -41,6 +41,7 @@ export const profileSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters."),
     age: z.coerce.number().min(0, "Age must be a positive number.").optional(),
     language: z.enum(["EN", "JP", "KR", "VI"]).optional(),
+    streak: z.coerce.number().min(0, "Streak must be a positive number.").optional(),
 });
 export type ProfileFormData = z.infer<typeof profileSchema>;
 
@@ -59,9 +60,17 @@ export interface UserProfile {
   xp: number;
   streak: number;
   badges: string[];
+  badgeCount: number;
   lastActivityDate?: Timestamp;
   pronunciationScores?: { [sentenceKey: string]: PronunciationAttempt };
   listeningScores?: { [exerciseId: string]: number }; // Store XP earned instead of boolean
+}
+
+export interface LeaderboardEntry {
+    rank: number;
+    userId: string;
+    name: string;
+    value: number;
 }
 
 export interface ChatSession {

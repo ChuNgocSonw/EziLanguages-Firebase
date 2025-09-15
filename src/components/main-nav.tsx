@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -8,6 +9,7 @@ import {
   Headphones,
   LayoutDashboard,
   MessageSquare,
+  Trophy,
   User,
 } from 'lucide-react';
 import {
@@ -24,6 +26,7 @@ const navItems = [
   { href: '/reading', icon: BookOpen, label: 'Reading' },
   { href: '/listening', icon: Headphones, label: 'Listening' },
   { href: '/quizzes', icon: ClipboardList, label: 'Quizzes' },
+  { href: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
   { href: '/profile', icon: User, label: 'Profile' },
 ];
 

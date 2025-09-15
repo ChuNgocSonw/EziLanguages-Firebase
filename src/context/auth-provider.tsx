@@ -14,8 +14,8 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt } from '@/lib/types';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit } from 'firebase/firestore';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry } from '@/lib/types';
 import { differenceInCalendarDays } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +39,7 @@ export interface AuthContextType {
   saveListeningScore: (exerciseId: string, isCorrect: boolean) => Promise<number>;
   saveQuizAttempt: (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>) => Promise<number>;
   getQuizHistory: () => Promise<QuizAttempt[]>;
+  getLeaderboard: (category: 'badgeCount' | 'streak') => Promise<LeaderboardEntry[]>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,10 +71,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (earnedBadges.length > 0) {
           const userDocRef = doc(db, "users", userId);
           await updateDoc(userDocRef, {
-              badges: arrayUnion(...earnedBadges)
+              badges: arrayUnion(...earnedBadges),
+              badgeCount: increment(earnedBadges.length),
           });
           
-          setUserProfile(prev => prev ? { ...prev, badges: [...(prev.badges || []), ...earnedBadges] } : null);
+          const newBadgeCount = (profile.badgeCount || 0) + earnedBadges.length;
+          setUserProfile(prev => prev ? { ...prev, badges: [...(prev.badges || []), ...earnedBadges], badgeCount: newBadgeCount } : null);
           
           earnedBadges.forEach(badgeId => {
               const badge = allBadges.find(b => b.id === badgeId);
@@ -148,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       xp: 0,
       streak: 0,
       badges: [],
+      badgeCount: 0,
       pronunciationScores: {},
       listeningScores: {},
     };
@@ -354,6 +358,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
   };
 
+  const getLeaderboard = async (category: 'badgeCount' | 'streak'): Promise<LeaderboardEntry[]> => {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, orderBy(category, "desc"), limit(100));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map((doc, index) => {
+        const data = doc.data() as UserProfile;
+        return {
+            rank: index + 1,
+            userId: doc.id,
+            name: data.name,
+            value: data[category],
+        };
+    });
+  };
 
   const value: AuthContextType = {
     user,
@@ -373,6 +392,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveListeningScore,
     saveQuizAttempt,
     getQuizHistory,
+    getLeaderboard,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

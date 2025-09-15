@@ -1,11 +1,13 @@
 
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Flame, Star, Trophy } from "lucide-react";
 import PageHeader from "@/components/page-header";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const { user, userProfile } = useAuth();
@@ -30,8 +32,7 @@ export default function DashboardPage() {
   const stats = [
     { title: "Daily Streak", value: `${userProfile.streak} days`, icon: Flame, color: "text-orange-500" },
     { title: "Experience Points", value: `${userProfile.xp} XP`, icon: Star, color: "text-yellow-500" },
-    { title: "Badges Earned", value: userProfile.badges.length, icon: Award, color: "text-blue-500" },
-    { title: "Weekly Rank", value: "#12", icon: Trophy, color: "text-amber-500" },
+    { title: "Badges Earned", value: userProfile.badgeCount, icon: Award, color: "text-blue-500" },
   ];
 
   return (
@@ -55,6 +56,20 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ))}
+         <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Leaderboard</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-start gap-2">
+                <div className="flex items-center gap-4">
+                    <Trophy className={`h-8 w-8 text-muted-foreground text-amber-500`} />
+                    <div className="text-3xl font-bold">Top Tier</div>
+                </div>
+                <Button asChild variant="outline" size="sm" className="mt-2">
+                    <Link href="/leaderboard">View Rankings</Link>
+                </Button>
+            </CardContent>
+          </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
