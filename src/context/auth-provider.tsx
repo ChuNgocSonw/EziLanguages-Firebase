@@ -128,27 +128,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lastResetDate = userProfile.weeklyXPResetDate?.toDate();
       const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday
 
-      let currentWeeklyXP = userProfile.weeklyXP || 0;
+      let newWeeklyXP = userProfile.weeklyXP || 0;
       const updates: any = {};
+      let isNewWeek = false;
 
       if (!lastResetDate || lastResetDate < startOfThisWeek) {
           // It's a new week, reset the weekly XP
-          currentWeeklyXP = 0;
+          isNewWeek = true;
+          newWeeklyXP = xpGained;
           updates.weeklyXP = xpGained;
           updates.weeklyXPResetDate = Timestamp.fromDate(today);
       } else {
           // Still the same week, increment
+          newWeeklyXP += xpGained;
           updates.weeklyXP = increment(xpGained);
       }
 
       await updateDoc(userDocRef, updates);
 
       // Update local state immediately
-      setUserProfile(prev => prev ? {
-          ...prev,
-          weeklyXP: currentWeeklyXP + xpGained,
-          weeklyXPResetDate: Timestamp.fromDate(today),
-      } : null);
+      setUserProfile(prev => {
+          if (!prev) return null;
+          const updatedProfile: UserProfile = {
+              ...prev,
+              weeklyXP: newWeeklyXP,
+          };
+          if (isNewWeek) {
+              updatedProfile.weeklyXPResetDate = Timestamp.fromDate(today);
+          }
+          return updatedProfile;
+      });
   };
 
 
@@ -436,3 +445,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+    
