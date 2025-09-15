@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry } from '@/lib/types';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
@@ -173,6 +173,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => unsubscribe();
   }, [updateStreak]);
+  
+  const setLastActivity = async (activity: LastActivity) => {
+      if (!auth.currentUser) return;
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userDocRef, { lastActivity: activity });
+  };
+
 
   const signUp = async (data: SignupFormData) => {
     const { name, email, password } = data;
@@ -262,6 +269,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     let currentChatId = chatId;
     
+    const activityTitle = message.original ? `Chat: "${message.original.substring(0, 30)}..."` : "Started a new chat";
+    await setLastActivity({ type: 'chat', title: activityTitle });
+    
     if (!currentChatId) {
       const chatRef = await addDoc(collection(db, "users", auth.currentUser.uid, "chats"), {
         title: message.original?.substring(0, 40) || "New Chat",
@@ -302,6 +312,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return 0;
     }
 
+    await setLastActivity({ type: 'reading', title: `Reading: "${sentence.substring(0, 30)}..."` });
+
     const safeKey = createSafeKey(sentence);
     const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
     let xpGained = 0;
@@ -340,6 +352,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth.currentUser || !userProfile) {
       return 0;
     }
+    
+    await setLastActivity({ type: 'listening', title: `Listening Exercise ${exerciseId}` });
+
 
     const xpEarned = userProfile.listeningScores?.[exerciseId];
     let xpGained = 0;
@@ -364,6 +379,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
     if (!auth.currentUser) throw new Error("User not authenticated");
+    
+    await setLastActivity({ type: 'quiz', title: `Quiz on ${attempt.topic}` });
     
     const xpGained = attempt.score * 5;
     const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");

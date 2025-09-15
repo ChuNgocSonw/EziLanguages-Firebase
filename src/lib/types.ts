@@ -51,6 +51,11 @@ export interface PronunciationAttempt {
   audioDataUri?: string; // To store the Base64 encoded audio
 }
 
+export interface LastActivity {
+  type: 'chat' | 'reading' | 'listening' | 'quiz';
+  title: string;
+}
+
 export interface UserProfile {
   name: string;
   email: string;
@@ -65,6 +70,7 @@ export interface UserProfile {
   weeklyXPResetDate?: Timestamp;
   pronunciationScores?: { [sentenceKey: string]: PronunciationAttempt };
   listeningScores?: { [exerciseId: string]: number }; // Store XP earned instead of boolean
+  lastActivity?: LastActivity;
 }
 
 export interface LeaderboardEntry {
