@@ -31,7 +31,7 @@ export default function DashboardPage() {
     { title: "Daily Streak", value: `${userProfile.streak} days`, icon: Flame, color: "text-orange-500" },
     { title: "Experience Points", value: `${userProfile.xp} XP`, icon: Star, color: "text-yellow-500" },
     { title: "Badges Earned", value: userProfile.badges.length, icon: Award, color: "text-blue-500" },
-    { title: "Weekly Rank", value: "#12", icon: Trophy, color: "text-green-500" },
+    { title: "Weekly Rank", value: "#12", icon: Trophy, color: "text-amber-500" },
   ];
 
   return (
