@@ -8,7 +8,7 @@ export default function LandingHeader() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-headline font-semibold">
           <Logo />
-          <span>Ezi Languages</span>
+          <span className="whitespace-nowrap">Ezi Languages</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           <Link href="#features" className="text-foreground/80 hover:text-foreground">

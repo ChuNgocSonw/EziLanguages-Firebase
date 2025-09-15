@@ -10,7 +10,7 @@ export default function LandingFooter() {
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2 font-headline font-semibold text-xl">
               <Logo />
-              <span>Ezi Languages</span>
+              <span className="whitespace-nowrap">Ezi Languages</span>
             </Link>
             <p className="text-muted-foreground">Learn languages smarter, not harder, with AI.</p>
             <div className="flex gap-4 mt-2">

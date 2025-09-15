@@ -14,7 +14,7 @@ export default function AuthLayout({
           <div className="mb-6 flex justify-center">
               <Link href="/" className="flex items-center gap-2 font-headline font-semibold text-2xl">
                 <Logo />
-                <span>Ezi Languages</span>
+                <span className="whitespace-nowrap">Ezi Languages</span>
               </Link>
           </div>
           {children}

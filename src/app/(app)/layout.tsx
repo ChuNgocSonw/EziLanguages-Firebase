@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -76,7 +77,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
              {!isSidebarCollapsed && (
                 <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold">
                     <Logo width={24} height={24} />
-                    <span>Ezi Languages</span>
+                    <span className="whitespace-nowrap">Ezi Languages</span>
                 </Link>
              )}
              <Button 
@@ -123,7 +124,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
              <div className="hidden md:block">
                 <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold">
                     <Logo width={24} height={24} />
-                    <span>Ezi Languages</span>
+                    <span className="whitespace-nowrap">Ezi Languages</span>
                 </Link>
              </div>
           )}
