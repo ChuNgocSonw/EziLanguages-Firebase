@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,14 +14,14 @@ import { profileSchema, ProfileFormData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { allBadges, Badge } from "@/lib/badges";
+import { allBadges } from "@/lib/badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { user, userProfile, updateUserProfile, updateUserAppData } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -38,9 +39,6 @@ export default function ProfilePage() {
         age: userProfile.age || 0,
         language: userProfile.language as "EN" | "JP" | "KR" | "VI" || "EN",
       });
-
-      const userBadges = allBadges.filter(badge => userProfile.badges?.includes(badge.id));
-      setEarnedBadges(userBadges);
     }
   }, [userProfile, user, form]);
 
@@ -153,38 +151,38 @@ export default function ProfilePage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Your Badges</CardTitle>
-                    <CardDescription>Achievements you've unlocked on your learning journey.</CardDescription>
+                    <CardDescription>Achievements to unlock on your learning journey.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {earnedBadges.length > 0 ? (
-                        <TooltipProvider>
-                            <div className="flex flex-wrap gap-4">
-                                {earnedBadges.map(badge => {
-                                    const Icon = badge.icon;
-                                    return (
-                                        <Tooltip key={badge.id}>
-                                            <TooltipTrigger>
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <div className="p-3 bg-muted rounded-full border-2 border-primary/20">
-                                                        <Icon className="h-8 w-8 text-primary" />
-                                                    </div>
+                    <TooltipProvider>
+                        <div className="flex flex-wrap gap-4">
+                            {allBadges.map(badge => {
+                                const Icon = badge.icon;
+                                const isEarned = userProfile?.badges?.includes(badge.id);
+                                return (
+                                    <Tooltip key={badge.id}>
+                                        <TooltipTrigger>
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className={cn(
+                                                    "p-3 bg-muted rounded-full border-2 transition-all",
+                                                    isEarned ? "border-primary/50" : "border-transparent opacity-40 grayscale"
+                                                )}>
+                                                    <Icon className={cn(
+                                                        "h-8 w-8",
+                                                        isEarned ? "text-primary" : "text-muted-foreground"
+                                                    )} />
                                                 </div>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p className="font-bold">{badge.name}</p>
-                                                <p className="text-sm text-muted-foreground">{badge.description}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    )
-                                })}
-                            </div>
-                        </TooltipProvider>
-                    ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                            <p>You haven't earned any badges yet.</p>
-                            <p>Keep learning to unlock them!</p>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p className="font-bold">{badge.name}</p>
+                                            <p className="text-sm text-muted-foreground">{badge.description}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                )
+                            })}
                         </div>
-                    )}
+                    </TooltipProvider>
                 </CardContent>
             </Card>
         </div>
