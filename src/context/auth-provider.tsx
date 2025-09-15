@@ -31,9 +31,9 @@ export interface AuthContextType {
   getChatMessages: (chatId: string) => Promise<ChatMessage[]>;
   saveChatMessage: (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<{ chatId: string }>;
   deleteChatSession: (chatId: string) => Promise<void>;
-  savePronunciationAttempt: (sentence: string, attempt: PronunciationAttempt) => Promise<void>;
-  saveListeningScore: (exerciseId: string, isCorrect: boolean) => Promise<void>;
-  saveQuizAttempt: (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>) => Promise<void>;
+  savePronunciationAttempt: (sentence: string, attempt: PronunciationAttempt) => Promise<number>;
+  saveListeningScore: (exerciseId: string, isCorrect: boolean) => Promise<number>;
+  saveQuizAttempt: (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>) => Promise<number>;
   getQuizHistory: () => Promise<QuizAttempt[]>;
 }
 
@@ -186,68 +186,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await batch.commit();
   };
 
-  const savePronunciationAttempt = async (sentence: string, attempt: PronunciationAttempt): Promise<void> => {
+  const savePronunciationAttempt = async (sentence: string, attempt: PronunciationAttempt): Promise<number> => {
     if (!auth.currentUser || !userProfile) {
-      return Promise.resolve();
+      return 0;
     }
   
     const safeKey = createSafeKey(sentence);
     const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
+    let xpGained = 0;
     
     if (attempt.score > (currentBestAttempt?.score || 0)) {
+        xpGained = 15;
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         
         const fieldPath = `pronunciationScores.${safeKey}`;
         const updates: any = { [fieldPath]: attempt };
         
-        // Award XP only for new best attempts, not for every attempt
-        updates.xp = increment(15);
+        updates.xp = increment(xpGained);
 
         await updateDoc(userDocRef, updates);
         
         setUserProfile(prev => {
             if (!prev) return null;
             const newScores = { ...(prev.pronunciationScores || {}), [safeKey]: attempt };
-            return { ...prev, pronunciationScores: newScores, xp: prev.xp + 15 };
+            return { ...prev, pronunciationScores: newScores, xp: prev.xp + xpGained };
         });
     }
-    return Promise.resolve();
+    return xpGained;
   };
 
-  const saveListeningScore = async (exerciseId: string, isCorrect: boolean): Promise<void> => {
+  const saveListeningScore = async (exerciseId: string, isCorrect: boolean): Promise<number> => {
     if (!auth.currentUser || !userProfile) {
-      return Promise.resolve();
+      return 0;
     }
 
     const currentScore = userProfile.listeningScores?.[exerciseId];
+    let xpGained = 0;
 
     if (isCorrect && !currentScore) {
+        xpGained = 10;
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         const fieldPath = `listeningScores.${exerciseId}`;
         await updateDoc(userDocRef, { 
             [fieldPath]: true,
-            xp: increment(10)
+            xp: increment(xpGained)
         });
 
         setUserProfile(prev => {
             if (!prev) return null;
             const newScores = { ...(prev.listeningScores || {}), [exerciseId]: true };
-            return { ...prev, listeningScores: newScores, xp: prev.xp + 10 };
+            return { ...prev, listeningScores: newScores, xp: prev.xp + xpGained };
         });
     }
-    return Promise.resolve();
+    return xpGained;
   };
 
-  const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<void> => {
+  const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
     if (!auth.currentUser) throw new Error("User not authenticated");
     
+    const xpGained = attempt.score * 5;
     const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
     await addDoc(historyRef, {
       ...attempt,
       completedAt: serverTimestamp(),
     });
     
-    const xpGained = attempt.score * 5;
     const userDocRef = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userDocRef, { xp: increment(xpGained) });
 
@@ -255,6 +258,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!prev) return null;
         return { ...prev, xp: prev.xp + xpGained };
     });
+
+    return xpGained;
   };
 
   const getQuizHistory = async (): Promise<QuizAttempt[]> => {

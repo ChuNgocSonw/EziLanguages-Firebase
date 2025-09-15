@@ -116,7 +116,15 @@ export default function ReadingPage() {
                 };
 
                 setResult(resultWithAudio);
-                await savePronunciationAttempt(activeSentence.text, resultWithAudio);
+                const xpGained = await savePronunciationAttempt(activeSentence.text, resultWithAudio);
+                
+                if (xpGained > 0) {
+                    toast({
+                        title: "New High Score!",
+                        description: `You've earned ${xpGained} XP for improving your score.`,
+                    });
+                }
+
             } catch (error: any) {
                 console.error("Pronunciation analysis failed:", error);
                 if (error.message && error.message.includes('overloaded')) {

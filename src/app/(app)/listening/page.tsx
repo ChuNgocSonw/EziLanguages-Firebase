@@ -102,7 +102,7 @@ export default function ListeningPage() {
         }
     };
     
-    const checkAnswer = () => {
+    const checkAnswer = async () => {
         if (!activeExercise) return;
         let isCorrect = false;
         if (activeExercise.type === 'typing') {
@@ -112,7 +112,13 @@ export default function ListeningPage() {
         }
         setResult(isCorrect ? "correct" : "incorrect");
         if (isCorrect) {
-            saveListeningScore(activeExercise.id, true);
+            const xpGained = await saveListeningScore(activeExercise.id, true);
+            if (xpGained > 0) {
+                 toast({
+                    title: "Correct!",
+                    description: `You've earned ${xpGained} XP.`,
+                });
+            }
         }
     };
 

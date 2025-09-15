@@ -76,7 +76,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     const percentage = Math.round((score / questions.length) * 100);
 
     try {
-        await saveQuizAttempt({
+        const xpGained = await saveQuizAttempt({
             topic,
             questions,
             selectedAnswers: finalAnswers,
@@ -85,7 +85,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
         });
         toast({
             title: "Quiz Saved!",
-            description: "Your quiz results have been saved to your history."
+            description: `Your results have been saved. You earned ${xpGained} XP!`,
         });
     } catch (error) {
         console.error("Failed to save quiz attempt:", error);
