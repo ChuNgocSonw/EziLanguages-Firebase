@@ -43,7 +43,7 @@ export default function DashboardPage() {
         description="Here's a snapshot of your language learning journey. Keep up the great work!"
       />
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -57,20 +57,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ))}
-         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Leaderboard</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-start gap-2">
-                <div className="flex items-center gap-4">
-                    <Trophy className={`h-8 w-8 text-muted-foreground text-amber-500`} />
-                    <div className="text-3xl font-bold">Top Tier</div>
-                </div>
-                <Button asChild variant="outline" size="sm" className="mt-2">
-                    <Link href="/leaderboard">View Rankings</Link>
-                </Button>
-            </CardContent>
-          </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
