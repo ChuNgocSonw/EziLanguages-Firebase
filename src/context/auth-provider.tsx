@@ -16,7 +16,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit } from 'firebase/firestore';
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry } from '@/lib/types';
-import { differenceInCalendarDays } from 'date-fns';
+import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
 
@@ -119,6 +119,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [checkAndAwardBadges]);
   
+  // Client-side logic to update weekly XP
+  const updateWeeklyXP = async (xpGained: number) => {
+      if (!auth.currentUser || !userProfile) return;
+
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      const today = new Date();
+      const lastResetDate = userProfile.weeklyXPResetDate?.toDate();
+      const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+
+      let currentWeeklyXP = userProfile.weeklyXP || 0;
+      const updates: any = {};
+
+      if (!lastResetDate || lastResetDate < startOfThisWeek) {
+          // It's a new week, reset the weekly XP
+          currentWeeklyXP = 0;
+          updates.weeklyXP = xpGained;
+          updates.weeklyXPResetDate = Timestamp.fromDate(today);
+      } else {
+          // Still the same week, increment
+          updates.weeklyXP = increment(xpGained);
+      }
+
+      await updateDoc(userDocRef, updates);
+
+      // Update local state immediately
+      setUserProfile(prev => prev ? {
+          ...prev,
+          weeklyXP: currentWeeklyXP + xpGained,
+          weeklyXPResetDate: Timestamp.fromDate(today),
+      } : null);
+  };
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -136,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [updateStreak, checkAndAwardBadges]);
+  }, [updateStreak]);
 
   const signUp = async (data: SignupFormData) => {
     const { name, email, password } = data;
@@ -270,16 +302,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
     let xpGained = 0;
 
+    // Award XP only for the first time achieving 100%
+    if (attempt.score === 100 && currentBestAttempt?.score !== 100) {
+        xpGained = 15;
+    }
+
     // Only save the best score.
     if (attempt.score > (currentBestAttempt?.score || 0)) {
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         const fieldPath = `pronunciationScores.${safeKey}`;
         const updates: any = { [fieldPath]: attempt };
 
-        // Award XP only for the first time achieving 100%
-        if (attempt.score === 100 && currentBestAttempt?.score !== 100) {
-            xpGained = 15;
+        if (xpGained > 0) {
             updates.xp = increment(xpGained);
+            await updateWeeklyXP(xpGained);
         }
 
         await updateDoc(userDocRef, updates);
@@ -314,6 +350,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             [fieldPath]: xpGained,
             xp: increment(xpGained)
         });
+        await updateWeeklyXP(xpGained);
 
         const updatedProfile = {
             ...userProfile,
@@ -327,7 +364,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
-    if (!auth.currentUser) throw new Error("User not authenticated");
+    if (!auth.currentUser || !userProfile) throw new Error("User not authenticated");
     
     const xpGained = attempt.score * 5;
     const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
@@ -338,10 +375,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const userDocRef = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userDocRef, { xp: increment(xpGained) });
+    await updateWeeklyXP(xpGained);
 
     const updatedProfile = {
-        ...userProfile!,
-        xp: userProfile!.xp + xpGained,
+        ...userProfile,
+        xp: userProfile.xp + xpGained,
     };
     setUserProfile(updatedProfile);
     
