@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, BookCopy, Languages, ListChecks, Trash2 } from "lucide-react";
+import { Loader2, PlusCircle, BookCopy, Languages, ListChecks, Trash2, Pencil } from "lucide-react";
 import type { Assignment } from "@/lib/types";
 import {
   AlertDialog,
@@ -109,7 +109,11 @@ export default function TeacherAssignmentsPage() {
                   </CardContent>
                   <CardFooter className="flex gap-2">
                     <Button variant="outline" className="w-full" disabled>Assign</Button>
-                    <Button variant="secondary" className="w-full" disabled>Edit</Button>
+                    <Button variant="secondary" className="w-full" asChild>
+                        <Link href={`/teacher/assignments/${assignment.id}/edit`}>
+                           <Pencil className="mr-2 h-4 w-4" /> Edit
+                        </Link>
+                    </Button>
                      <AlertDialog>
                       <AlertDialogTrigger asChild>
                          <Button variant="ghost" size="icon" disabled={isDeleting === assignment.id} className="shrink-0 hover:bg-destructive/10">

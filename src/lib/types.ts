@@ -9,6 +9,7 @@ export const QuestionType = z.enum(['multiple-choice', 'true-false', 'fill-in-th
 export type QuestionType = z.infer<typeof QuestionType>;
 
 export const QuizQuestionSchema = z.object({
+  id: z.string().optional(),
   question: z.string(),
   type: QuestionType,
   options: z.array(z.string()).optional(),

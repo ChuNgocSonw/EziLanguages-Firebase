@@ -51,7 +51,9 @@ export interface AuthContextType {
   removeStudentFromClass: (classId: string, studentId: string) => Promise<void>;
   searchStudentsByEmail: (emailQuery: string) => Promise<AdminUserView[]>;
   createAssignment: (assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => Promise<void>;
+  updateAssignment: (assignmentId: string, assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => Promise<void>;
   getTeacherAssignments: () => Promise<Assignment[]>;
+  getAssignmentDetails: (assignmentId: string) => Promise<Assignment | null>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
 }
 
@@ -592,12 +594,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const updateAssignment = async (assignmentId: string, assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => {
+      if (!auth.currentUser) throw new Error("Not authenticated");
+      const assignmentRef = doc(db, "assignments", assignmentId);
+      const docSnap = await getDoc(assignmentRef);
+      if (!docSnap.exists() || docSnap.data().teacherId !== auth.currentUser.uid) {
+        throw new Error("Permission denied or assignment not found.");
+      }
+      await updateDoc(assignmentRef, assignmentData);
+  };
+
   const getTeacherAssignments = async (): Promise<Assignment[]> => {
     if (!auth.currentUser) return [];
     const assignmentsRef = collection(db, "assignments");
     const q = query(assignmentsRef, where("teacherId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
+  };
+  
+  const getAssignmentDetails = async (assignmentId: string): Promise<Assignment | null> => {
+    if (!auth.currentUser) throw new Error("Not authenticated");
+    const assignmentRef = doc(db, "assignments", assignmentId);
+    const docSnap = await getDoc(assignmentRef);
+    if (docSnap.exists() && docSnap.data().teacherId === auth.currentUser.uid) {
+        return { id: docSnap.id, ...docSnap.data() } as Assignment;
+    }
+    return null;
   };
 
   const deleteAssignment = async (assignmentId: string) => {
@@ -641,7 +663,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     removeStudentFromClass,
     searchStudentsByEmail,
     createAssignment,
+    updateAssignment,
     getTeacherAssignments,
+    getAssignmentDetails,
     deleteAssignment,
   };
 
