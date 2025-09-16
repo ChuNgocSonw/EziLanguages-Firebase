@@ -1,7 +1,8 @@
+
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BarChart2, MessageSquare, BookUser } from "lucide-react";
+import { PlusCircle, BarChart2, MessageSquare, BookUser, BookCopy } from "lucide-react";
 import Link from "next/link";
 
 export default function TeacherPage() {
@@ -26,6 +27,24 @@ export default function TeacherPage() {
              <Button className="w-full" asChild>
                 <Link href="/teacher/classes">
                     <PlusCircle className="mr-2 h-4 w-4" /> Manage Your Classes
+                </Link>
+             </Button>
+          </CardFooter>
+        </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Manage Assignments</CardTitle>
+            <BookCopy className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+             <p className="text-xs text-muted-foreground">
+              Create and assign quizzes to your classes.
+            </p>
+          </CardContent>
+           <CardFooter>
+             <Button className="w-full" asChild>
+                <Link href="/teacher/assignments">
+                    Manage Assignments
                 </Link>
              </Button>
           </CardFooter>

@@ -30,6 +30,16 @@ export interface Class {
   createdAt: Timestamp;
 }
 
+export interface Assignment {
+  id: string;
+  title: string;
+  language: "EN" | "JP" | "KR" | "VI";
+  questions: QuizQuestion[];
+  teacherId: string;
+  createdAt: Timestamp;
+  // Later: assignedClasses: { classId: string; dueDate: Timestamp }[];
+}
+
 
 export const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),

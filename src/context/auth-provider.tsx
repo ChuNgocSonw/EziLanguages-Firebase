@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole } from '@/lib/types';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
@@ -50,6 +50,8 @@ export interface AuthContextType {
   addStudentToClass: (classId: string, studentId: string) => Promise<void>;
   removeStudentFromClass: (classId: string, studentId: string) => Promise<void>;
   searchStudentsByEmail: (emailQuery: string) => Promise<AdminUserView[]>;
+  createAssignment: (assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => Promise<void>;
+  getTeacherAssignments: () => Promise<Assignment[]>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -577,6 +579,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await updateDoc(userDocRef, { role: role });
   };
 
+  const createAssignment = async (assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => {
+    if (!auth.currentUser || !userProfile || userProfile.role === 'student') {
+      throw new Error("You do not have permission to create assignments.");
+    }
+    const assignmentsRef = collection(db, "assignments");
+    await addDoc(assignmentsRef, {
+      ...assignmentData,
+      teacherId: auth.currentUser.uid,
+      createdAt: serverTimestamp(),
+    });
+  };
+
+  const getTeacherAssignments = async (): Promise<Assignment[]> => {
+    if (!auth.currentUser) return [];
+    const assignmentsRef = collection(db, "assignments");
+    const q = query(assignmentsRef, where("teacherId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
+  };
+
 
   const value: AuthContextType = {
     user,
@@ -607,6 +629,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     addStudentToClass,
     removeStudentFromClass,
     searchStudentsByEmail,
+    createAssignment,
+    getTeacherAssignments,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
