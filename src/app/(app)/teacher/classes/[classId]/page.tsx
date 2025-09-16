@@ -225,7 +225,7 @@ export default function ManageClassPage() {
                                     variant="ghost" 
                                     onClick={() => handleAddStudent(student)} 
                                     disabled={isUpdating === student.uid}
-                                    className="text-green-600 hover:bg-[#E6F9ED] hover:text-green-700"
+                                    className="text-green-600 hover:bg-[#2E7D32] hover:text-white"
                                 >
                                     {isUpdating === student.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="h-5 w-5"/>}
                                 </Button>
