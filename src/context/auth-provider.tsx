@@ -456,7 +456,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const getTeacherClasses = async (): Promise<Class[]> => {
     if (!auth.currentUser) return [];
     const classesRef = collection(db, "classes");
-    const q = query(classesRef, where("teacherId", "==", auth.currentUser.uid));
+    const q = query(classesRef, where("teacherId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
   };
@@ -487,3 +487,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+    
