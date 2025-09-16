@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2, PlusCircle, ArrowRight } from "lucide-react";
 import type { Class } from "@/lib/types";
+import Link from "next/link";
 
 const createClassSchema = z.object({
   className: z.string().min(3, "Class name must be at least 3 characters.").max(50, "Class name is too long."),
@@ -132,8 +133,10 @@ export default function TeacherClassesPage() {
                       {c.studentIds.length} student(s)
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" disabled>
-                    Manage <ArrowRight className="ml-2 h-4 w-4" />
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/teacher/classes/${c.id}`}>
+                      Manage <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
                   </Button>
                 </div>
               ))}

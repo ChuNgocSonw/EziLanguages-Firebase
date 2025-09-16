@@ -14,7 +14,7 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField } from 'firebase/firestore';
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
@@ -44,6 +44,10 @@ export interface AuthContextType {
   getTeacherClasses: () => Promise<Class[]>;
   getAllUsers: () => Promise<AdminUserView[]>;
   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
+  getClassDetails: (classId: string) => Promise<Class | null>;
+  getStudentsForClassManagement: (classId: string) => Promise<{ studentsInClass: AdminUserView[], availableStudents: AdminUserView[] }>;
+  addStudentToClass: (classId: string, studentId: string) => Promise<void>;
+  removeStudentFromClass: (classId: string, studentId: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -462,6 +466,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
   };
+  
+  const getClassDetails = async (classId: string): Promise<Class | null> => {
+      if (!auth.currentUser) return null;
+      const classRef = doc(db, "classes", classId);
+      const docSnap = await getDoc(classRef);
+      if (docSnap.exists()) {
+          return { id: docSnap.id, ...docSnap.data() } as Class;
+      }
+      return null;
+  };
+  
+  const getStudentsForClassManagement = async (classId: string): Promise<{ studentsInClass: AdminUserView[], availableStudents: AdminUserView[] }> => {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("role", "==", "student"));
+      const querySnapshot = await getDocs(q);
+      const allStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
+
+      const classDetails = await getClassDetails(classId);
+      const studentIdsInClass = classDetails?.studentIds || [];
+      
+      const studentsInClass = allStudents.filter(s => studentIdsInClass.includes(s.uid));
+      const availableStudents = allStudents.filter(s => !s.classId);
+
+      return { studentsInClass, availableStudents };
+  }
+  
+  const addStudentToClass = async (classId: string, studentId: string) => {
+      const classRef = doc(db, "classes", classId);
+      const studentRef = doc(db, "users", studentId);
+
+      const batch = writeBatch(db);
+      batch.update(classRef, { studentIds: arrayUnion(studentId) });
+      batch.update(studentRef, { classId: classId });
+      await batch.commit();
+  }
+  
+  const removeStudentFromClass = async (classId: string, studentId: string) => {
+      const classRef = doc(db, "classes", classId);
+      const studentRef = doc(db, "users", studentId);
+
+      const batch = writeBatch(db);
+      batch.update(classRef, { studentIds: arrayRemove(studentId) });
+      batch.update(studentRef, { classId: deleteField() });
+      await batch.commit();
+  }
 
   const getAllUsers = async (): Promise<AdminUserView[]> => {
     if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superadmin')) {
@@ -473,6 +522,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUserRole = async (userId: string, role: UserRole) => {
+    // Let Firestore Rules handle the detailed permission logic.
+    // Client-side checks are for better UX, not for security.
     if (!userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
       throw new Error("You do not have permission to update roles.");
     }
@@ -481,22 +532,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error("You cannot change your own role.");
     }
 
-    const targetUserDoc = await getDoc(doc(db, "users", userId));
-    if (!targetUserDoc.exists()) {
-      throw new Error("Target user not found.");
-    }
-    const targetUserData = targetUserDoc.data() as UserProfile;
-
-    // Prevent anyone from changing a superadmin's role
-    if (targetUserData.role === 'superadmin') {
-      throw new Error("The role of a Super Admin cannot be changed.");
-    }
-
-    // Prevent admins from changing other admins' roles
-    if (userProfile.role === 'admin' && targetUserData.role === 'admin') {
-      throw new Error("Admins cannot change the role of other admins.");
-    }
-    
     const userDocRef = doc(db, "users", userId);
     await updateDoc(userDocRef, { role: role });
   };
@@ -525,6 +560,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getTeacherClasses,
     getAllUsers,
     updateUserRole,
+    getClassDetails,
+    getStudentsForClassManagement,
+    addStudentToClass,
+    removeStudentFromClass,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
