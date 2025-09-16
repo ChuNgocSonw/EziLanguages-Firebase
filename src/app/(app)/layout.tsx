@@ -48,11 +48,11 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     }
     
     // Role-based route protection
-    if (pathname.startsWith('/admin') && userProfile.role !== 'admin') {
+    if (pathname.startsWith('/admin') && !['admin', 'superadmin'].includes(userProfile.role)) {
       router.push('/dashboard'); 
     }
     
-    if (pathname.startsWith('/teacher') && !['admin', 'teacher'].includes(userProfile.role)) {
+    if (pathname.startsWith('/teacher') && !['admin', 'teacher', 'superadmin'].includes(userProfile.role)) {
       router.push('/dashboard');
     }
 
@@ -167,7 +167,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              {(userProfile?.role === 'admin' || userProfile?.role === 'teacher') && (
+              {(userProfile?.role === 'admin' || userProfile?.role === 'teacher' || userProfile?.role === 'superadmin') && (
                   <>
                     <DropdownMenuSeparator />
                      <DropdownMenuItem asChild>
@@ -178,7 +178,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                     </DropdownMenuItem>
                   </>
               )}
-              {userProfile?.role === 'admin' && (
+              {(userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
                   <>
                      <DropdownMenuItem asChild>
                         <Link href="/admin">
