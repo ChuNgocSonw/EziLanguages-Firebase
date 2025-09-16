@@ -487,9 +487,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error("Admins cannot change the role of other admins or superadmins.");
     }
 
-    if (userProfile.role === 'superadmin' && targetUserData.role === 'superadmin' && role !== 'superadmin') {
-        // Optional: prevent a superadmin from demoting another superadmin unless intended
-        // For now, we allow superadmins to manage other superadmins
+    if (userProfile.role === 'superadmin' && targetUserData.role === 'superadmin') {
+       throw new Error("A Super Admin cannot change the role of another Super Admin.");
     }
 
     const userDocRef = doc(db, "users", userId);

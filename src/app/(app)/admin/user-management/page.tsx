@@ -45,7 +45,7 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
             <TableCell>{user.email}</TableCell>
             <TableCell>
               <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize pointer-events-none">
-                {user.role}
+                {user.role === 'superadmin' ? 'Super Admin' : user.role}
               </Badge>
             </TableCell>
             <TableCell>
