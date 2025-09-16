@@ -15,10 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Wand2, Save, RefreshCw, ArrowRight } from "lucide-react";
+import { Loader2, ArrowLeft, Wand2, Save, ArrowRight, PlusCircle, Trash2, BookCheck } from "lucide-react";
 import { generateQuizQuestions } from "@/lib/actions";
 import type { QuizQuestion } from "@/lib/types";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 
 const detailsSchema = z.object({
@@ -30,13 +29,11 @@ type DetailsFormData = z.infer<typeof detailsSchema>;
 const questionsSchema = z.object({
   topic: z.string().min(3, "Topic must be at least 3 characters."),
   difficulty: z.enum(["Easy", "Medium", "Hard"]),
-  numberOfQuestions: z.coerce.number().min(1, "Must have at least 1 question.").max(30, "Cannot exceed 30 questions."),
+  numberOfQuestions: z.coerce.number().min(1, "Must have at least 1 question.").max(10, "Cannot exceed 10 questions per generation."),
   questions: z.array(z.object({
-    id: z.string(),
     question: z.string(),
     options: z.array(z.string()),
     answer: z.string(),
-    isSelected: z.boolean().default(true),
   })),
 });
 type QuestionsFormData = z.infer<typeof questionsSchema>;
@@ -51,6 +48,8 @@ export default function NewAssignmentPage() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  const [generatedQuestions, setGeneratedQuestions] = useState<QuizQuestion[]>([]);
 
   const detailsForm = useForm<DetailsFormData>({
     resolver: zodResolver(detailsSchema),
@@ -70,7 +69,7 @@ export default function NewAssignmentPage() {
     },
   });
 
-  const { fields, replace } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: questionsForm.control,
     name: "questions",
   });
@@ -83,11 +82,11 @@ export default function NewAssignmentPage() {
   const handleGenerateQuestions = async () => {
     const { topic, difficulty, numberOfQuestions } = questionsForm.getValues();
     
-    // Trigger validation for generation fields
     const isValid = await questionsForm.trigger(["topic", "difficulty", "numberOfQuestions"]);
     if (!isValid) return;
 
     setIsGenerating(true);
+    setGeneratedQuestions([]);
     try {
       toast({ title: "Generating Questions...", description: "Please wait while the AI creates the quiz questions." });
       const generated = await generateQuizQuestions({ topic, difficulty, numberOfQuestions });
@@ -96,12 +95,9 @@ export default function NewAssignmentPage() {
         throw new Error("The AI failed to generate questions for this topic.");
       }
 
-      const questionsForReview = generated.map((q, index) => ({
-        ...q,
-        id: `ai-q-${index}`,
-        isSelected: true,
-      }));
-      replace(questionsForReview);
+      // Filter out questions that are already in the selected list
+      const newGenerated = generated.filter(gq => !fields.some(sq => sq.question === gq.question));
+      setGeneratedQuestions(newGenerated);
 
     } catch (error: any) {
       console.error("Failed to generate questions:", error);
@@ -115,16 +111,17 @@ export default function NewAssignmentPage() {
     }
   };
   
+  const handleAddQuestionToSelection = (question: QuizQuestion, index: number) => {
+    append(question);
+    setGeneratedQuestions(prev => prev.filter((_, i) => i !== index));
+  };
+  
   const handleSaveAssignment = async (data: QuestionsFormData) => {
     if (!assignmentDetails) return;
     setIsSaving(true);
     
-    const selectedQuestions: QuizQuestion[] = data.questions
-      .filter(q => q.isSelected)
-      .map(({ question, options, answer }) => ({ question, options, answer }));
-
-    if (selectedQuestions.length === 0) {
-      toast({ title: "No Questions Selected", description: "Please select at least one question to save.", variant: "destructive" });
+    if (data.questions.length === 0) {
+      toast({ title: "No Questions Selected", description: "Please add at least one question to the assignment.", variant: "destructive" });
       setIsSaving(false);
       return;
     }
@@ -133,7 +130,7 @@ export default function NewAssignmentPage() {
       await createAssignment({
         title: assignmentDetails.title,
         language: assignmentDetails.language,
-        questions: selectedQuestions,
+        questions: data.questions,
       });
       toast({ title: "Assignment Created!", description: "The new assignment has been saved successfully." });
       router.push("/teacher/assignments");
@@ -147,7 +144,26 @@ export default function NewAssignmentPage() {
 
   const handleBackToDetails = () => {
     setStep('details');
-  }
+  };
+  
+  const QuestionCard = ({ q, index, onAction, actionType }: { q: QuizQuestion, index: number, onAction: (q: QuizQuestion, index: number) => void, actionType: 'add' | 'remove' }) => (
+    <div className="p-3 border rounded-md bg-muted/30 relative">
+        <p className="font-medium pr-8">{q.question}</p>
+        <ul className="text-sm text-muted-foreground mt-2 list-disc pl-5">
+            {q.options.map((opt, i) => (
+                <li key={i} className={opt === q.answer ? "font-semibold text-primary" : ""}>{opt}</li>
+            ))}
+        </ul>
+        <Button 
+            size="icon" 
+            variant="ghost" 
+            className="absolute top-2 right-2 h-7 w-7" 
+            onClick={() => onAction(q, index)}
+        >
+            {actionType === 'add' ? <PlusCircle className="h-4 w-4 text-green-600" /> : <Trash2 className="h-4 w-4 text-destructive" />}
+        </Button>
+    </div>
+  );
 
   return (
     <>
@@ -219,9 +235,9 @@ export default function NewAssignmentPage() {
            <Form {...questionsForm}>
             <form onSubmit={questionsForm.handleSubmit(handleSaveAssignment)}>
               <CardHeader>
-                <CardTitle>Step 2: Generate & Select Questions</CardTitle>
+                <CardTitle>Step 2: Build Your Assignment</CardTitle>
                 <CardDescription>
-                  Use AI to generate questions for your assignment: "{assignmentDetails?.title}".
+                  Generate questions with AI and add them to your assignment: "{assignmentDetails?.title}".
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -266,9 +282,9 @@ export default function NewAssignmentPage() {
                     />
                     <FormField control={questionsForm.control} name="numberOfQuestions" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Number of Questions</FormLabel>
+                          <FormLabel>Number of Questions to Generate</FormLabel>
                           <FormControl>
-                            <Input type="number" min="1" max="30" {...field} />
+                            <Input type="number" min="1" max="10" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -280,54 +296,54 @@ export default function NewAssignmentPage() {
                     {isGenerating ? "Generating..." : "Generate Questions"}
                   </Button>
                 </div>
-
-                {fields.length > 0 && (
-                    <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-4 border rounded-md p-4">
-                        <h3 className="font-semibold">Review AI-Generated Questions</h3>
-                        {fields.map((field, index) => (
-                          <div key={field.id} className="p-3 border rounded-md bg-muted/30">
-                             <FormField
-                                control={questionsForm.control}
-                                name={`questions.${index}.isSelected`}
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none w-full">
-                                        <FormLabel className="font-normal text-base">{index + 1}. {questionsForm.getValues(`questions.${index}.question`)}</FormLabel>
-                                        <div className="pl-6 pt-2">
-                                           <RadioGroup defaultValue={questionsForm.getValues(`questions.${index}.answer`)} disabled>
-                                              {questionsForm.getValues(`questions.${index}.options`).map((option, optIndex) => (
-                                                  <FormItem key={optIndex} className="flex items-center space-x-2">
-                                                      <FormControl>
-                                                          <RadioGroupItem value={option} id={`${field.id}-opt-${optIndex}`} />
-                                                      </FormControl>
-                                                      <FormLabel htmlFor={`${field.id}-opt-${optIndex}`} className="font-normal cursor-not-allowed text-muted-foreground">{option}</FormLabel>
-                                                  </FormItem>
-                                              ))}
-                                          </RadioGroup>
-                                        </div>
-                                    </div>
-                                  </FormItem>
-                                )}
-                              />
-                          </div>
-                        ))}
+                
+                <Separator />
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                    {/* AI-Generated Questions Column */}
+                    <div>
+                        <h3 className="font-semibold mb-2">AI-Generated Questions</h3>
+                        <div className="p-4 border rounded-md h-96 overflow-y-auto space-y-3">
+                           {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
+                           {!isGenerating && generatedQuestions.length === 0 && (
+                                <div className="text-center text-muted-foreground pt-12">
+                                    <Wand2 className="mx-auto h-8 w-8 mb-2" />
+                                    <p>Generated questions will appear here.</p>
+                                    <p className="text-xs">Click a question's (+) icon to add it.</p>
+                                </div>
+                           )}
+                           {generatedQuestions.map((q, index) => (
+                             <QuestionCard key={`gen-${index}`} q={q} index={index} onAction={handleAddQuestionToSelection} actionType="add" />
+                           ))}
+                        </div>
                     </div>
-                )}
+
+                    {/* Selected Questions Column */}
+                     <div>
+                        <h3 className="font-semibold mb-2">Selected Questions ({fields.length})</h3>
+                        <div className="p-4 border rounded-md h-96 overflow-y-auto space-y-3">
+                           {fields.length === 0 && (
+                                <div className="text-center text-muted-foreground pt-12">
+                                    <BookCheck className="mx-auto h-8 w-8 mb-2" />
+                                    <p>Your chosen questions will appear here.</p>
+                                </div>
+                           )}
+                           {fields.map((field, index) => (
+                               <QuestionCard key={field.id} q={field} index={index} onAction={(_, idx) => remove(idx)} actionType="remove" />
+                           ))}
+                        </div>
+                    </div>
+                </div>
+
               </CardContent>
               <CardFooter className="flex justify-between">
                 <div className="flex gap-2">
                     <Button type="submit" disabled={isSaving || fields.length === 0}>
                       {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                      {isSaving ? "Saving..." : `Save Assignment (${questionsForm.watch('questions').filter(q => q.isSelected).length} questions)`}
+                      {isSaving ? "Saving..." : `Save Assignment (${fields.length} questions)`}
                     </Button>
                      <Button type="button" variant="outline" onClick={handleBackToDetails} disabled={isSaving}>
-                      <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                      <ArrowLeft className="mr-2 h-4 w-4" /> Back to Details
                     </Button>
                 </div>
               </CardFooter>
