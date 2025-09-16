@@ -12,6 +12,7 @@ import {
   Trophy,
   User,
   ShieldCheck,
+  School
 } from 'lucide-react';
 import {
   Tooltip,
@@ -30,6 +31,7 @@ const allNavItems = [
   { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin'] },
   { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student', 'teacher', 'admin'] },
   { href: '/profile', icon: User, label: 'Profile', roles: ['student', 'teacher', 'admin'] },
+  { href: '/teacher', icon: School, label: 'Teacher Panel', roles: ['teacher', 'admin'] },
   { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin'] },
 ];
 

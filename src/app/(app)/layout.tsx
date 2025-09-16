@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ShieldCheck } from 'lucide-react';
+import { User, Settings, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ShieldCheck, School } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { MainNav } from '@/components/main-nav';
@@ -49,7 +49,11 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     
     // Role-based route protection
     if (pathname.startsWith('/admin') && userProfile.role !== 'admin') {
-      router.push('/dashboard'); // Or a dedicated 'unauthorized' page
+      router.push('/dashboard'); 
+    }
+    
+    if (pathname.startsWith('/teacher') && !['admin', 'teacher'].includes(userProfile.role)) {
+      router.push('/dashboard');
     }
 
   }, [user, userProfile, loading, router, pathname]);
@@ -163,9 +167,19 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              {userProfile?.role === 'admin' && (
+              {(userProfile?.role === 'admin' || userProfile?.role === 'teacher') && (
                   <>
                     <DropdownMenuSeparator />
+                     <DropdownMenuItem asChild>
+                        <Link href="/teacher">
+                            <School className="mr-2 h-4 w-4" />
+                            <span>Teacher Panel</span>
+                        </Link>
+                    </DropdownMenuItem>
+                  </>
+              )}
+              {userProfile?.role === 'admin' && (
+                  <>
                      <DropdownMenuItem asChild>
                         <Link href="/admin">
                             <ShieldCheck className="mr-2 h-4 w-4" />
