@@ -24,15 +24,15 @@ import type { UserRole } from '@/lib/types';
 
 
 const allNavItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['student', 'teacher', 'admin'] },
-  { href: '/chat', icon: MessageSquare, label: 'AI Chat', roles: ['student', 'teacher', 'admin'] },
-  { href: '/reading', icon: BookOpen, label: 'Reading', roles: ['student', 'teacher', 'admin'] },
-  { href: '/listening', icon: Headphones, label: 'Listening', roles: ['student', 'teacher', 'admin'] },
-  { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin'] },
-  { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student', 'teacher', 'admin'] },
-  { href: '/profile', icon: User, label: 'Profile', roles: ['student', 'teacher', 'admin'] },
-  { href: '/teacher', icon: School, label: 'Teacher Panel', roles: ['teacher', 'admin'] },
-  { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin'] },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['student', 'teacher', 'admin', 'superadmin'] },
+  { href: '/chat', icon: MessageSquare, label: 'AI Chat', roles: ['student', 'teacher', 'admin', 'superadmin'] },
+  { href: '/reading', icon: BookOpen, label: 'Reading', roles: ['student', 'teacher', 'admin', 'superadmin'] },
+  { href: '/listening', icon: Headphones, label: 'Listening', roles: ['student', 'teacher', 'admin', 'superadmin'] },
+  { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin', 'superadmin'] },
+  { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student', 'teacher', 'admin', 'superadmin'] },
+  { href: '/profile', icon: User, label: 'Profile', roles: ['student', 'teacher', 'admin', 'superadmin'] },
+  { href: '/teacher', icon: School, label: 'Teacher Panel', roles: ['teacher', 'admin', 'superadmin'] },
+  { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin', 'superadmin'] },
 ];
 
 interface MainNavProps {
