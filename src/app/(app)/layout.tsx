@@ -173,7 +173,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                      <DropdownMenuItem asChild>
                         <Link href="/teacher">
                             <School className="mr-2 h-4 w-4" />
-                            <span>Teacher Dashboard</span>
+                            <span>Teacher</span>
                         </Link>
                     </DropdownMenuItem>
                   </>
@@ -183,7 +183,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                      <DropdownMenuItem asChild>
                         <Link href="/admin">
                             <ShieldCheck className="mr-2 h-4 w-4" />
-                            <span>Admin Dashboard</span>
+                            <span>Admin</span>
                         </Link>
                     </DropdownMenuItem>
                   </>

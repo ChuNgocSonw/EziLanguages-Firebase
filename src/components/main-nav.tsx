@@ -30,8 +30,8 @@ const allNavItems = [
   { href: '/listening', icon: Headphones, label: 'Listening', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student', 'teacher', 'admin', 'superadmin'] },
-  { href: '/teacher', icon: School, label: 'Teacher Dashboard', roles: ['teacher', 'admin', 'superadmin'] },
-  { href: '/admin', icon: ShieldCheck, label: 'Admin Dashboard', roles: ['admin', 'superadmin'] },
+  { href: '/teacher', icon: School, label: 'Teacher', roles: ['teacher', 'admin', 'superadmin'] },
+  { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin', 'superadmin'] },
 ];
 
 interface MainNavProps {
