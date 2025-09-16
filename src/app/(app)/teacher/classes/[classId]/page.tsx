@@ -140,7 +140,7 @@ export default function ManageClassPage() {
                                     <p className="text-xs text-muted-foreground">{student.email}</p>
                                 </div>
                             </div>
-                            <Button size="icon" variant="ghost" onClick={() => handleRemoveStudent(student.uid)} disabled={isUpdating === student.uid}>
+                            <Button size="icon" variant="ghost" onClick={() => handleRemoveStudent(student.uid)} disabled={isUpdating === student.uid} className="hover:bg-[#FDECEA]">
                                 {isUpdating === student.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive"/>}
                             </Button>
                         </div>
