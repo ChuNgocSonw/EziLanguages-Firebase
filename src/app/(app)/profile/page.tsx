@@ -73,6 +73,8 @@ export default function ProfilePage() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
+      case "superadmin":
+        return "destructive";
       case "admin":
         return "destructive";
       case "teacher":
@@ -155,7 +157,7 @@ export default function ProfilePage() {
                         <div>
                            {userProfile?.role && (
                              <Badge variant={getRoleBadgeVariant(userProfile.role)} className="capitalize">
-                               {userProfile.role}
+                               {userProfile.role === 'superadmin' ? 'Super Admin' : userProfile.role}
                              </Badge>
                            )}
                         </div>
