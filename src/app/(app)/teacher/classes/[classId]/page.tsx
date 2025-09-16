@@ -6,28 +6,38 @@ import { useParams, useRouter } from "next/navigation";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
+import { Loader2, ArrowLeft, PlusCircle, Trash2, Search } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import type { AdminUserView, Class } from "@/lib/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export default function ManageClassPage() {
   const { classId } = useParams();
   const router = useRouter();
-  const { getClassDetails, getStudentsForClassManagement, addStudentToClass, removeStudentFromClass } = useAuth();
+  const { 
+    getClassDetails, 
+    getStudentsForClassManagement, 
+    addStudentToClass, 
+    removeStudentFromClass,
+    findStudentByEmail 
+  } = useAuth();
   const { toast } = useToast();
 
   const [classDetails, setClassDetails] = useState<Class | null>(null);
   const [studentsInClass, setStudentsInClass] = useState<AdminUserView[]>([]);
-  const [availableStudents, setAvailableStudents] = useState<AdminUserView[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState<string | null>(null); // Store student ID being updated
 
+  const [searchEmail, setSearchEmail] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResult, setSearchResult] = useState<AdminUserView | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
   const fetchClassData = useCallback(async () => {
     if (typeof classId !== 'string') return;
-    setIsLoading(true);
     try {
       const details = await getClassDetails(classId);
       if (!details) {
@@ -37,9 +47,8 @@ export default function ManageClassPage() {
       }
       setClassDetails(details);
       
-      const { studentsInClass, availableStudents } = await getStudentsForClassManagement(classId);
-      setStudentsInClass(studentsInClass);
-      setAvailableStudents(availableStudents);
+      const students = await getStudentsForClassManagement(classId);
+      setStudentsInClass(students);
 
     } catch (error) {
       console.error("Failed to fetch class data:", error);
@@ -50,27 +59,47 @@ export default function ManageClassPage() {
   }, [classId, getClassDetails, getStudentsForClassManagement, toast, router]);
 
   useEffect(() => {
+    setIsLoading(true);
     fetchClassData();
   }, [fetchClassData]);
-  
-  const handleAddStudent = async (studentId: string) => {
-    if (typeof classId !== 'string') return;
-    setIsUpdating(studentId);
+
+  const handleSearchStudent = async () => {
+    if (!searchEmail) return;
+    setIsSearching(true);
+    setSearchResult(null);
+    setSearchError(null);
     try {
-        await addStudentToClass(classId, studentId);
+        const student = await findStudentByEmail(searchEmail);
+        if (student) {
+            if (student.classId) {
+                setSearchError("This student is already in a class.");
+            } else {
+                setSearchResult(student);
+            }
+        } else {
+            setSearchError("No student found with this email.");
+        }
+    } catch (error: any) {
+        setSearchError(error.message);
+    } finally {
+        setIsSearching(false);
+    }
+  };
+  
+  const handleAddStudent = async (student: AdminUserView) => {
+    if (typeof classId !== 'string') return;
+    setIsUpdating(student.uid);
+    try {
+        await addStudentToClass(classId, student.uid);
         toast({ title: "Success", description: "Student added to the class." });
         
         // Optimistic UI update
-        const studentToAdd = availableStudents.find(s => s.uid === studentId);
-        if (studentToAdd) {
-            setStudentsInClass(prev => [...prev, studentToAdd].sort((a, b) => a.name.localeCompare(b.name)));
-            setAvailableStudents(prev => prev.filter(s => s.uid !== studentId));
-        }
-
+        setStudentsInClass(prev => [...prev, student].sort((a, b) => a.name.localeCompare(b.name)));
+        setSearchResult(null);
+        setSearchEmail("");
+        
     } catch(error: any) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
-        // Revert UI on error
-        await fetchClassData();
     } finally {
         setIsUpdating(null);
     }
@@ -84,16 +113,10 @@ export default function ManageClassPage() {
         toast({ title: "Success", description: "Student removed from the class." });
 
         // Optimistic UI update
-        const studentToRemove = studentsInClass.find(s => s.uid === studentId);
-        if (studentToRemove) {
-            setAvailableStudents(prev => [...prev, studentToRemove].sort((a, b) => a.name.localeCompare(b.name)));
-            setStudentsInClass(prev => prev.filter(s => s.uid !== studentId));
-        }
+        setStudentsInClass(prev => prev.filter(s => s.uid !== studentId));
 
     } catch(error: any) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
-        // Revert UI on error
-        await fetchClassData();
     } finally {
         setIsUpdating(null);
     }
@@ -128,7 +151,7 @@ export default function ManageClassPage() {
           </CardHeader>
           <CardContent>
             {studentsInClass.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-96 overflow-y-auto">
                     {studentsInClass.map(student => (
                         <div key={student.uid} className="flex items-center justify-between p-2 rounded-md border">
                             <div className="flex items-center gap-3">
@@ -154,32 +177,56 @@ export default function ManageClassPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Available Students ({availableStudents.length})</CardTitle>
-            <CardDescription>Students not currently in any class.</CardDescription>
+            <CardTitle>Add Student to Class</CardTitle>
+            <CardDescription>Search for a student by their email address to add them.</CardDescription>
           </CardHeader>
           <CardContent>
-             {availableStudents.length > 0 ? (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {availableStudents.map(student => (
-                         <div key={student.uid} className="flex items-center justify-between p-2 rounded-md border">
-                             <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarFallback><UserCircle className="h-5 w-5"/></AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-medium">{student.name}</p>
-                                    <p className="text-xs text-muted-foreground">{student.email}</p>
-                                </div>
-                            </div>
-                            <Button size="icon" variant="ghost" onClick={() => handleAddStudent(student.uid)} disabled={isUpdating === student.uid} className="hover:bg-[#E6F9ED]">
-                               {isUpdating === student.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="h-4 w-4 text-green-600"/>}
-                            </Button>
+             <div className="flex items-center gap-2">
+                <Input 
+                    type="email" 
+                    placeholder="student@example.com"
+                    value={searchEmail}
+                    onChange={(e) => setSearchEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearchStudent()}
+                />
+                <Button onClick={handleSearchStudent} disabled={isSearching}>
+                    {isSearching ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4" />}
+                </Button>
+             </div>
+
+             <div className="mt-4 min-h-[80px]">
+                {isSearching && (
+                    <div className="flex justify-center items-center pt-4">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                )}
+                {searchError && (
+                    <p className="text-center text-destructive py-4">{searchError}</p>
+                )}
+                {searchResult && (
+                    <div className="flex items-center justify-between p-2 rounded-md border bg-muted/50">
+                        <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                            <AvatarFallback><UserCircle className="h-5 w-5"/></AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-medium">{searchResult.name}</p>
+                            <p className="text-xs text-muted-foreground">{searchResult.email}</p>
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <p className="text-center text-muted-foreground py-8">All students have been assigned to a class.</p>
-            )}
+                        </div>
+                        <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => handleAddStudent(searchResult)} 
+                            disabled={isUpdating === searchResult.uid}
+                            className="bg-green-100 border-green-300 text-green-800 hover:bg-green-200"
+                        >
+                            {isUpdating === searchResult.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="h-4 w-4 mr-2"/>}
+                            Add to Class
+                        </Button>
+                    </div>
+                )}
+             </div>
           </CardContent>
         </Card>
       </div>

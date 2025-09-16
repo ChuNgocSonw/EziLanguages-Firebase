@@ -46,9 +46,10 @@ export interface AuthContextType {
   getAllUsers: () => Promise<AdminUserView[]>;
   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
   getClassDetails: (classId: string) => Promise<Class | null>;
-  getStudentsForClassManagement: (classId: string) => Promise<{ studentsInClass: AdminUserView[], availableStudents: AdminUserView[] }>;
+  getStudentsForClassManagement: (classId: string) => Promise<AdminUserView[]>;
   addStudentToClass: (classId: string, studentId: string) => Promise<void>;
   removeStudentFromClass: (classId: string, studentId: string) => Promise<void>;
+  findStudentByEmail: (email: string) => Promise<AdminUserView | null>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -503,22 +504,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
   };
   
-  const getStudentsForClassManagement = async (classId: string): Promise<{ studentsInClass: AdminUserView[], availableStudents: AdminUserView[] }> => {
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("role", "==", "student"));
-      const querySnapshot = await getDocs(q);
-      const allStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
-
+  const getStudentsForClassManagement = async (classId: string): Promise<AdminUserView[]> => {
       const classDetails = await getClassDetails(classId);
-      const studentIdsInClass = classDetails?.studentIds || [];
+      if (!classDetails || classDetails.studentIds.length === 0) return [];
       
-      const studentsInClass = allStudents.filter(s => studentIdsInClass.includes(s.uid));
-      const availableStudents = allStudents.filter(s => !s.classId);
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("__name__", "in", classDetails.studentIds));
+      const querySnapshot = await getDocs(q);
+      
+      return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
+  }
 
-      return { studentsInClass, availableStudents };
+  const findStudentByEmail = async (email: string): Promise<AdminUserView | null> => {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("email", "==", email), where("role", "==", "student"), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+        return null;
+    }
+    const studentDoc = querySnapshot.docs[0];
+    return { uid: studentDoc.id, ...studentDoc.data() } as AdminUserView;
   }
   
   const addStudentToClass = async (classId: string, studentId: string) => {
+      const studentDoc = await getDoc(doc(db, "users", studentId));
+      if (studentDoc.exists() && studentDoc.data().classId) {
+          throw new Error("This student is already assigned to another class.");
+      }
+      
       const classRef = doc(db, "classes", classId);
       const studentRef = doc(db, "users", studentId);
 
@@ -591,6 +604,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getStudentsForClassManagement,
     addStudentToClass,
     removeStudentFromClass,
+    findStudentByEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
