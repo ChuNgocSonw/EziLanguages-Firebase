@@ -329,8 +329,8 @@ export default function NewAssignmentPage() {
             <div className="space-y-6">
                 <div>
                     <h3 className="font-semibold mb-2">Available Questions</h3>
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <div className="p-4 border rounded-md h-96 overflow-y-auto space-y-3">
+                    <div className="grid md:grid-cols-2 gap-6 items-start">
+                        <div className="p-4 border rounded-md min-h-full space-y-3">
                             <h4 className="font-medium text-center mb-2">AI-Generated</h4>
                             {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
                             {!isGenerating && generatedQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
