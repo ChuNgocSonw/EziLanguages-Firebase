@@ -34,8 +34,13 @@ export default function TeacherAssignmentsPage() {
       try {
         const teacherAssignments = await getTeacherAssignments();
         setAssignments(teacherAssignments);
-      } catch (error) {
-        toast({ title: "Error", description: "Failed to fetch assignments.", variant: "destructive" });
+      } catch (error: any) {
+        console.error("Failed to fetch assignments:", error);
+        toast({ 
+            title: "Error", 
+            description: `Failed to fetch assignments. ${error.message}`, 
+            variant: "destructive" 
+        });
       } finally {
         setIsLoading(false);
       }
