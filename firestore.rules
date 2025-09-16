@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check the role of the user making the request
+    function getRequestingUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    match /users/{userId} {
+      allow list: if request.auth != null;
+      allow read: if request.auth != null && (request.auth.uid == userId || getRequestingUserRole() in ['admin', 'superadmin']);
+      allow create: if request.auth != null;
+
+      // --- UPDATED RULE ---
+      // Allow update if:
+      // 1. User is updating their own profile (but cannot change critical fields like role or classId).
+      // 2. A user with a Teacher, Admin, or Superadmin role is updating a student's classId.
+      // 3. An 'admin' or 'superadmin' is updating a user's role according to their permissions.
+      allow update: if request.auth != null &&
+                    (
+                      // Case 1: User updates their own data, but cannot change their own role or classId.
+                      (request.auth.uid == userId && request.resource.data.role == resource.data.role && (!('classId' in request.resource.data) || request.resource.data.classId == resource.data.classId)) ||
+                      
+                      // Case 2: Teacher, Admin, or Superadmin can manage a student's class assignment.
+                      // This checks if the user being modified IS a student and the user making the request IS a teacher/admin/superadmin.
+                      (getRequestingUserRole() in ['teacher', 'admin', 'superadmin'] && resource.data.role == 'student') ||
+                      
+                      // Case 3: Admin role management.
+                      (getRequestingUserRole() == 'admin' && resource.data.role in ['student', 'teacher']) ||
+
+                      // Case 4: Superadmin role management.
+                      (getRequestingUserRole() == 'superadmin' && resource.data.role in ['student', 'teacher', 'admin'])
+                    );
+
+      match /chats/{chatId} {
+        allow read, create, delete: if request.auth != null && request.auth.uid == userId;
+        match /messages/{messageId} {
+          allow read, create, delete: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+
+      match /quizHistory/{quizId} {
+        allow read, create: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    match /classes/{classId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null 
+                    && request.resource.data.teacherId == request.auth.uid
+                    && getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
+      // Allow the class teacher to update the class document (e.g., add/remove student IDs)
+      allow update, delete: if request.auth != null 
+                           && resource.data.teacherId == request.auth.uid;
+    }
+
+    match /assignments/{assignmentId} {
+      // Allow authenticated users to read assignments (students will need this).
+      allow read: if request.auth != null;
+      
+      // Allow teachers, admins, or superadmins to create assignments.
+      // The teacherId in the new document must match the creator's UID.
+      allow create: if request.auth != null 
+                    && getRequestingUserRole() in ['teacher', 'admin', 'superadmin']
+                    && request.resource.data.teacherId == request.auth.uid;
+                    
+      // Only allow the teacher who created the assignment to update or delete it.
+      allow update, delete: if request.auth != null 
+                           && resource.data.teacherId == request.auth.uid;
+    }
+  }
+}
