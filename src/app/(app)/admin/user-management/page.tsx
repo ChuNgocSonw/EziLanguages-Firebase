@@ -163,7 +163,7 @@ export default function UserManagementPage() {
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="students">Students ({filteredUsers.students.length})</TabsTrigger>
                 <TabsTrigger value="teachers">Teachers ({filteredUsers.teachers.length})</TabsTrigger>
-                <TabsTrigger value="admins">Admins &amp; Supers ({filteredUsers.admins.length})</TabsTrigger>
+                <TabsTrigger value="admins">Admins ({filteredUsers.admins.length})</TabsTrigger>
               </TabsList>
               <TabsContent value="students" className="mt-4">
                 <UserTable users={filteredUsers.students} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
