@@ -487,20 +487,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const targetUserData = targetUserDoc.data() as UserProfile;
 
-    // Superadmin checks
-    if (userProfile.role === 'superadmin') {
-      if (targetUserData.role === 'superadmin') {
-        throw new Error("A Super Admin cannot change the role of another Super Admin.");
-      }
+    // Prevent anyone from changing a superadmin's role
+    if (targetUserData.role === 'superadmin') {
+      throw new Error("The role of a Super Admin cannot be changed.");
     }
 
-    // Admin checks
-    if (userProfile.role === 'admin') {
-      if (['admin', 'superadmin'].includes(targetUserData.role)) {
-        throw new Error("Admins cannot change the role of other admins or superadmins.");
-      }
+    // Prevent admins from changing other admins' roles
+    if (userProfile.role === 'admin' && targetUserData.role === 'admin') {
+      throw new Error("Admins cannot change the role of other admins.");
     }
-
+    
     const userDocRef = doc(db, "users", userId);
     await updateDoc(userDocRef, { role: role });
   };
