@@ -111,10 +111,8 @@ export default function ManageClassPage() {
         setStudentsInClass(prev => [...prev, student].sort((a, b) => (a.name || '').localeCompare(b.name || '')));
         setSearchResults(prev => prev.filter(s => s.uid !== student.uid));
         
-        // Clear search if no results left to avoid confusion
-        if (searchResults.length <= 1) {
-            setSearchQuery("");
-        }
+        // Clear search to avoid "not found" message after successful add.
+        setSearchQuery("");
         
     } catch(error: any) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
