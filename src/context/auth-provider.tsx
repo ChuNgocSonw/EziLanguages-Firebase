@@ -473,24 +473,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUserRole = async (userId: string, role: UserRole) => {
-    if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superadmin')) {
+    // 1. Check if the current user has permission to update roles at all.
+    if (!userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
       throw new Error("You do not have permission to update roles.");
     }
+
+    // 2. Prevent users from changing their own role.
     if (auth.currentUser?.uid === userId) {
       throw new Error("You cannot change your own role.");
     }
-    
+
+    // 3. Fetch the target user's data to check their current role.
     const targetUserDoc = await getDoc(doc(db, "users", userId));
+    if (!targetUserDoc.exists()) {
+      throw new Error("Target user not found.");
+    }
     const targetUserData = targetUserDoc.data() as UserProfile;
 
-    if (userProfile.role === 'admin' && (targetUserData.role === 'admin' || targetUserData.role === 'superadmin')) {
-      throw new Error("Admins cannot change the role of other admins or superadmins.");
+    // 4. Enforce role hierarchy rules.
+    if (userProfile.role === 'admin') {
+      // Admins cannot change the role of other admins or superadmins.
+      if (['admin', 'superadmin'].includes(targetUserData.role)) {
+        throw new Error("Admins cannot change the role of other admins or superadmins.");
+      }
+    } else if (userProfile.role === 'superadmin') {
+      // Superadmins can change anyone's role except another superadmin's.
+      if (targetUserData.role === 'superadmin') {
+        throw new Error("A Super Admin cannot change the role of another Super Admin.");
+      }
     }
 
-    if (userProfile.role === 'superadmin' && targetUserData.role === 'superadmin') {
-       throw new Error("A Super Admin cannot change the role of another Super Admin.");
-    }
-
+    // 5. If all checks pass, update the user's role in Firestore.
     const userDocRef = doc(db, "users", userId);
     await updateDoc(userDocRef, { role: role });
   };
