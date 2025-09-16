@@ -1,9 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Grant public read access to any document with a 'privacy' field set to 'public'.
     allow read: if resource.data.privacy == 'public';
-
     // Grant public read access to the 'users' collection for leaderboards,
     // but restrict writes to the user who owns the document.
     match /users/{userId} {
@@ -32,6 +30,21 @@ service cloud.firestore {
       match /quizHistory/{quizId} {
         allow read, create: if request.auth != null && request.auth.uid == userId;
       }
+    }
+
+    // Rules for the 'classes' collection.
+    match /classes/{classId} {
+      // Any authenticated user can read class information.
+      allow read: if request.auth != null;
+      
+      // Only users with 'teacher' or 'admin' role can create a class.
+      allow create: if request.auth != null 
+                    && request.resource.data.teacherId == request.auth.uid
+                    && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' 
+                        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      
+      // Only the teacher who owns the class can update or delete it.
+      allow update, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
     }
   }
 }
