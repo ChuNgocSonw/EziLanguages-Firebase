@@ -102,8 +102,11 @@ export default function ManageClassPage() {
         await addStudentToClass(classId, student.uid);
         toast({ title: "Success", description: "Student added to the class." });
         
+        // Update state directly instead of re-fetching
         setStudentsInClass(prev => [...prev, student].sort((a, b) => a.name.localeCompare(b.name)));
         setSearchResults(prev => prev.filter(s => s.uid !== student.uid));
+        
+        // Clear search if no results left
         if (searchResults.length <= 1) {
             setSearchQuery("");
         }
@@ -115,13 +118,16 @@ export default function ManageClassPage() {
     }
   }
 
-  const handleRemoveStudent = async (studentId: string) => {
+  const handleRemoveStudent = async (student: AdminUserView) => {
     if (typeof classId !== 'string') return;
-    setIsUpdating(studentId);
+    setIsUpdating(student.uid);
     try {
-        await removeStudentFromClass(classId, studentId);
+        await removeStudentFromClass(classId, student.uid);
         toast({ title: "Success", description: "Student removed from the class." });
-        setStudentsInClass(prev => prev.filter(s => s.uid !== studentId));
+        
+        // Update state directly
+        setStudentsInClass(prev => prev.filter(s => s.uid !== student.uid));
+
     } catch(error: any) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -169,7 +175,7 @@ export default function ManageClassPage() {
                                     <p className="text-xs text-muted-foreground">{student.email}</p>
                                 </div>
                             </div>
-                            <Button size="icon" variant="ghost" onClick={() => handleRemoveStudent(student.uid)} disabled={isUpdating === student.uid} className="hover:bg-[#FDECEA]">
+                            <Button size="icon" variant="ghost" onClick={() => handleRemoveStudent(student)} disabled={isUpdating === student.uid} className="hover:bg-[#FDECEA]">
                                 {isUpdating === student.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive"/>}
                             </Button>
                         </div>
@@ -240,3 +246,5 @@ export default function ManageClassPage() {
     </>
   );
 }
+
+    
