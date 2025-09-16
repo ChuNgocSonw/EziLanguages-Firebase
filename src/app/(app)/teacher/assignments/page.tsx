@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, BookCopy, Languages, ListChecks } from "lucide-react";
+import { Loader2, PlusCircle, BookCopy, Languages, ListChecks, Trash2 } from "lucide-react";
 import type { Assignment } from "@/lib/types";
 import {
   AlertDialog,
@@ -25,7 +25,8 @@ import {
 export default function TeacherAssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { getTeacherAssignments } = useAuth();
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const { getTeacherAssignments, deleteAssignment } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,6 +48,19 @@ export default function TeacherAssignmentsPage() {
     };
     fetchAssignments();
   }, [getTeacherAssignments, toast]);
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    setIsDeleting(assignmentId);
+    try {
+      await deleteAssignment(assignmentId);
+      toast({ title: "Success", description: "Assignment deleted successfully." });
+      setAssignments(prev => prev.filter(a => a.id !== assignmentId));
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to delete assignment.", variant: "destructive" });
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
 
   return (
@@ -94,8 +108,32 @@ export default function TeacherAssignmentsPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="flex gap-2">
-                    <Button variant="outline" className="w-full" disabled>Assign to Class</Button>
+                    <Button variant="outline" className="w-full" disabled>Assign</Button>
                     <Button variant="secondary" className="w-full" disabled>Edit</Button>
+                     <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="ghost" size="icon" disabled={isDeleting === assignment.id} className="shrink-0 hover:bg-destructive/10">
+                           {isDeleting === assignment.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive" />}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the assignment "{assignment.title}". This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteAssignment(assignment.id)}
+                            className="bg-destructive hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </CardFooter>
                 </Card>
               ))}

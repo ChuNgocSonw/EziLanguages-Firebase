@@ -52,6 +52,7 @@ export interface AuthContextType {
   searchStudentsByEmail: (emailQuery: string) => Promise<AdminUserView[]>;
   createAssignment: (assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => Promise<void>;
   getTeacherAssignments: () => Promise<Assignment[]>;
+  deleteAssignment: (assignmentId: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -599,6 +600,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
   };
 
+  const deleteAssignment = async (assignmentId: string) => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+    const assignmentRef = doc(db, "assignments", assignmentId);
+    const assignmentDoc = await getDoc(assignmentRef);
+    if (!assignmentDoc.exists() || assignmentDoc.data().teacherId !== auth.currentUser.uid) {
+      throw new Error("Assignment not found or you do not have permission to delete it.");
+    }
+    await deleteDoc(assignmentRef);
+  };
+
 
   const value: AuthContextType = {
     user,
@@ -631,6 +642,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     searchStudentsByEmail,
     createAssignment,
     getTeacherAssignments,
+    deleteAssignment,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
