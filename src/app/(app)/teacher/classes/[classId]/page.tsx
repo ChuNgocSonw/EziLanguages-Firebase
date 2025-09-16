@@ -60,7 +60,7 @@ export default function ManageClassPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [classId, getClassDetails, getStudentsForClassManagement, toast, router]);
+  }, [classId, getClassDetails, getStudentsForClassManagement, router]);
 
   useEffect(() => {
     fetchClassData();
