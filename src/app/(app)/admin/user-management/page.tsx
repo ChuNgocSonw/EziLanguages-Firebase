@@ -138,8 +138,7 @@ export default function UserManagementPage() {
     return {
       students: users.filter(u => u.role === 'student'),
       teachers: users.filter(u => u.role === 'teacher'),
-      admins: users.filter(u => u.role === 'admin'),
-      superadmins: users.filter(u => u.role === 'superadmin'),
+      admins: users.filter(u => u.role === 'admin' || u.role === 'superadmin'),
     };
   }, [users]);
 
@@ -161,11 +160,10 @@ export default function UserManagementPage() {
             </div>
           ) : (
             <Tabs defaultValue="students" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="students">Students ({filteredUsers.students.length})</TabsTrigger>
                 <TabsTrigger value="teachers">Teachers ({filteredUsers.teachers.length})</TabsTrigger>
-                <TabsTrigger value="admins">Admins ({filteredUsers.admins.length})</TabsTrigger>
-                <TabsTrigger value="superadmins">Super Admins ({filteredUsers.superadmins.length})</TabsTrigger>
+                <TabsTrigger value="admins">Admins &amp; Supers ({filteredUsers.admins.length})</TabsTrigger>
               </TabsList>
               <TabsContent value="students" className="mt-4">
                 <UserTable users={filteredUsers.students} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
@@ -175,9 +173,6 @@ export default function UserManagementPage() {
               </TabsContent>
               <TabsContent value="admins" className="mt-4">
                  <UserTable users={filteredUsers.admins} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
-              </TabsContent>
-               <TabsContent value="superadmins" className="mt-4">
-                 <UserTable users={filteredUsers.superadmins} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
               </TabsContent>
             </Tabs>
           )}
