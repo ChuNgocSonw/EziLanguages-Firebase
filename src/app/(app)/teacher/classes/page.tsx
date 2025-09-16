@@ -10,10 +10,29 @@ import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, PlusCircle, ArrowRight } from "lucide-react";
+import { Loader2, PlusCircle, ArrowRight, Trash2 } from "lucide-react";
 import type { Class } from "@/lib/types";
 import Link from "next/link";
 
@@ -26,8 +45,9 @@ export default function TeacherClassesPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { getTeacherClasses, createClass } = useAuth();
+  const { getTeacherClasses, createClass, deleteClass } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<CreateClassFormData>({
@@ -65,6 +85,19 @@ export default function TeacherClassesPage() {
       setIsCreating(false);
     }
   };
+  
+  const handleDeleteClass = async (classId: string) => {
+    setIsDeleting(classId);
+    try {
+        await deleteClass(classId);
+        toast({ title: "Success", description: "Class deleted successfully." });
+        setClasses(prev => prev.filter(c => c.id !== classId));
+    } catch (error: any) {
+        toast({ title: "Error", description: error.message || "Failed to delete class.", variant: "destructive" });
+    } finally {
+        setIsDeleting(null);
+    }
+  }
 
   return (
     <>
@@ -133,11 +166,37 @@ export default function TeacherClassesPage() {
                       {c.studentIds.length} student(s)
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/teacher/classes/${c.id}`}>
-                      Manage <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/teacher/classes/${c.id}`}>
+                        Manage <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                     <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" disabled={isDeleting === c.id}>
+                           {isDeleting === c.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive" />}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure you want to delete this class?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the class "{c.className}" and remove all students from it.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteClass(c.id)}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                          >
+                            Yes, delete class
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               ))}
             </div>

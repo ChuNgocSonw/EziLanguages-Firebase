@@ -14,7 +14,7 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
@@ -42,6 +42,7 @@ export interface AuthContextType {
   getLeaderboard: (category: 'badgeCount' | 'streak' | 'weeklyXP') => Promise<LeaderboardEntry[]>;
   createClass: (className: string) => Promise<void>;
   getTeacherClasses: () => Promise<Class[]>;
+  deleteClass: (classId: string) => Promise<void>;
   getAllUsers: () => Promise<AdminUserView[]>;
   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
   getClassDetails: (classId: string) => Promise<Class | null>;
@@ -467,6 +468,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
   };
   
+  const deleteClass = async (classId: string) => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+
+    const classRef = doc(db, "classes", classId);
+    const classDoc = await getDoc(classRef);
+
+    if (!classDoc.exists() || classDoc.data().teacherId !== auth.currentUser.uid) {
+        throw new Error("Class not found or you do not have permission to delete it.");
+    }
+
+    const studentIds = classDoc.data().studentIds || [];
+    const batch = writeBatch(db);
+
+    // 1. Delete the class document
+    batch.delete(classRef);
+
+    // 2. Update all students who were in that class
+    studentIds.forEach((studentId: string) => {
+        const studentRef = doc(db, "users", studentId);
+        batch.update(studentRef, { classId: deleteField() });
+    });
+
+    await batch.commit();
+  };
+  
   const getClassDetails = async (classId: string): Promise<Class | null> => {
       if (!auth.currentUser) return null;
       const classRef = doc(db, "classes", classId);
@@ -558,6 +584,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getLeaderboard,
     createClass,
     getTeacherClasses,
+    deleteClass,
     getAllUsers,
     updateUserRole,
     getClassDetails,
