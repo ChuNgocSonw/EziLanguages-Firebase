@@ -172,12 +172,17 @@ function ManualQuestionForm({ onAddQuestion }: { onAddQuestion: (q: QuizQuestion
                         {questionType === 'true-false' && (
                            <FormField control={form.control} name="answer" render={({ field }) => (
                                 <FormItem><FormLabel>Correct Answer</FormLabel>
-                                    <FormControl>
-                                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
-                                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="True" /></FormControl><FormLabel className="font-normal">True</FormLabel></FormItem>
-                                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="False" /></FormControl><FormLabel className="font-normal">False</FormLabel></FormItem>
-                                        </RadioGroup>
-                                    </FormControl><FormMessage />
+                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
+                                        <FormItem className="flex items-center space-x-2">
+                                            <FormControl><RadioGroupItem value="True" /></FormControl>
+                                            <FormLabel className="font-normal">True</FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-2">
+                                            <FormControl><RadioGroupItem value="False" /></FormControl>
+                                            <FormLabel className="font-normal">False</FormLabel>
+                                        </FormItem>
+                                    </RadioGroup>
+                                    <FormMessage />
                                 </FormItem>
                             )}/>
                         )}
@@ -288,7 +293,28 @@ export default function NewAssignmentPage() {
                         <CardContent className="space-y-4">
                             <FormField control={generationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Question Topic</FormLabel><FormControl><Input placeholder="e.g., Common English Idioms" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <FormField control={generationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
+                                <FormField control={generationForm.control} name="difficulty" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Difficulty</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4">
+                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                <FormControl><RadioGroupItem value="Easy" /></FormControl>
+                                                <FormLabel className="font-normal">Easy</FormLabel>
+                                            </FormItem>
+                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                <FormControl><RadioGroupItem value="Medium" /></FormControl>
+                                                <FormLabel className="font-normal">Medium</FormLabel>
+                                            </FormItem>
+                                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                                <FormControl><RadioGroupItem value="Hard" /></FormControl>
+                                                <FormLabel className="font-normal">Hard</FormLabel>
+                                            </FormItem>
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}/>
                                 <FormField control={generationForm.control} name="questionType" render={({ field }) => (<FormItem><FormLabel>Question Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="multiple-choice">Multiple Choice</SelectItem><SelectItem value="true-false">True/False</SelectItem><SelectItem value="fill-in-the-blank">Fill-in-the-Blank</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
                                 <FormField control={generationForm.control} name="numberOfQuestions" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                             </div>
@@ -297,8 +323,10 @@ export default function NewAssignmentPage() {
                     </form>
                 </Form>
             </Card>
+            
             <Separator />
-            <div className="grid lg:grid-cols-2 gap-6">
+
+            <div className="space-y-6">
                 <div>
                     <h3 className="font-semibold mb-2">Available Questions</h3>
                     <div className="grid md:grid-cols-2 gap-6">
@@ -321,6 +349,7 @@ export default function NewAssignmentPage() {
                     </div>
                 </div>
             </div>
+
             <div className="flex justify-between items-center mt-6">
                 <Button type="button" variant="outline" onClick={handleBackToDetails} disabled={isSaving}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Details</Button>
                 <Button onClick={selectionForm.handleSubmit(handleSaveAssignment)} disabled={isSaving || fields.length === 0}>{isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{isSaving ? "Saving..." : `Save Assignment (${fields.length} questions)`}</Button>
