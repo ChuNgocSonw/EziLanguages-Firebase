@@ -157,10 +157,10 @@ export default function NewAssignmentPage() {
         <Button 
             size="icon" 
             variant="ghost" 
-            className="absolute top-2 right-2 h-7 w-7" 
+            className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white"
             onClick={() => onAction(q, index)}
         >
-            {actionType === 'add' ? <PlusCircle className="h-4 w-4 text-green-600" /> : <Trash2 className="h-4 w-4 text-destructive" />}
+            {actionType === 'add' ? <PlusCircle className="h-4 w-4" /> : <Trash2 className="h-4 w-4 text-destructive" />}
         </Button>
     </div>
   );
