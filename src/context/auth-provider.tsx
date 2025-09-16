@@ -14,8 +14,8 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity } from '@/lib/types';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where } from 'firebase/firestore';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +40,8 @@ export interface AuthContextType {
   saveQuizAttempt: (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>) => Promise<number>;
   getQuizHistory: () => Promise<QuizAttempt[]>;
   getLeaderboard: (category: 'badgeCount' | 'streak' | 'weeklyXP') => Promise<LeaderboardEntry[]>;
+  createClass: (className: string) => Promise<void>;
+  getTeacherClasses: () => Promise<Class[]>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -437,6 +439,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const createClass = async (className: string) => {
+    if (!auth.currentUser || !userProfile || userProfile.role === 'student') {
+        throw new Error("You do not have permission to create classes.");
+    }
+    const classesRef = collection(db, "classes");
+    await addDoc(classesRef, {
+        className,
+        teacherId: auth.currentUser.uid,
+        teacherName: userProfile.name,
+        studentIds: [],
+        createdAt: serverTimestamp(),
+    });
+  };
+
+  const getTeacherClasses = async (): Promise<Class[]> => {
+    if (!auth.currentUser) return [];
+    const classesRef = collection(db, "classes");
+    const q = query(classesRef, where("teacherId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
+  };
+
+
   const value: AuthContextType = {
     user,
     userProfile,
@@ -456,10 +481,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveQuizAttempt,
     getQuizHistory,
     getLeaderboard,
+    createClass,
+    getTeacherClasses,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-    
-    

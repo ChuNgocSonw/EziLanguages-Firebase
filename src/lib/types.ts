@@ -21,6 +21,16 @@ export interface QuizAttempt {
   completedAt: Timestamp;
 }
 
+export interface Class {
+  id: string;
+  className: string;
+  teacherId: string;
+  teacherName: string;
+  studentIds: string[];
+  createdAt: Timestamp;
+}
+
+
 export const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Invalid email address."),
@@ -75,6 +85,7 @@ export interface UserProfile {
   pronunciationScores?: { [sentenceKey: string]: PronunciationAttempt };
   listeningScores?: { [exerciseId: string]: number }; // Store XP earned instead of boolean
   lastActivity?: LastActivity;
+  classId?: string;
 }
 
 export interface LeaderboardEntry {
