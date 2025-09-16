@@ -13,6 +13,7 @@ import type { AdminUserView, Class } from "@/lib/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import useDebounce from "@/hooks/use-debounce";
 
 export default function ManageClassPage() {
   const { classId } = useParams();
@@ -22,19 +23,21 @@ export default function ManageClassPage() {
     getStudentsForClassManagement, 
     addStudentToClass, 
     removeStudentFromClass,
-    findStudentByEmail 
+    searchStudentsByEmail 
   } = useAuth();
   const { toast } = useToast();
 
   const [classDetails, setClassDetails] = useState<Class | null>(null);
   const [studentsInClass, setStudentsInClass] = useState<AdminUserView[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState<string | null>(null); // Store student ID being updated
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
 
-  const [searchEmail, setSearchEmail] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResult, setSearchResult] = useState<AdminUserView | null>(null);
+  const [searchResults, setSearchResults] = useState<AdminUserView[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
+  
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const fetchClassData = useCallback(async () => {
     if (typeof classId !== 'string') return;
@@ -62,29 +65,35 @@ export default function ManageClassPage() {
     setIsLoading(true);
     fetchClassData();
   }, [fetchClassData]);
-
-  const handleSearchStudent = async () => {
-    if (!searchEmail) return;
-    setIsSearching(true);
-    setSearchResult(null);
-    setSearchError(null);
-    try {
-        const student = await findStudentByEmail(searchEmail);
-        if (student) {
-            if (student.classId) {
-                setSearchError("This student is already in a class.");
-            } else {
-                setSearchResult(student);
-            }
-        } else {
-            setSearchError("No student found with this email.");
+  
+  useEffect(() => {
+    const performSearch = async () => {
+        if (debouncedSearchQuery.length < 3) {
+            setSearchResults([]);
+            setSearchError(null);
+            setIsSearching(false);
+            return;
         }
-    } catch (error: any) {
-        setSearchError(error.message);
-    } finally {
-        setIsSearching(false);
-    }
-  };
+        setIsSearching(true);
+        setSearchError(null);
+        try {
+            const results = await searchStudentsByEmail(debouncedSearchQuery);
+            if (results.length > 0) {
+                setSearchResults(results);
+            } else {
+                setSearchResults([]);
+                setSearchError("No available students found with this email.");
+            }
+        } catch (error: any) {
+            setSearchError(error.message);
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+    performSearch();
+  }, [debouncedSearchQuery, searchStudentsByEmail]);
+
   
   const handleAddStudent = async (student: AdminUserView) => {
     if (typeof classId !== 'string') return;
@@ -93,10 +102,11 @@ export default function ManageClassPage() {
         await addStudentToClass(classId, student.uid);
         toast({ title: "Success", description: "Student added to the class." });
         
-        // Optimistic UI update
         setStudentsInClass(prev => [...prev, student].sort((a, b) => a.name.localeCompare(b.name)));
-        setSearchResult(null);
-        setSearchEmail("");
+        setSearchResults(prev => prev.filter(s => s.uid !== student.uid));
+        if (searchResults.length <= 1) {
+            setSearchQuery("");
+        }
         
     } catch(error: any) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -111,17 +121,13 @@ export default function ManageClassPage() {
     try {
         await removeStudentFromClass(classId, studentId);
         toast({ title: "Success", description: "Student removed from the class." });
-
-        // Optimistic UI update
         setStudentsInClass(prev => prev.filter(s => s.uid !== studentId));
-
     } catch(error: any) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
         setIsUpdating(null);
     }
   }
-
 
   if (isLoading) {
     return (
@@ -178,20 +184,18 @@ export default function ManageClassPage() {
         <Card>
           <CardHeader>
             <CardTitle>Add Student to Class</CardTitle>
-            <CardDescription>Search for a student by their email address to add them.</CardDescription>
+            <CardDescription>Search for available students by their email address.</CardDescription>
           </CardHeader>
           <CardContent>
-             <div className="flex items-center gap-2">
+             <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
                     type="email" 
-                    placeholder="student@example.com"
-                    value={searchEmail}
-                    onChange={(e) => setSearchEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearchStudent()}
+                    placeholder="Start typing student's email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
                 />
-                <Button onClick={handleSearchStudent} disabled={isSearching}>
-                    {isSearching ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4" />}
-                </Button>
              </div>
 
              <div className="mt-4 min-h-[80px]">
@@ -200,30 +204,33 @@ export default function ManageClassPage() {
                         <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
                 )}
-                {searchError && (
+                {searchError && !isSearching && (
                     <p className="text-center text-destructive py-4">{searchError}</p>
                 )}
-                {searchResult && (
-                    <div className="flex items-center justify-between p-2 rounded-md border bg-muted/50">
-                        <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                            <AvatarFallback><UserCircle className="h-5 w-5"/></AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="font-medium">{searchResult.name}</p>
-                            <p className="text-xs text-muted-foreground">{searchResult.email}</p>
-                        </div>
-                        </div>
-                        <Button 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={() => handleAddStudent(searchResult)} 
-                            disabled={isUpdating === searchResult.uid}
-                            className="bg-green-100 border-green-300 text-green-800 hover:bg-green-200"
-                        >
-                            {isUpdating === searchResult.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="h-4 w-4 mr-2"/>}
-                            Add to Class
-                        </Button>
+                {searchResults.length > 0 && !isSearching && (
+                    <div className="space-y-2">
+                        {searchResults.map(student => (
+                            <div key={student.uid} className="flex items-center justify-between p-2 rounded-md border bg-muted/50">
+                                <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarFallback><UserCircle className="h-5 w-5"/></AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-medium">{student.name}</p>
+                                    <p className="text-xs text-muted-foreground">{student.email}</p>
+                                </div>
+                                </div>
+                                <Button 
+                                    size="icon" 
+                                    variant="ghost" 
+                                    onClick={() => handleAddStudent(student)} 
+                                    disabled={isUpdating === student.uid}
+                                    className="text-green-600 hover:bg-[#E6F9ED] hover:text-green-700"
+                                >
+                                    {isUpdating === student.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="h-5 w-5"/>}
+                                </Button>
+                            </div>
+                        ))}
                     </div>
                 )}
              </div>

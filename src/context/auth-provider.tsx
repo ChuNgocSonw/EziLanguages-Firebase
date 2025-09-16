@@ -49,7 +49,7 @@ export interface AuthContextType {
   getStudentsForClassManagement: (classId: string) => Promise<AdminUserView[]>;
   addStudentToClass: (classId: string, studentId: string) => Promise<void>;
   removeStudentFromClass: (classId: string, studentId: string) => Promise<void>;
-  findStudentByEmail: (email: string) => Promise<AdminUserView | null>;
+  searchStudentsByEmail: (emailQuery: string) => Promise<AdminUserView[]>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -482,10 +482,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const studentIds = classDoc.data().studentIds || [];
     const batch = writeBatch(db);
 
-    // 1. Delete the class document
     batch.delete(classRef);
 
-    // 2. Update all students who were in that class
     studentIds.forEach((studentId: string) => {
         const studentRef = doc(db, "users", studentId);
         batch.update(studentRef, { classId: deleteField() });
@@ -515,15 +513,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
   }
 
-  const findStudentByEmail = async (email: string): Promise<AdminUserView | null> => {
+  const searchStudentsByEmail = async (emailQuery: string): Promise<AdminUserView[]> => {
     const usersRef = collection(db, "users");
-    const q = query(usersRef, where("email", "==", email), where("role", "==", "student"), limit(1));
+    const endStr = emailQuery + '\uf8ff';
+    const q = query(
+      usersRef, 
+      where("email", ">=", emailQuery),
+      where("email", "<", endStr),
+      where("role", "==", "student"),
+      limit(5)
+    );
     const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-        return null;
-    }
-    const studentDoc = querySnapshot.docs[0];
-    return { uid: studentDoc.id, ...studentDoc.data() } as AdminUserView;
+    const results = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
+
+    // Filter out students who already have a class
+    return results.filter(student => !student.classId);
   }
   
   const addStudentToClass = async (classId: string, studentId: string) => {
@@ -561,8 +565,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUserRole = async (userId: string, role: UserRole) => {
-    // Let Firestore Rules handle the detailed permission logic.
-    // Client-side checks are for better UX, not for security.
     if (!userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
       throw new Error("You do not have permission to update roles.");
     }
@@ -604,7 +606,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getStudentsForClassManagement,
     addStudentToClass,
     removeStudentFromClass,
-    findStudentByEmail,
+    searchStudentsByEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
