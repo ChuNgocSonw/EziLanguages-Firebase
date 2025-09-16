@@ -492,17 +492,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await batch.commit();
   };
   
-  const getClassDetails = async (classId: string): Promise<Class | null> => {
-      if (!auth.currentUser) return null;
-      const classRef = doc(db, "classes", classId);
-      const docSnap = await getDoc(classRef);
-      if (docSnap.exists()) {
-          return { id: docSnap.id, ...docSnap.data() } as Class;
-      }
-      return null;
-  };
+  const getClassDetails = useCallback(async (classId: string): Promise<Class | null> => {
+    if (!auth.currentUser) return null;
+    const classRef = doc(db, "classes", classId);
+    const docSnap = await getDoc(classRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Class;
+    }
+    return null;
+  }, []);
   
-  const getStudentsForClassManagement = async (classId: string): Promise<AdminUserView[]> => {
+  const getStudentsForClassManagement = useCallback(async (classId: string): Promise<AdminUserView[]> => {
       const classDetails = await getClassDetails(classId);
       if (!classDetails || classDetails.studentIds.length === 0) return [];
       
@@ -511,7 +511,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const querySnapshot = await getDocs(q);
       
       return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
-  }
+  }, [getClassDetails]);
 
   const searchStudentsByEmail = async (emailQuery: string): Promise<AdminUserView[]> => {
     const usersRef = collection(db, "users");
