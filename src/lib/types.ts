@@ -2,7 +2,7 @@
 import { z } from "zod";
 import type { Timestamp } from "firebase/firestore";
 
-export const UserRole = z.enum(["student", "teacher", "admin"]);
+export const UserRole = z.enum(["student", "teacher", "admin", "superadmin"]);
 export type UserRole = z.infer<typeof UserRole>;
 
 export interface QuizQuestion {

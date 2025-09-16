@@ -464,7 +464,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const getAllUsers = async (): Promise<AdminUserView[]> => {
-    if (!userProfile || userProfile.role !== 'admin') {
+    if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superadmin')) {
       throw new Error("You do not have permission to view users.");
     }
     const usersRef = collection(db, "users");
@@ -473,12 +473,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUserRole = async (userId: string, role: UserRole) => {
-    if (!userProfile || userProfile.role !== 'admin') {
+    if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superadmin')) {
       throw new Error("You do not have permission to update roles.");
     }
     if (auth.currentUser?.uid === userId) {
-      throw new Error("Admins cannot change their own role.");
+      throw new Error("You cannot change your own role.");
     }
+    
+    const targetUserDoc = await getDoc(doc(db, "users", userId));
+    const targetUserData = targetUserDoc.data() as UserProfile;
+
+    if (userProfile.role === 'admin' && (targetUserData.role === 'admin' || targetUserData.role === 'superadmin')) {
+      throw new Error("Admins cannot change the role of other admins or superadmins.");
+    }
+
+    if (userProfile.role === 'superadmin' && targetUserData.role === 'superadmin' && role !== 'superadmin') {
+        // Optional: prevent a superadmin from demoting another superadmin unless intended
+        // For now, we allow superadmins to manage other superadmins
+    }
+
     const userDocRef = doc(db, "users", userId);
     await updateDoc(userDocRef, { role: role });
   };

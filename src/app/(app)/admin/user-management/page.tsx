@@ -13,9 +13,21 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminUserView[], onRoleChange: (userId: string, newRole: UserRole) => void, getRoleBadgeVariant: (role: string) => "default" | "secondary" | "destructive" }) {
-  const { user: currentUser } = useAuth();
+function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminUserView[], onRoleChange: (userId: string, newRole: UserRole) => void, getRoleBadgeVariant: (role: string) => "default" | "secondary" | "destructive" | "outline" }) {
+  const { user: currentUser, userProfile } = useAuth();
   
+  const canChangeRole = (targetUserRole: UserRole) => {
+    if (userProfile?.role === 'superadmin') {
+      return true; // Superadmin can change any role
+    }
+    if (userProfile?.role === 'admin') {
+      // Admin cannot change admin or superadmin roles
+      return targetUserRole !== 'admin' && targetUserRole !== 'superadmin';
+    }
+    return false;
+  };
+
+
   return (
     <Table>
       <TableHeader>
@@ -32,7 +44,7 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
             <TableCell className="font-medium">{user.name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>
-              <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize">
+              <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize pointer-events-none">
                 {user.role}
               </Badge>
             </TableCell>
@@ -40,7 +52,7 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
               <Select
                 defaultValue={user.role}
                 onValueChange={(newRole: UserRole) => onRoleChange(user.uid, newRole)}
-                disabled={user.uid === currentUser?.uid}
+                disabled={user.uid === currentUser?.uid || !canChangeRole(user.role)}
               >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select a role" />
@@ -48,7 +60,8 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
                 <SelectContent>
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  {userProfile?.role === 'superadmin' && <SelectItem value="admin">Admin</SelectItem>}
+                  {userProfile?.role === 'superadmin' && <SelectItem value="superadmin">Super Admin</SelectItem>}
                 </SelectContent>
               </Select>
             </TableCell>
@@ -110,8 +123,10 @@ export default function UserManagementPage() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case "admin":
+      case "superadmin":
         return "destructive";
+      case "admin":
+        return "outline";
       case "teacher":
         return "secondary";
       default:
@@ -124,6 +139,7 @@ export default function UserManagementPage() {
       students: users.filter(u => u.role === 'student'),
       teachers: users.filter(u => u.role === 'teacher'),
       admins: users.filter(u => u.role === 'admin'),
+      superadmins: users.filter(u => u.role === 'superadmin'),
     };
   }, [users]);
 
@@ -145,10 +161,11 @@ export default function UserManagementPage() {
             </div>
           ) : (
             <Tabs defaultValue="students" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="students">Students ({filteredUsers.students.length})</TabsTrigger>
                 <TabsTrigger value="teachers">Teachers ({filteredUsers.teachers.length})</TabsTrigger>
                 <TabsTrigger value="admins">Admins ({filteredUsers.admins.length})</TabsTrigger>
+                <TabsTrigger value="superadmins">Super Admins ({filteredUsers.superadmins.length})</TabsTrigger>
               </TabsList>
               <TabsContent value="students" className="mt-4">
                 <UserTable users={filteredUsers.students} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
@@ -158,6 +175,9 @@ export default function UserManagementPage() {
               </TabsContent>
               <TabsContent value="admins" className="mt-4">
                  <UserTable users={filteredUsers.admins} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
+              </TabsContent>
+               <TabsContent value="superadmins" className="mt-4">
+                 <UserTable users={filteredUsers.superadmins} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
               </TabsContent>
             </Tabs>
           )}
