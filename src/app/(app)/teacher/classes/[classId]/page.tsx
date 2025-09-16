@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,7 @@ export default function ManageClassPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState<string | null>(null); // Store student ID being updated
 
-  const fetchClassData = async () => {
+  const fetchClassData = useCallback(async () => {
     if (typeof classId !== 'string') return;
     setIsLoading(true);
     try {
@@ -47,11 +47,11 @@ export default function ManageClassPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [classId, getClassDetails, getStudentsForClassManagement, toast, router]);
 
   useEffect(() => {
     fetchClassData();
-  }, [classId]);
+  }, [fetchClassData]);
   
   const handleAddStudent = async (studentId: string) => {
     if (typeof classId !== 'string') return;
@@ -63,7 +63,7 @@ export default function ManageClassPage() {
         // Optimistic UI update
         const studentToAdd = availableStudents.find(s => s.uid === studentId);
         if (studentToAdd) {
-            setStudentsInClass(prev => [...prev, studentToAdd]);
+            setStudentsInClass(prev => [...prev, studentToAdd].sort((a, b) => a.name.localeCompare(b.name)));
             setAvailableStudents(prev => prev.filter(s => s.uid !== studentId));
         }
 
@@ -86,7 +86,7 @@ export default function ManageClassPage() {
         // Optimistic UI update
         const studentToRemove = studentsInClass.find(s => s.uid === studentId);
         if (studentToRemove) {
-            setAvailableStudents(prev => [...prev, studentToRemove]);
+            setAvailableStudents(prev => [...prev, studentToRemove].sort((a, b) => a.name.localeCompare(b.name)));
             setStudentsInClass(prev => prev.filter(s => s.uid !== studentId));
         }
 
@@ -171,7 +171,7 @@ export default function ManageClassPage() {
                                     <p className="text-xs text-muted-foreground">{student.email}</p>
                                 </div>
                             </div>
-                            <Button size="icon" variant="ghost" onClick={() => handleAddStudent(student.uid)} disabled={isUpdating === student.uid} className="text-green-600 hover:text-green-700">
+                            <Button size="icon" variant="ghost" onClick={() => handleAddStudent(student.uid)} disabled={isUpdating === student.uid} className="text-green-600 hover:bg-[#2E7D32] hover:text-white">
                                {isUpdating === student.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="h-4 w-4"/>}
                             </Button>
                         </div>
