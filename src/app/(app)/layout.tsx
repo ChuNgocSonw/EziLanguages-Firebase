@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { User, Settings, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ShieldCheck } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { MainNav } from '@/components/main-nav';
@@ -22,16 +22,17 @@ import { AuthProvider } from '@/context/auth-provider';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
-  const { user, loading, logOut } = useAuth();
+  const { user, userProfile, loading, logOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !userProfile) return;
 
     if (!user) {
       router.push('/login');
@@ -42,9 +43,16 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         // Allow access to profile page to manage account, but not others
         if (pathname !== '/profile') {
             router.push('/verify-email');
+            return;
         }
     }
-  }, [user, loading, router, pathname]);
+    
+    // Role-based route protection
+    if (pathname.startsWith('/admin') && userProfile.role !== 'admin') {
+      router.push('/dashboard'); // Or a dedicated 'unauthorized' page
+    }
+
+  }, [user, userProfile, loading, router, pathname]);
 
   if (loading || !user) {
     return (
@@ -90,7 +98,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
              </Button>
           </div>
           <div className="flex-1">
-            <MainNav isCollapsed={isSidebarCollapsed} />
+            <MainNav isCollapsed={isSidebarCollapsed} userRole={userProfile?.role} />
           </div>
         </div>
       </div>
@@ -115,7 +123,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                   <Logo width={40} height={40} />
                   <span className="sr-only">Ezi Languages</span>
                 </Link>
-                <MainNav isMobile />
+                <MainNav isMobile userRole={userProfile?.role}/>
               </nav>
             </SheetContent>
           </Sheet>
@@ -155,6 +163,17 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
+              {userProfile?.role === 'admin' && (
+                  <>
+                    <DropdownMenuSeparator />
+                     <DropdownMenuItem asChild>
+                        <Link href="/admin">
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            <span>Admin Panel</span>
+                        </Link>
+                    </DropdownMenuItem>
+                  </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logOut}>
                  <LogOut className="mr-2 h-4 w-4" />
@@ -165,10 +184,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 flex flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background overflow-y-auto">
           {!user.emailVerified && (
-              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md mb-4" role="alert">
-              <p className="font-bold">Verification Required</p>
-              <p>Your email is not verified. Please check your inbox for a verification link to unlock all features.</p>
-              </div>
+              <Alert variant="default" className="bg-yellow-100 border-yellow-500 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300">
+                  <AlertTitle className="font-bold">Verification Required</AlertTitle>
+                  <AlertDescription>
+                    Your email is not verified. Please check your inbox for a verification link to unlock all features.
+                  </AlertDescription>
+              </Alert>
           )}
           {children}
         </main>

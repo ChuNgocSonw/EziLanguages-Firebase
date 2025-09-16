@@ -191,6 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: email,
       age: 0,
       language: "EN",
+      role: 'student',
       xp: 0,
       weeklyXP: 0,
       streak: 0,

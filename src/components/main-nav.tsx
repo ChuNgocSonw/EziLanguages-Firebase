@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Trophy,
   User,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -18,20 +19,30 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import type { UserRole } from '@/lib/types';
 
 
-const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/chat', icon: MessageSquare, label: 'AI Chat' },
-  { href: '/reading', icon: BookOpen, label: 'Reading' },
-  { href: '/listening', icon: Headphones, label: 'Listening' },
-  { href: '/quizzes', icon: ClipboardList, label: 'Quizzes' },
-  { href: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
-  { href: '/profile', icon: User, label: 'Profile' },
+const allNavItems = [
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['student', 'teacher', 'admin'] },
+  { href: '/chat', icon: MessageSquare, label: 'AI Chat', roles: ['student', 'teacher', 'admin'] },
+  { href: '/reading', icon: BookOpen, label: 'Reading', roles: ['student', 'teacher', 'admin'] },
+  { href: '/listening', icon: Headphones, label: 'Listening', roles: ['student', 'teacher', 'admin'] },
+  { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin'] },
+  { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student', 'teacher', 'admin'] },
+  { href: '/profile', icon: User, label: 'Profile', roles: ['student', 'teacher', 'admin'] },
+  { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin'] },
 ];
 
-export function MainNav({ isMobile = false, isCollapsed = false }: { isMobile?: boolean, isCollapsed?: boolean }) {
+interface MainNavProps {
+    isMobile?: boolean;
+    isCollapsed?: boolean;
+    userRole?: UserRole;
+}
+
+export function MainNav({ isMobile = false, isCollapsed = false, userRole }: MainNavProps) {
   const navClass = isMobile ? "" : "grid items-start px-2 text-sm font-medium lg:px-4";
+
+  const navItems = allNavItems.filter(item => userRole && item.roles.includes(userRole));
 
   if (isCollapsed) {
     return (

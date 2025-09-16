@@ -18,6 +18,7 @@ import { badgeCategories } from "@/lib/badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProfilePage() {
   const { user, userProfile, updateUserProfile, updateUserAppData } = useAuth();
@@ -69,6 +70,17 @@ export default function ProfilePage() {
       setIsLoading(false);
     }
   };
+
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "destructive";
+      case "teacher":
+        return "secondary";
+      default:
+        return "default";
+    }
+  }
 
   return (
     <>
@@ -134,9 +146,19 @@ export default function ProfilePage() {
                         </FormItem>
                         )}
                     />
-                    <div className="space-y-2">
+                     <div className="space-y-2">
                         <FormLabel>Email</FormLabel>
                         <Input value={user?.email || ""} disabled />
+                    </div>
+                     <div className="space-y-2">
+                        <FormLabel>Role</FormLabel>
+                        <div>
+                           {userProfile?.role && (
+                             <Badge variant={getRoleBadgeVariant(userProfile.role)} className="capitalize">
+                               {userProfile.role}
+                             </Badge>
+                           )}
+                        </div>
                     </div>
                     </CardContent>
                     <CardFooter>

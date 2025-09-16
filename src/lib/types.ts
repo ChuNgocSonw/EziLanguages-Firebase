@@ -2,6 +2,9 @@
 import { z } from "zod";
 import type { Timestamp } from "firebase/firestore";
 
+export const UserRole = z.enum(["student", "teacher", "admin"]);
+export type UserRole = z.infer<typeof UserRole>;
+
 export interface QuizQuestion {
   question: string;
   options: string[];
@@ -61,6 +64,7 @@ export interface UserProfile {
   email: string;
   age: number;
   language: string;
+  role: UserRole;
   xp: number;
   weeklyXP: number;
   streak: number;
