@@ -5,11 +5,17 @@ import type { Timestamp } from "firebase/firestore";
 export const UserRole = z.enum(["student", "teacher", "admin", "superadmin"]);
 export type UserRole = z.infer<typeof UserRole>;
 
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  answer: string;
-}
+export const QuestionType = z.enum(['multiple-choice', 'true-false', 'fill-in-the-blank']);
+export type QuestionType = z.infer<typeof QuestionType>;
+
+export const QuizQuestionSchema = z.object({
+  question: z.string(),
+  type: QuestionType,
+  options: z.array(z.string()).optional(),
+  answer: z.string(),
+});
+export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
+
 
 export interface QuizAttempt {
   id?: string;
