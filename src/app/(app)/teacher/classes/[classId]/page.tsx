@@ -41,6 +41,7 @@ export default function ManageClassPage() {
 
   const fetchClassData = useCallback(async () => {
     if (typeof classId !== 'string') return;
+    setIsLoading(true);
     try {
       const details = await getClassDetails(classId);
       if (!details) {
@@ -62,7 +63,6 @@ export default function ManageClassPage() {
   }, [classId, getClassDetails, getStudentsForClassManagement, toast, router]);
 
   useEffect(() => {
-    setIsLoading(true);
     fetchClassData();
   }, [fetchClassData]);
   
@@ -78,11 +78,16 @@ export default function ManageClassPage() {
         setSearchError(null);
         try {
             const results = await searchStudentsByEmail(debouncedSearchQuery);
-            if (results.length > 0) {
-                setSearchResults(results);
+            // Filter out students who are already in the current class
+            const availableResults = results.filter(
+                (searchedStudent) => !studentsInClass.some((classStudent) => classStudent.uid === searchedStudent.uid)
+            );
+            
+            if (availableResults.length > 0) {
+                setSearchResults(availableResults);
             } else {
                 setSearchResults([]);
-                setSearchError("No available students found with this email.");
+                setSearchError("No available students found with this email, or they are already in this class.");
             }
         } catch (error: any) {
             setSearchError(error.message);
@@ -92,7 +97,7 @@ export default function ManageClassPage() {
         }
     };
     performSearch();
-  }, [debouncedSearchQuery, searchStudentsByEmail]);
+  }, [debouncedSearchQuery, searchStudentsByEmail, studentsInClass]);
 
   
   const handleAddStudent = async (student: AdminUserView) => {
@@ -100,13 +105,13 @@ export default function ManageClassPage() {
     setIsUpdating(student.uid);
     try {
         await addStudentToClass(classId, student.uid);
-        toast({ title: "Success", description: "Student added to the class." });
+        toast({ title: "Success", description: `${student.name} has been added to the class.` });
         
         // Update state directly instead of re-fetching
-        setStudentsInClass(prev => [...prev, student].sort((a, b) => a.name.localeCompare(b.name)));
+        setStudentsInClass(prev => [...prev, student].sort((a, b) => (a.name || '').localeCompare(b.name || '')));
         setSearchResults(prev => prev.filter(s => s.uid !== student.uid));
         
-        // Clear search if no results left
+        // Clear search if no results left to avoid confusion
         if (searchResults.length <= 1) {
             setSearchQuery("");
         }
@@ -123,7 +128,7 @@ export default function ManageClassPage() {
     setIsUpdating(student.uid);
     try {
         await removeStudentFromClass(classId, student.uid);
-        toast({ title: "Success", description: "Student removed from the class." });
+        toast({ title: "Success", description: `${student.name} has been removed from the class.` });
         
         // Update state directly
         setStudentsInClass(prev => prev.filter(s => s.uid !== student.uid));
@@ -137,7 +142,7 @@ export default function ManageClassPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-48">
+      <div className="flex justify-center items-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -246,5 +251,3 @@ export default function ManageClassPage() {
     </>
   );
 }
-
-    
