@@ -336,7 +336,9 @@ export default function NewAssignmentPage() {
                             {!isGenerating && generatedQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
                             {generatedQuestions.map((q, index) => (<QuestionCard key={`gen-${index}`} q={q} index={index} onAction={handleAddQuestionToSelection} actionType="add" />))}
                         </div>
-                        <div className="h-96 overflow-y-auto"><ManualQuestionForm onAddQuestion={handleAddManualQuestion} /></div>
+                        <div>
+                           <ManualQuestionForm onAddQuestion={handleAddManualQuestion} />
+                        </div>
                     </div>
                 </div>
                 <div>
