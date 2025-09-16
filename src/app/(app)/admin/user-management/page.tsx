@@ -18,10 +18,9 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
   
   const canChangeRole = (targetUserRole: UserRole) => {
     if (userProfile?.role === 'superadmin') {
-      return true; // Superadmin can change any role
+      return targetUserRole !== 'superadmin';
     }
     if (userProfile?.role === 'admin') {
-      // Admin cannot change admin or superadmin roles
       return targetUserRole !== 'admin' && targetUserRole !== 'superadmin';
     }
     return false;
@@ -126,7 +125,7 @@ export default function UserManagementPage() {
       case "superadmin":
         return "destructive";
       case "admin":
-        return "outline";
+        return "destructive";
       case "teacher":
         return "secondary";
       default:
