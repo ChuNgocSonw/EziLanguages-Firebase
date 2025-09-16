@@ -59,9 +59,18 @@ export default function ManageClassPage() {
     try {
         await addStudentToClass(classId, studentId);
         toast({ title: "Success", description: "Student added to the class." });
-        await fetchClassData(); // Refresh data
+        
+        // Optimistic UI update
+        const studentToAdd = availableStudents.find(s => s.uid === studentId);
+        if (studentToAdd) {
+            setStudentsInClass(prev => [...prev, studentToAdd]);
+            setAvailableStudents(prev => prev.filter(s => s.uid !== studentId));
+        }
+
     } catch(error: any) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
+        // Revert UI on error
+        await fetchClassData();
     } finally {
         setIsUpdating(null);
     }
@@ -73,9 +82,18 @@ export default function ManageClassPage() {
     try {
         await removeStudentFromClass(classId, studentId);
         toast({ title: "Success", description: "Student removed from the class." });
-        await fetchClassData(); // Refresh data
+
+        // Optimistic UI update
+        const studentToRemove = studentsInClass.find(s => s.uid === studentId);
+        if (studentToRemove) {
+            setAvailableStudents(prev => [...prev, studentToRemove]);
+            setStudentsInClass(prev => prev.filter(s => s.uid !== studentId));
+        }
+
     } catch(error: any) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
+        // Revert UI on error
+        await fetchClassData();
     } finally {
         setIsUpdating(null);
     }
@@ -153,7 +171,7 @@ export default function ManageClassPage() {
                                     <p className="text-xs text-muted-foreground">{student.email}</p>
                                 </div>
                             </div>
-                            <Button size="icon" variant="ghost" onClick={() => handleAddStudent(student.uid)} disabled={isUpdating === student.uid}>
+                            <Button size="icon" variant="ghost" onClick={() => handleAddStudent(student.uid)} disabled={isUpdating === student.uid} className="hover:bg-transparent">
                                {isUpdating === student.uid ? <Loader2 className="h-4 w-4 animate-spin"/> : <PlusCircle className="h-4 w-4 text-green-600"/>}
                             </Button>
                         </div>
