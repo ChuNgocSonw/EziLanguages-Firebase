@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,6 +11,51 @@ import { AdminUserView, UserRole } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminUserView[], onRoleChange: (userId: string, newRole: UserRole) => void, getRoleBadgeVariant: (role: string) => "default" | "secondary" | "destructive" }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Current Role</TableHead>
+          <TableHead>Change Role</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {users.map((user) => (
+          <TableRow key={user.uid}>
+            <TableCell className="font-medium">{user.name}</TableCell>
+            <TableCell>{user.email}</TableCell>
+            <TableCell>
+              <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize">
+                {user.role}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <Select
+                defaultValue={user.role}
+                onValueChange={(newRole: UserRole) => onRoleChange(user.uid, newRole)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
 
 export default function AdminPage() {
   const { getAllUsers, updateUserRole } = useAuth();
@@ -70,6 +115,14 @@ export default function AdminPage() {
         return "default";
     }
   }
+  
+  const filteredUsers = useMemo(() => {
+    return {
+      students: users.filter(u => u.role === 'student'),
+      teachers: users.filter(u => u.role === 'teacher'),
+      admins: users.filter(u => u.role === 'admin'),
+    };
+  }, [users]);
 
   return (
     <>
@@ -80,7 +133,7 @@ export default function AdminPage() {
       <Card>
         <CardHeader>
           <CardTitle>User Management</CardTitle>
-          <CardDescription>View all registered users and assign roles.</CardDescription>
+          <CardDescription>View all registered users and assign roles based on their category.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -88,44 +141,22 @@ export default function AdminPage() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Current Role</TableHead>
-                  <TableHead>Change Role</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.uid}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                       <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize">
-                          {user.role}
-                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        defaultValue={user.role}
-                        onValueChange={(newRole: UserRole) => handleRoleChange(user.uid, newRole)}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="student">Student</SelectItem>
-                          <SelectItem value="teacher">Teacher</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <Tabs defaultValue="students" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="students">Students ({filteredUsers.students.length})</TabsTrigger>
+                <TabsTrigger value="teachers">Teachers ({filteredUsers.teachers.length})</TabsTrigger>
+                <TabsTrigger value="admins">Admins ({filteredUsers.admins.length})</TabsTrigger>
+              </TabsList>
+              <TabsContent value="students" className="mt-4">
+                <UserTable users={filteredUsers.students} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
+              </TabsContent>
+              <TabsContent value="teachers" className="mt-4">
+                 <UserTable users={filteredUsers.teachers} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
+              </TabsContent>
+              <TabsContent value="admins" className="mt-4">
+                 <UserTable users={filteredUsers.admins} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>
