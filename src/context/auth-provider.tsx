@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class } from '@/lib/types';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
@@ -42,6 +42,8 @@ export interface AuthContextType {
   getLeaderboard: (category: 'badgeCount' | 'streak' | 'weeklyXP') => Promise<LeaderboardEntry[]>;
   createClass: (className: string) => Promise<void>;
   getTeacherClasses: () => Promise<Class[]>;
+  getAllUsers: () => Promise<AdminUserView[]>;
+  updateUserRole: (userId: string, role: UserRole) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -461,6 +463,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
   };
 
+  const getAllUsers = async (): Promise<AdminUserView[]> => {
+    if (!userProfile || userProfile.role !== 'admin') {
+      throw new Error("You do not have permission to view users.");
+    }
+    const usersRef = collection(db, "users");
+    const querySnapshot = await getDocs(usersRef);
+    return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
+  };
+
+  const updateUserRole = async (userId: string, role: UserRole) => {
+    if (!userProfile || userProfile.role !== 'admin') {
+      throw new Error("You do not have permission to update roles.");
+    }
+    if (auth.currentUser?.uid === userId) {
+      throw new Error("Admins cannot change their own role.");
+    }
+    const userDocRef = doc(db, "users", userId);
+    await updateDoc(userDocRef, { role: role });
+  };
+
 
   const value: AuthContextType = {
     user,
@@ -483,9 +505,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getLeaderboard,
     createClass,
     getTeacherClasses,
+    getAllUsers,
+    updateUserRole,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</Auth.Provider>;
 }
 
     

@@ -88,6 +88,10 @@ export interface UserProfile {
   classId?: string;
 }
 
+export interface AdminUserView extends UserProfile {
+  uid: string;
+}
+
 export interface LeaderboardEntry {
     rank: number;
     userId: string;
