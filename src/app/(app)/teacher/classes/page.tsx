@@ -159,7 +159,7 @@ export default function TeacherClassesPage() {
           ) : classes.length > 0 ? (
             <div className="space-y-3">
               {classes.map((c) => (
-                <div key={c.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted">
+                <div key={c.id} className="flex items-center justify-between p-3 rounded-md border">
                   <div>
                     <h4 className="font-semibold">{c.className}</h4>
                     <p className="text-sm text-muted-foreground">
