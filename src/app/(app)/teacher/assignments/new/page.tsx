@@ -19,6 +19,7 @@ import { Loader2, ArrowLeft, Wand2, Save, ArrowRight, PlusCircle, Trash2, BookCh
 import { generateQuizQuestions } from "@/lib/actions";
 import type { QuizQuestion } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 const detailsSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -157,10 +158,13 @@ export default function NewAssignmentPage() {
         <Button 
             size="icon" 
             variant="ghost" 
-            className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white"
+            className={cn(
+                "absolute top-2 right-2 h-7 w-7",
+                actionType === 'add' ? "text-green-600 hover:bg-[#2E7D32] hover:text-white" : "text-destructive hover:bg-[#D32F2F] hover:text-white"
+            )}
             onClick={() => onAction(q, index)}
         >
-            {actionType === 'add' ? <PlusCircle className="h-4 w-4" /> : <Trash2 className="h-4 w-4 text-destructive" />}
+            {actionType === 'add' ? <PlusCircle className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
         </Button>
     </div>
   );
@@ -354,3 +358,5 @@ export default function NewAssignmentPage() {
     </>
   );
 }
+
+    
