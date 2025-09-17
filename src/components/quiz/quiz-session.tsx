@@ -434,7 +434,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
         <CardContent className="flex flex-col items-center gap-4 pt-6">
             <h3 className="font-semibold text-lg">Select a Difficulty</h3>
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-                <Button onClick={() => handleRandomQuizDifficultySelect('Easy')} size="lg" variant="outline" className="w-full">Easy</Button>
+                <Button onClick={() => handleRandomQuizDifficultySelect('Easy')} size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">Easy</Button>
                 <Button onClick={() => handleRandomQuizDifficultySelect('Medium')} size="lg" className="w-full bg-accent hover:bg-accent/90">Medium</Button>
                 <Button onClick={() => handleRandomQuizDifficultySelect('Hard')} size="lg" variant="destructive" className="w-full">Hard</Button>
             </div>
