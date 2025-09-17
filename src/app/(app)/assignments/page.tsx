@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Loader2, BookCopy, ChevronLeft, Check, X } from "lucide-react";
 import QuizSession from "@/components/quiz/quiz-session";
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 function ReviewAssignmentView({ attempt, onBack }: { attempt: QuizAttempt, onBack: () => void }) {
     return (
@@ -101,6 +102,11 @@ export default function StudentAssignmentsPage() {
         setSelectedAssignment(null);
         setReviewAttempt(null);
     }
+    
+    const completedAssignments = useMemo(() => {
+        return assignments.filter(quiz => userProfile?.completedAssignments?.includes(quiz.id));
+    }, [assignments, userProfile]);
+
 
     if (selectedAssignment) {
         return <QuizSession assignment={selectedAssignment} onQuizFinish={handleBack} />;
@@ -116,23 +122,72 @@ export default function StudentAssignmentsPage() {
                 title="My Assignments"
                 description="Quizzes and tasks assigned to you by your teacher."
             />
-            <Card>
-                <CardHeader>
-                    <CardTitle>Assigned Quizzes</CardTitle>
-                    <CardDescription>
-                        Complete these quizzes to practice and show your progress.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {isLoading ? (
-                        <div className="flex justify-center items-center h-48">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : assignments.length > 0 ? (
-                        <div className="space-y-3">
-                            {assignments.map((quiz) => {
-                                const isCompleted = userProfile?.completedAssignments?.includes(quiz.id);
-                                return (
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Assigned Quizzes</CardTitle>
+                        <CardDescription>
+                            Complete these quizzes to practice and show your progress.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : assignments.length > 0 ? (
+                            <div className="space-y-3">
+                                {assignments.map((quiz) => {
+                                    const isCompleted = userProfile?.completedAssignments?.includes(quiz.id);
+                                    return (
+                                        <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
+                                            <div>
+                                                <h4 className="font-semibold">{quiz.title}</h4>
+                                                <p className="text-sm text-muted-foreground mt-1">
+                                                    {quiz.questions.length} questions &bull; Language: {quiz.language}
+                                                </p>
+                                            </div>
+                                            <div className="shrink-0">
+                                                {isCompleted ? (
+                                                     <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+                                                        <Check className="mr-2 h-4 w-4" />
+                                                        Completed
+                                                    </Badge>
+                                                ) : (
+                                                    <Button variant="outline" size="sm" onClick={() => handleStartQuiz(quiz)}>
+                                                        <BookCopy className="mr-2 h-4 w-4" />
+                                                        Start Quiz
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12">
+                                <h3 className="text-lg font-semibold">No Assignments</h3>
+                                <p className="text-muted-foreground mt-2">You don't have any assignments from your teacher right now.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Assigned Quizzes History</CardTitle>
+                        <CardDescription>
+                            Review your performance on completed assignments.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         {isLoading ? (
+                            <div className="flex justify-center items-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : completedAssignments.length > 0 ? (
+                            <div className="space-y-3">
+                                {completedAssignments.map((quiz) => (
                                     <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
                                         <div>
                                             <h4 className="font-semibold">{quiz.title}</h4>
@@ -141,30 +196,23 @@ export default function StudentAssignmentsPage() {
                                             </p>
                                         </div>
                                         <div className="shrink-0">
-                                            {isCompleted ? (
-                                                <Button variant="secondary" size="sm" onClick={() => handleReviewAssignment(quiz.id)}>
-                                                    <BookCopy className="mr-2 h-4 w-4" />
-                                                    Review
-                                                </Button>
-                                            ) : (
-                                                <Button variant="outline" size="sm" onClick={() => handleStartQuiz(quiz)}>
-                                                    <BookCopy className="mr-2 h-4 w-4" />
-                                                    Start Quiz
-                                                </Button>
-                                            )}
+                                             <Button variant="secondary" size="sm" onClick={() => handleReviewAssignment(quiz.id)}>
+                                                <BookCopy className="mr-2 h-4 w-4" />
+                                                Review
+                                            </Button>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="text-center py-12">
-                            <h3 className="text-lg font-semibold">No Assignments</h3>
-                            <p className="text-muted-foreground mt-2">You don't have any assignments from your teacher right now.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12">
+                                <h3 className="text-lg font-semibold">No Completed Assignments</h3>
+                                <p className="text-muted-foreground mt-2">Your completed assignments will appear here once you finish them.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </>
     );
 }
