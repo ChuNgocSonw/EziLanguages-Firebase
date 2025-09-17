@@ -162,7 +162,7 @@ export default function TeacherAssignmentsPage() {
       }
     };
     fetchAssignments();
-  }, [getTeacherAssignments, toast]);
+  }, [getTeacherAssignments]);
 
   const handleDeleteAssignment = async (assignmentId: string) => {
     setIsDeleting(assignmentId);

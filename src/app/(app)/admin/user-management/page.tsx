@@ -96,7 +96,7 @@ export default function UserManagementPage() {
       }
     };
     fetchUsers();
-  }, [getAllUsers, toast]);
+  }, [getAllUsers]);
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
     try {
