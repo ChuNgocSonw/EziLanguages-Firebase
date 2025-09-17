@@ -39,13 +39,12 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
   const { toast } = useToast();
   const { saveQuizAttempt } = useAuth();
 
-  const handleGenerateQuiz = async (e: React.FormEvent, generationTopic: string) => {
+  const handleGenerateQuiz = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!generationTopic.trim()) return;
-    setTopic(generationTopic); // Store the topic used for this quiz
+    if (!topic.trim()) return;
     setQuizState("loading");
     try {
-      const generatedQuestions = await generateQuizQuestions({ topic: generationTopic, difficulty, numberOfQuestions, questionType: 'multiple-choice' });
+      const generatedQuestions = await generateQuizQuestions({ topic, difficulty, numberOfQuestions, questionType: 'multiple-choice' });
       setQuestions(generatedQuestions);
       setQuizState("active");
       setCurrentQuestionIndex(0);
@@ -128,23 +127,22 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
   };
   
   const TopicGenerationForm = () => {
-    const [localTopic, setLocalTopic] = useState("");
     return (
-        <form onSubmit={(e) => handleGenerateQuiz(e, localTopic)}>
+        <form onSubmit={handleGenerateQuiz}>
             <CardContent className="space-y-4 pt-6 px-1">
                 <div className="space-y-2">
                     <Label htmlFor="topic">Topic</Label>
                     <Input 
                         id="topic" 
                         placeholder="e.g., French Past Tense" 
-                        value={localTopic}
-                        onChange={(e) => setLocalTopic(e.target.value)}
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
                     />
                 </div>
                 <SharedGenerationOptions />
             </CardContent>
             <CardFooter className="px-1">
-                <Button type="submit" disabled={!localTopic.trim()} className="w-full bg-accent hover:bg-accent/90">
+                <Button type="submit" disabled={!topic.trim()} className="w-full bg-accent hover:bg-accent/90">
                     Generate Quiz
                 </Button>
             </CardFooter>
@@ -153,13 +151,12 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
   };
 
   const LessonGenerationForm = () => {
-      const [localLesson, setLocalLesson] = useState("");
       return (
-         <form onSubmit={(e) => handleGenerateQuiz(e, localLesson)}>
+         <form onSubmit={handleGenerateQuiz}>
             <CardContent className="space-y-4 pt-6 px-1">
                  <div className="space-y-2">
                     <Label htmlFor="lesson">Select a Lesson</Label>
-                    <Select onValueChange={setLocalLesson}>
+                    <Select onValueChange={setTopic} value={topic}>
                         <SelectTrigger><SelectValue placeholder="Choose a lesson to generate a quiz..." /></SelectTrigger>
                         <SelectContent>
                             {lessonsData.map(lesson => (
@@ -173,7 +170,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
                  <SharedGenerationOptions />
             </CardContent>
             <CardFooter className="px-1">
-                <Button type="submit" disabled={!localLesson.trim()} className="w-full bg-accent hover:bg-accent/90">
+                <Button type="submit" disabled={!topic.trim()} className="w-full bg-accent hover:bg-accent/90">
                     Generate Quiz
                 </Button>
             </CardFooter>
@@ -186,7 +183,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
         <div className="space-y-2">
             <Label>Difficulty</Label>
             <RadioGroup 
-            defaultValue="Medium"
+            value={difficulty}
             onValueChange={(value: Difficulty) => setDifficulty(value)}
             className="flex items-center gap-4"
             >
@@ -225,10 +222,15 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
 
 
   if (quizState === "loading") {
+    // Truncate topic for display
+    const displayTopic = topic.length > 50 ? topic.substring(0, 50) + "..." : topic;
+    const isLesson = lessonsData.some(lesson => lesson.content === topic);
+    const topicTitle = isLesson ? lessonsData.find(l => l.content === topic)?.unit : displayTopic;
+
     return (
       <Card className="flex flex-col items-center justify-center p-8 gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-muted-foreground">Generating your quiz on "{topic.substring(0, 50)}..."</p>
+        <p className="text-muted-foreground text-center">Generating your quiz on "{topicTitle}"...</p>
       </Card>
     );
   }
