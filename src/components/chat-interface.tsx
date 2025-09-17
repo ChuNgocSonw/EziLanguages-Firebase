@@ -24,6 +24,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Label } from "./ui/label";
 
 const suggestedPrompts = [
     "Correct this for me: She don't like coffee.",
@@ -42,6 +44,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [explanationLanguage, setExplanationLanguage] = useState("English");
   const viewportRef = useRef<HTMLDivElement>(null);
   const { getChatMessages, saveChatMessage, deleteChatSession } = useAuth();
   const { toast } = useToast();
@@ -103,7 +106,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
         await saveChatMessage(newChatId, userMessage);
       }
       
-      const aiResult = await chatWithTutor({ text: messageText, language: "English" });
+      const aiResult = await chatWithTutor({ text: messageText, language: explanationLanguage });
       
       const botMessage: Omit<ChatMessage, 'id' | 'timestamp'> = {
         role: "bot",
@@ -194,8 +197,21 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
 
   return (
     <Card className="flex-1 flex flex-col h-full">
-        {currentChatId && (
-          <div className="flex items-center justify-end p-2 border-b">
+        
+          <div className="flex items-center justify-between p-2 border-b">
+             <div className="flex items-center gap-2">
+                <Label htmlFor="language-select" className="text-sm font-medium">Explanation Language:</Label>
+                <Select value={explanationLanguage} onValueChange={setExplanationLanguage}>
+                    <SelectTrigger id="language-select" className="w-[140px]">
+                        <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Vietnamese">Vietnamese</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            {currentChatId && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">
@@ -216,8 +232,9 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            )}
           </div>
-        )}
+       
         <ScrollArea className="flex-1 p-4" viewportRef={viewportRef}>
           {isHistoryLoading ? (
              <div className="flex justify-center items-center h-full">

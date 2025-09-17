@@ -95,7 +95,7 @@ export interface UserProfile {
   name: string;
   email: string;
   age: number;
-  language: string;
+  language: "EN";
   role: UserRole;
   xp: number;
   weeklyXP: number;
