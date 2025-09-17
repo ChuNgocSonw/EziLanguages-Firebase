@@ -9,12 +9,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { generateQuizQuestions } from "@/lib/actions";
 import type { QuizQuestion } from "@/lib/types";
-import { Loader2, ArrowRight, Check, X, RefreshCw } from "lucide-react";
+import { Loader2, ArrowRight, Check, X, RefreshCw, BookCopy, Pilcrow } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { lessonsData } from "@/lib/lessons";
 
 
@@ -38,12 +39,13 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
   const { toast } = useToast();
   const { saveQuizAttempt } = useAuth();
 
-  const handleGenerateQuiz = async (e: React.FormEvent) => {
+  const handleGenerateQuiz = async (e: React.FormEvent, generationTopic: string) => {
     e.preventDefault();
-    if (!topic.trim()) return;
+    if (!generationTopic.trim()) return;
+    setTopic(generationTopic); // Store the topic used for this quiz
     setQuizState("loading");
     try {
-      const generatedQuestions = await generateQuizQuestions({ topic, difficulty, numberOfQuestions, questionType: 'multiple-choice' });
+      const generatedQuestions = await generateQuizQuestions({ topic: generationTopic, difficulty, numberOfQuestions, questionType: 'multiple-choice' });
       setQuestions(generatedQuestions);
       setQuizState("active");
       setCurrentQuestionIndex(0);
@@ -125,9 +127,102 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     }, 0);
   };
   
-  const handleLessonSelect = (lessonContent: string) => {
-    setTopic(lessonContent);
-  }
+  const TopicGenerationForm = () => {
+    const [localTopic, setLocalTopic] = useState("");
+    return (
+        <form onSubmit={(e) => handleGenerateQuiz(e, localTopic)}>
+            <CardContent className="space-y-4 pt-6 px-1">
+                <div className="space-y-2">
+                    <Label htmlFor="topic">Topic</Label>
+                    <Input 
+                        id="topic" 
+                        placeholder="e.g., French Past Tense" 
+                        value={localTopic}
+                        onChange={(e) => setLocalTopic(e.target.value)}
+                    />
+                </div>
+                <SharedGenerationOptions />
+            </CardContent>
+            <CardFooter className="px-1">
+                <Button type="submit" disabled={!localTopic.trim()} className="w-full bg-accent hover:bg-accent/90">
+                    Generate Quiz
+                </Button>
+            </CardFooter>
+        </form>
+    );
+  };
+
+  const LessonGenerationForm = () => {
+      const [localLesson, setLocalLesson] = useState("");
+      return (
+         <form onSubmit={(e) => handleGenerateQuiz(e, localLesson)}>
+            <CardContent className="space-y-4 pt-6 px-1">
+                 <div className="space-y-2">
+                    <Label htmlFor="lesson">Select a Lesson</Label>
+                    <Select onValueChange={setLocalLesson}>
+                        <SelectTrigger><SelectValue placeholder="Choose a lesson to generate a quiz..." /></SelectTrigger>
+                        <SelectContent>
+                            {lessonsData.map(lesson => (
+                                <SelectItem key={lesson.id} value={lesson.content}>
+                                    {lesson.unit}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <SharedGenerationOptions />
+            </CardContent>
+            <CardFooter className="px-1">
+                <Button type="submit" disabled={!localLesson.trim()} className="w-full bg-accent hover:bg-accent/90">
+                    Generate Quiz
+                </Button>
+            </CardFooter>
+        </form>
+      );
+  };
+
+  const SharedGenerationOptions = () => (
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+            <Label>Difficulty</Label>
+            <RadioGroup 
+            defaultValue="Medium"
+            onValueChange={(value: Difficulty) => setDifficulty(value)}
+            className="flex items-center gap-4"
+            >
+            <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Easy" id="d-easy" />
+                <Label htmlFor="d-easy">Easy</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Medium" id="d-medium" />
+                <Label htmlFor="d-medium">Medium</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Hard" id="d-hard" />
+                <Label htmlFor="d-hard">Hard</Label>
+            </div>
+            </RadioGroup>
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="num-questions">Number of Questions</Label>
+            <Input
+                id="num-questions"
+                type="number"
+                value={numberOfQuestions}
+                onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (val > 30) setNumberOfQuestions(30);
+                    else if (val < 1) setNumberOfQuestions(1);
+                    else setNumberOfQuestions(val);
+                }}
+                min="1"
+                max="30"
+            />
+        </div>
+      </div>
+  );
+
 
   if (quizState === "loading") {
     return (
@@ -205,87 +300,40 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
 
   return (
     <Card>
-      <form onSubmit={handleGenerateQuiz}>
         <CardHeader>
           <CardTitle className="font-headline">Generate a New Quiz</CardTitle>
           <CardDescription>
-            Enter a topic, or select a lesson. Our AI will create the questions for you.
+            Create a quiz by entering a custom topic or by selecting from your lessons.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="lesson">Generate from Lesson (Optional)</Label>
-                <Select onValueChange={handleLessonSelect}>
-                    <SelectTrigger><SelectValue placeholder="Select a lesson to generate a quiz from..." /></SelectTrigger>
-                    <SelectContent>
-                        {lessonsData.map(lesson => (
-                            <SelectItem key={lesson.id} value={lesson.content}>
-                                {lesson.unit}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <div className="space-y-2">
-                <Label htmlFor="topic">Topic</Label>
-                <Input 
-                id="topic" 
-                placeholder="e.g., French Past Tense, or select a lesson above" 
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                />
-            </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-                <Label>Difficulty</Label>
-                <RadioGroup 
-                defaultValue="Medium"
-                onValueChange={(value: Difficulty) => setDifficulty(value)}
-                className="flex items-center gap-4"
-                >
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Easy" id="d-easy" />
-                    <Label htmlFor="d-easy">Easy</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Medium" id="d-medium" />
-                    <Label htmlFor="d-medium">Medium</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Hard" id="d-hard" />
-                    <Label htmlFor="d-hard">Hard</Label>
-                </div>
-                </RadioGroup>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="num-questions">Number of Questions</Label>
-                <Input
-                    id="num-questions"
-                    type="number"
-                    value={numberOfQuestions}
-                    onChange={(e) => {
-                        const val = parseInt(e.target.value, 10);
-                        if (val > 30) setNumberOfQuestions(30);
-                        else if (val < 1) setNumberOfQuestions(1);
-                        else setNumberOfQuestions(val);
-                    }}
-                    min="1"
-                    max="30"
-                />
-            </div>
-          </div>
+        <CardContent>
+           <Tabs defaultValue="topic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="topic">
+                  <Pilcrow className="mr-2 h-4 w-4"/>
+                  From Topic
+                </TabsTrigger>
+                <TabsTrigger value="lesson">
+                  <BookCopy className="mr-2 h-4 w-4"/>
+                  From Lesson
+                  </TabsTrigger>
+              </TabsList>
+              <TabsContent value="topic">
+                <TopicGenerationForm />
+              </TabsContent>
+              <TabsContent value="lesson">
+                <LessonGenerationForm />
+              </TabsContent>
+            </Tabs>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button type="submit" disabled={!topic.trim()} className="bg-accent hover:bg-accent/90">
-            Generate Quiz
-          </Button>
+        <CardFooter className="flex justify-center">
            <Button variant="outline" onClick={onQuizFinish}>
             Cancel
           </Button>
         </CardFooter>
-      </form>
     </Card>
   );
 }
+
+
+    
