@@ -16,7 +16,7 @@ import {z} from 'genkit';
 import { QuizQuestionSchema } from '@/lib/types';
 
 const GenerateQuizQuestionsInputSchema = z.object({
-  topic: z.string().describe('The topic for the quiz.'),
+  topic: z.string().describe('The topic for the quiz. This could be a general topic like "English Idioms" or it could be the specific content of a lesson that questions should be based on.'),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']).describe('The difficulty level of the quiz.'),
   numberOfQuestions: z.number().min(1).max(30).describe('The number of questions to generate.'),
   questionType: z.enum(['multiple-choice', 'true-false', 'fill-in-the-blank']).describe('The desired format for the generated questions.'),
@@ -37,6 +37,8 @@ const generateQuizQuestionsPrompt = ai.definePrompt({
   prompt: `You are a quiz generator.
 Your ONLY task is to create {{{numberOfQuestions}}} questions about the following topic, at the specified difficulty level, and in the specified format.
 The questions and answers MUST be in the same language as the topic.
+
+IMPORTANT: If the provided topic contains a list of sentences or specific content, you MUST base your questions exclusively on that content. Do not introduce outside knowledge. If it's a general topic, you can use your general knowledge.
 
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}

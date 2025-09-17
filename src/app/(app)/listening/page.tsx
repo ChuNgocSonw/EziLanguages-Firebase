@@ -16,50 +16,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-
-type ExerciseType = 'typing' | 'mcq';
-
-interface BaseExercise {
-    id: string;
-    text: string;
-}
-interface TypingExercise extends BaseExercise {
-    type: 'typing';
-}
-interface McqExercise extends BaseExercise {
-    type: 'mcq';
-    options: string[];
-    answer: string;
-}
-
-type Exercise = TypingExercise | McqExercise;
-
-interface LessonUnit {
-    unit: string;
-    exercises: Exercise[];
-}
-
-const lessons: LessonUnit[] = [
-    {
-        unit: "Unit 1: Basic Greetings",
-        exercises: [
-            { id: "u1e1", type: "typing", text: "Hello, how are you?" },
-            { id: "u1e2", type: "mcq", text: "My name is John.", options: ["My name is John.", "My name is Jane.", "His name is John."], answer: "My name is John." },
-            { id: "u1e3", type: "typing", text: "It is a pleasure to meet you." },
-        ],
-    },
-    {
-        unit: "Unit 2: Everyday Objects",
-        exercises: [
-            { id: "u2e1", type: "mcq", text: "The cat is sleeping on the sofa.", options: ["The dog is sleeping on the sofa.", "The cat is sleeping on the sofa.", "The cat is playing on the sofa."], answer: "The cat is sleeping on the sofa." },
-            { id: "u2e2", type: "typing", text: "There is a book on the table." },
-            { id: "u2e3", type: "mcq", text: "She opened the window to get some fresh air.", options: ["She closed the window.", "He opened the window.", "She opened the window to get some fresh air."], answer: "She opened the window to get some fresh air." },
-        ],
-    },
-];
+import { lessonsData } from "@/lib/lessons";
+import type { ListeningExercise } from "@/lib/lessons";
 
 export default function ListeningPage() {
-    const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
+    const [activeExercise, setActiveExercise] = useState<ListeningExercise | null>(null);
     const [answer, setAnswer] = useState("");
     const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -123,7 +84,7 @@ export default function ListeningPage() {
         }
     };
 
-    const handleSelectExercise = (exercise: Exercise) => {
+    const handleSelectExercise = (exercise: ListeningExercise) => {
         setActiveExercise(exercise);
         setAnswer("");
         setResult(null);
@@ -134,7 +95,7 @@ export default function ListeningPage() {
         setActiveExercise(null);
     }
 
-    const getUnitProgress = (unitExercises: Exercise[]) => {
+    const getUnitProgress = (unitExercises: ListeningExercise[]) => {
         if (!userProfile?.listeningScores) return 0;
         const completedCount = unitExercises.filter(exercise => 
             userProfile.listeningScores?.[exercise.id]
@@ -170,7 +131,7 @@ export default function ListeningPage() {
                     )}
                     {activeExercise.type === 'mcq' && (
                         <RadioGroup value={answer} onValueChange={(value) => { setAnswer(value); setResult(null); }}>
-                            {(activeExercise as McqExercise).options.map((option, index) => (
+                            {(activeExercise).options.map((option, index) => (
                                 <div key={index} className="flex items-center space-x-2">
                                     <RadioGroupItem value={option} id={`option-${index}`} />
                                     <Label htmlFor={`option-${index}`}>{option}</Label>
@@ -185,7 +146,7 @@ export default function ListeningPage() {
                     {result === 'incorrect' && (
                          <div className="flex items-center text-destructive">
                             <XCircle className="mr-2 h-5 w-5" /> 
-                            Not quite. The correct answer was: "{activeExercise.type === 'typing' ? activeExercise.text : (activeExercise as McqExercise).answer}"
+                            Not quite. The correct answer was: "{activeExercise.type === 'typing' ? activeExercise.text : (activeExercise as any).answer}"
                         </div>
                     )}
                 </CardFooter>
@@ -201,8 +162,10 @@ export default function ListeningPage() {
                 </CardHeader>
                 <CardContent>
                     <Accordion type="single" collapsible className="w-full">
-                        {lessons.map((lesson, index) => {
-                            const progress = getUnitProgress(lesson.exercises);
+                        {lessonsData.map((lesson, index) => {
+                             const listeningExercises = lesson.activities.listening || [];
+                            if (listeningExercises.length === 0) return null;
+                            const progress = getUnitProgress(listeningExercises);
                             return (
                             <AccordionItem value={`item-${index}`} key={lesson.unit}>
                                 <AccordionTrigger>
@@ -216,7 +179,7 @@ export default function ListeningPage() {
                                 </AccordionTrigger>
                                 <AccordionContent>
                                     <ul className="space-y-2">
-                                        {lesson.exercises.map((exercise, sIndex) => {
+                                        {listeningExercises.map((exercise, sIndex) => {
                                             const xpEarned = userProfile?.listeningScores?.[exercise.id];
                                             return (
                                             <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">

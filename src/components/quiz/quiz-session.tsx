@@ -14,6 +14,9 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { lessonsData } from "@/lib/lessons";
+
 
 type QuizState = "idle" | "loading" | "active" | "finished";
 type Difficulty = "Easy" | "Medium" | "Hard";
@@ -40,7 +43,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     if (!topic.trim()) return;
     setQuizState("loading");
     try {
-      const generatedQuestions = await generateQuizQuestions({ topic, difficulty, numberOfQuestions });
+      const generatedQuestions = await generateQuizQuestions({ topic, difficulty, numberOfQuestions, questionType: 'multiple-choice' });
       setQuestions(generatedQuestions);
       setQuizState("active");
       setCurrentQuestionIndex(0);
@@ -122,11 +125,15 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     }, 0);
   };
   
+  const handleLessonSelect = (lessonContent: string) => {
+    setTopic(lessonContent);
+  }
+
   if (quizState === "loading") {
     return (
       <Card className="flex flex-col items-center justify-center p-8 gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-muted-foreground">Generating your quiz on "{topic}"...</p>
+        <p className="text-muted-foreground">Generating your quiz on "{topic.substring(0, 50)}..."</p>
       </Card>
     );
   }
@@ -202,19 +209,34 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
         <CardHeader>
           <CardTitle className="font-headline">Generate a New Quiz</CardTitle>
           <CardDescription>
-            Enter a topic and select a difficulty. Our AI will create the questions for you.
+            Enter a topic, or select a lesson. Our AI will create the questions for you.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="topic">Topic</Label>
-            <Input 
-              id="topic" 
-              placeholder="e.g., French Past Tense, Common English Idioms" 
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-            />
-          </div>
+            <div className="space-y-2">
+                <Label htmlFor="lesson">Generate from Lesson (Optional)</Label>
+                <Select onValueChange={handleLessonSelect}>
+                    <SelectTrigger><SelectValue placeholder="Select a lesson to generate a quiz from..." /></SelectTrigger>
+                    <SelectContent>
+                        {lessonsData.map(lesson => (
+                            <SelectItem key={lesson.id} value={lesson.content}>
+                                {lesson.unit}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="topic">Topic</Label>
+                <Input 
+                id="topic" 
+                placeholder="e.g., French Past Tense, or select a lesson above" 
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                />
+            </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label>Difficulty</Label>

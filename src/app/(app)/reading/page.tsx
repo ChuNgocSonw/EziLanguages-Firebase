@@ -13,45 +13,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
 import type { PronunciationAttempt } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-
-const lessons = [
-    {
-        unit: "Unit 1: Greetings",
-        sentences: [
-            "Hello, how are you doing today?",
-            "It's a pleasure to meet you.",
-            "Good morning, I hope you have a wonderful day.",
-        ],
-    },
-    {
-        unit: "Unit 2: Daily Activities",
-        sentences: [
-            "I usually wake up early in the morning.",
-            "She is currently working on a very important project.",
-            "They are going to the supermarket to buy some groceries.",
-        ],
-    },
-    {
-        unit: "Unit 3: Complex Sounds",
-        sentences: [
-            "The quick brown fox jumps over the lazy dog near the river bank.",
-            "She sells seashells by the seashore.",
-            "Peter Piper picked a peck of pickled peppers.",
-        ],
-    },
-];
-
-type PracticeSentence = {
-    unit: string;
-    text: string;
-};
+import { lessonsData } from "@/lib/lessons";
+import type { ReadingSentence } from "@/lib/lessons";
 
 // Helper to create a Firestore-safe key from a sentence
 const createSafeKey = (sentence: string) => sentence.replace(/[.#$[\]/]/g, '_');
 
 
 export default function ReadingPage() {
-  const [activeSentence, setActiveSentence] = useState<PracticeSentence | null>(null);
+  const [activeSentence, setActiveSentence] = useState<ReadingSentence | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<PronunciationAttempt | null>(null);
@@ -178,10 +148,10 @@ export default function ReadingPage() {
     }
   };
 
-  const handleSelectSentence = (unit: string, text: string) => {
-    setActiveSentence({ unit, text });
+  const handleSelectSentence = (sentence: ReadingSentence) => {
+    setActiveSentence(sentence);
     // Load previous best result if it exists
-    const safeKey = createSafeKey(text);
+    const safeKey = createSafeKey(sentence.text);
     const bestAttempt = userProfile?.pronunciationScores?.[safeKey];
     if (bestAttempt) {
         setResult(bestAttempt);
@@ -209,10 +179,10 @@ export default function ReadingPage() {
       setRecordedAudioUrl(null);
   }
 
-  const getUnitProgress = (unitSentences: string[]) => {
+  const getUnitProgress = (unitSentences: ReadingSentence[]) => {
     if (!userProfile?.pronunciationScores) return 0;
     const completedCount = unitSentences.filter(sentence => {
-        const safeKey = createSafeKey(sentence);
+        const safeKey = createSafeKey(sentence.text);
         return userProfile.pronunciationScores?.[safeKey] !== undefined;
     }).length;
     return (completedCount / unitSentences.length) * 100;
@@ -232,8 +202,10 @@ export default function ReadingPage() {
             </CardHeader>
             <CardContent>
                 <Accordion type="single" collapsible className="w-full">
-                    {lessons.map((lesson, index) => {
-                        const progress = getUnitProgress(lesson.sentences);
+                    {lessonsData.map((lesson, index) => {
+                        const readingSentences = lesson.activities.reading || [];
+                        if (readingSentences.length === 0) return null;
+                        const progress = getUnitProgress(readingSentences);
                         return (
                             <AccordionItem value={`item-${index}`} key={lesson.unit}>
                                 <AccordionTrigger>
@@ -247,12 +219,12 @@ export default function ReadingPage() {
                                 </AccordionTrigger>
                                 <AccordionContent>
                                     <ul className="space-y-2">
-                                        {lesson.sentences.map((sentence, sIndex) => {
-                                            const safeKey = createSafeKey(sentence);
+                                        {readingSentences.map((sentence, sIndex) => {
+                                            const safeKey = createSafeKey(sentence.text);
                                             const bestAttempt = userProfile?.pronunciationScores?.[safeKey];
                                             return (
                                                 <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
-                                                    <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">{sentence}</p>
+                                                    <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">{sentence.text}</p>
                                                     <div className="flex items-center gap-4">
                                                         {bestAttempt ? (
                                                             <div className="flex items-center gap-2">
@@ -266,7 +238,7 @@ export default function ReadingPage() {
                                                                  )}
                                                             </div>
                                                         ) : <div className="w-[180px] md:w-[170px]"></div>}
-                                                        <Button variant="outline" size="sm" onClick={() => handleSelectSentence(lesson.unit, sentence)}>
+                                                        <Button variant="outline" size="sm" onClick={() => handleSelectSentence(sentence)}>
                                                            <BookCheck className="mr-2 h-4 w-4" /> {bestAttempt ? "Improve" : "Practice"}
                                                         </Button>
                                                     </div>
