@@ -32,7 +32,6 @@ const allNavItems = [
   { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/teacher', icon: School, label: 'Teacher', roles: ['teacher', 'admin', 'superadmin'] },
-  { href: '/teacher/assignments', icon: BookCopy, label: 'Assignments', roles: ['teacher', 'admin', 'superadmin'] },
   { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin', 'superadmin'] },
 ];
 
