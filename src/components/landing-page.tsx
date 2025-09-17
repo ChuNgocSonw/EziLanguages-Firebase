@@ -1,3 +1,4 @@
+
 import { MessageSquare, BookOpen, Headphones, ClipboardList, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -48,9 +49,6 @@ export default function LandingPage() {
                         <div className="mt-8 flex justify-center gap-4">
                             <Button size="lg" className="bg-accent hover:bg-accent/90" asChild>
                                 <Link href="/signup">Get Started for Free <ArrowRight className="ml-2 h-5 w-5" /></Link>
-                            </Button>
-                            <Button size="lg" variant="outline">
-                                See a Demo
                             </Button>
                         </div>
                          <div className="mt-12 relative">
