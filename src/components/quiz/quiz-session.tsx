@@ -27,24 +27,29 @@ interface QuizSessionProps {
 }
 
 export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
-  const [topic, setTopic] = useState("");
-  const [difficulty, setDifficulty] = useState<Difficulty>("Medium");
-  const [numberOfQuestions, setNumberOfQuestions] = useState(5);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [quizState, setQuizState] = useState<QuizState>("idle");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [quizTopic, setQuizTopic] = useState(""); // This will store the final topic for the summary page
   const { toast } = useToast();
   const { saveQuizAttempt } = useAuth();
 
-  const handleGenerateQuiz = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const startQuizGeneration = async (generationParams: { topic: string; difficulty: Difficulty; numberOfQuestions: number; displayTopic: string; }) => {
+    const { topic, difficulty, numberOfQuestions, displayTopic } = generationParams;
+
     if (!topic.trim()) return;
+
     setQuizState("loading");
+    setQuizTopic(displayTopic); // Use the user-friendly name for display
+
     try {
       const generatedQuestions = await generateQuizQuestions({ topic, difficulty, numberOfQuestions, questionType: 'multiple-choice' });
+      if (!generatedQuestions || generatedQuestions.length === 0) {
+        throw new Error("The AI failed to generate questions for this topic.");
+      }
       setQuestions(generatedQuestions);
       setQuizState("active");
       setCurrentQuestionIndex(0);
@@ -81,7 +86,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
 
     try {
         const xpGained = await saveQuizAttempt({
-            topic,
+            topic: quizTopic,
             questions,
             selectedAnswers: finalAnswers,
             score,
@@ -126,9 +131,22 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     }, 0);
   };
   
-  const TopicGenerationForm = () => {
+  const TopicGenerationForm = ({ difficulty, setDifficulty, numberOfQuestions, setNumberOfQuestions, onGenerate }: {
+      difficulty: Difficulty;
+      setDifficulty: (d: Difficulty) => void;
+      numberOfQuestions: number;
+      setNumberOfQuestions: (n: number) => void;
+      onGenerate: (params: any) => void;
+  }) => {
+    const [topic, setTopic] = useState("");
+    
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onGenerate({ topic: topic, difficulty, numberOfQuestions, displayTopic: topic });
+    };
+
     return (
-        <form onSubmit={handleGenerateQuiz}>
+        <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 pt-6 px-1">
                 <div className="space-y-2">
                     <Label htmlFor="topic">Topic</Label>
@@ -139,7 +157,12 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
                         onChange={(e) => setTopic(e.target.value)}
                     />
                 </div>
-                <SharedGenerationOptions />
+                <SharedGenerationOptions 
+                    difficulty={difficulty}
+                    setDifficulty={setDifficulty}
+                    numberOfQuestions={numberOfQuestions}
+                    setNumberOfQuestions={setNumberOfQuestions}
+                />
             </CardContent>
             <CardFooter className="px-1">
                 <Button type="submit" disabled={!topic.trim()} className="w-full bg-accent hover:bg-accent/90">
@@ -150,27 +173,54 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     );
   };
 
-  const LessonGenerationForm = () => {
+  const LessonGenerationForm = ({ difficulty, setDifficulty, numberOfQuestions, setNumberOfQuestions, onGenerate }: {
+      difficulty: Difficulty;
+      setDifficulty: (d: Difficulty) => void;
+      numberOfQuestions: number;
+      setNumberOfQuestions: (n: number) => void;
+      onGenerate: (params: any) => void;
+  }) => {
+      const [lessonContent, setLessonContent] = useState("");
+      const [lessonTitle, setLessonTitle] = useState("");
+
+      const handleLessonChange = (value: string) => {
+          const selectedLesson = lessonsData.find(lesson => lesson.id === value);
+          if (selectedLesson) {
+              setLessonContent(selectedLesson.content);
+              setLessonTitle(selectedLesson.unit);
+          }
+      };
+      
+      const handleSubmit = (e: React.FormEvent) => {
+          e.preventDefault();
+          onGenerate({ topic: lessonContent, difficulty, numberOfQuestions, displayTopic: lessonTitle });
+      };
+
       return (
-         <form onSubmit={handleGenerateQuiz}>
+         <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 pt-6 px-1">
                  <div className="space-y-2">
                     <Label htmlFor="lesson">Select a Lesson</Label>
-                    <Select onValueChange={setTopic} value={topic}>
+                    <Select onValueChange={handleLessonChange}>
                         <SelectTrigger><SelectValue placeholder="Choose a lesson to generate a quiz..." /></SelectTrigger>
                         <SelectContent>
                             {lessonsData.map(lesson => (
-                                <SelectItem key={lesson.id} value={lesson.content}>
+                                <SelectItem key={lesson.id} value={lesson.id}>
                                     {lesson.unit}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                 </div>
-                 <SharedGenerationOptions />
+                 <SharedGenerationOptions 
+                    difficulty={difficulty}
+                    setDifficulty={setDifficulty}
+                    numberOfQuestions={numberOfQuestions}
+                    setNumberOfQuestions={setNumberOfQuestions}
+                 />
             </CardContent>
             <CardFooter className="px-1">
-                <Button type="submit" disabled={!topic.trim()} className="w-full bg-accent hover:bg-accent/90">
+                <Button type="submit" disabled={!lessonContent.trim()} className="w-full bg-accent hover:bg-accent/90">
                     Generate Quiz
                 </Button>
             </CardFooter>
@@ -178,7 +228,12 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
       );
   };
 
-  const SharedGenerationOptions = () => (
+  const SharedGenerationOptions = ({ difficulty, setDifficulty, numberOfQuestions, setNumberOfQuestions }: {
+      difficulty: Difficulty;
+      setDifficulty: (d: Difficulty) => void;
+      numberOfQuestions: number;
+      setNumberOfQuestions: (n: number) => void;
+  }) => (
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
             <Label>Difficulty</Label>
@@ -222,15 +277,10 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
 
 
   if (quizState === "loading") {
-    // Truncate topic for display
-    const displayTopic = topic.length > 50 ? topic.substring(0, 50) + "..." : topic;
-    const isLesson = lessonsData.some(lesson => lesson.content === topic);
-    const topicTitle = isLesson ? lessonsData.find(l => l.content === topic)?.unit : displayTopic;
-
     return (
       <Card className="flex flex-col items-center justify-center p-8 gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-muted-foreground text-center">Generating your quiz on "{topicTitle}"...</p>
+        <p className="text-muted-foreground text-center">Generating your quiz on "{quizTopic}"...</p>
       </Card>
     );
   }
@@ -300,6 +350,44 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     );
   }
 
+  const GenerationWizard = () => {
+    const [difficulty, setDifficulty] = useState<Difficulty>("Medium");
+    const [numberOfQuestions, setNumberOfQuestions] = useState(5);
+    
+    return (
+       <Tabs defaultValue="topic" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="topic">
+                <Pilcrow className="mr-2 h-4 w-4"/>
+                From Topic
+            </TabsTrigger>
+            <TabsTrigger value="lesson">
+                <BookCopy className="mr-2 h-4 w-4"/>
+                From Lesson
+                </TabsTrigger>
+            </TabsList>
+            <TabsContent value="topic">
+                <TopicGenerationForm 
+                    difficulty={difficulty}
+                    setDifficulty={setDifficulty}
+                    numberOfQuestions={numberOfQuestions}
+                    setNumberOfQuestions={setNumberOfQuestions}
+                    onGenerate={startQuizGeneration}
+                />
+            </TabsContent>
+            <TabsContent value="lesson">
+                <LessonGenerationForm 
+                     difficulty={difficulty}
+                    setDifficulty={setDifficulty}
+                    numberOfQuestions={numberOfQuestions}
+                    setNumberOfQuestions={setNumberOfQuestions}
+                    onGenerate={startQuizGeneration}
+                />
+            </TabsContent>
+        </Tabs>
+    );
+  }
+
   return (
     <Card>
         <CardHeader>
@@ -309,24 +397,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-           <Tabs defaultValue="topic" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="topic">
-                  <Pilcrow className="mr-2 h-4 w-4"/>
-                  From Topic
-                </TabsTrigger>
-                <TabsTrigger value="lesson">
-                  <BookCopy className="mr-2 h-4 w-4"/>
-                  From Lesson
-                  </TabsTrigger>
-              </TabsList>
-              <TabsContent value="topic">
-                <TopicGenerationForm />
-              </TabsContent>
-              <TabsContent value="lesson">
-                <LessonGenerationForm />
-              </TabsContent>
-            </Tabs>
+           <GenerationWizard />
         </CardContent>
         <CardFooter className="flex justify-center">
            <Button variant="outline" onClick={onQuizFinish}>
@@ -336,6 +407,3 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     </Card>
   );
 }
-
-
-    
