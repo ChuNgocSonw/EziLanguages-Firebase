@@ -32,32 +32,31 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   useEffect(() => {
-    // 1. Chờ cho đến khi quá trình xác thực ban đầu hoàn tất
+    // Wait until the initial authentication check is complete
     if (loading) {
       return;
     }
 
-    // 2. Nếu không có người dùng sau khi tải xong, chuyển hướng đến trang đăng nhập
+    // If there's no user after loading, redirect to login
     if (!user) {
       router.push('/login');
       return;
     }
 
-    // 3. Nếu email chưa được xác thực, chuyển hướng đến trang yêu cầu xác thực
+    // If email is not verified, redirect to verification page, allowing access to profile
     if (!user.emailVerified) {
-        // Cho phép truy cập trang hồ sơ để quản lý tài khoản
         if (pathname !== '/profile') {
             router.push('/verify-email');
             return;
         }
     }
     
-    // 4. Chờ cho đến khi userProfile được tải về
+    // Wait until the userProfile is loaded from Firestore
     if (!userProfile) {
       return;
     }
 
-    // 5. Khi đã có userProfile, thực hiện kiểm tra vai trò để bảo vệ tuyến đường
+    // Once userProfile is available, perform role-based route protection
     if (pathname.startsWith('/admin') && !['admin', 'superadmin'].includes(userProfile.role)) {
       router.push('/dashboard'); 
     }
@@ -68,7 +67,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
   }, [user, userProfile, loading, router, pathname]);
 
-  // Hiển thị trạng thái tải trong khi chờ user hoặc userProfile
+  // Display a loading state while waiting for user or userProfile
   if (loading || !user) {
     return (
        <div className="flex items-center justify-center min-h-screen">
