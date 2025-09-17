@@ -23,7 +23,7 @@ export default function LandingHeader() {
             <Link href="/login">Log In</Link>
           </Button>
           <Button className="bg-accent hover:bg-accent/90" asChild>
-            <Link href="/signup">Sign Up Free</Link>
+            <Link href="/signup">Sign Up</Link>
           </Button>
         </div>
       </div>
