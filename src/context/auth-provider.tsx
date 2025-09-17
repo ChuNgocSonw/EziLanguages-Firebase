@@ -407,20 +407,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const saveQuizAttempt = useCallback(async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
     if (!auth.currentUser) throw new Error("User not authenticated");
-    
+
     const isAssignment = !!attempt.assignmentId;
     const activityTitle = isAssignment ? `Assignment: ${attempt.topic}` : `Quiz on ${attempt.topic}`;
     await setLastActivity({ type: 'quiz', title: activityTitle });
-    
+
     const xpGained = attempt.score * 5;
-    
+
     const collectionName = isAssignment ? "assignmentAttempts" : "quizHistory";
     const ref = collection(db, "users", auth.currentUser.uid, collectionName);
-    await addDoc(ref, {
+
+    // Prepare data, ensuring no undefined fields are sent to Firestore.
+    const dataToSave: any = {
         ...attempt,
         completedAt: serverTimestamp(),
-    });
-    
+    };
+    if (!isAssignment) {
+        // Explicitly remove assignmentId for self-generated quizzes to avoid Firestore errors.
+        delete dataToSave.assignmentId;
+    }
+
+    await addDoc(ref, dataToSave);
+
     const userDocRef = doc(db, "users", auth.currentUser.uid);
     const updates: any = { xp: increment(xpGained) };
 
@@ -435,9 +443,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (updatedProfileDoc.exists()) {
         const updatedProfile = updatedProfileDoc.data() as UserProfile;
         setUserProfile(updatedProfile);
-        
-        const allQuizHistory = await getQuizHistory();
-        await checkAndAwardBadges(auth.currentUser.uid, updatedProfile, allQuizHistory);
+
+        // Fetch only self-generated quiz history for badge calculation.
+        const selfGeneratedQuizHistory = await getQuizHistory();
+        await checkAndAwardBadges(auth.currentUser.uid, updatedProfile, selfGeneratedQuizHistory);
     }
 
     return xpGained;

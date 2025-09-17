@@ -26,7 +26,7 @@ export interface QuizAttempt {
   score: number;
   percentage: number;
   completedAt: Timestamp;
-  assignmentId: string | null;
+  assignmentId?: string | null;
 }
 
 export interface Class {
