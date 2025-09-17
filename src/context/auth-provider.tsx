@@ -393,6 +393,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return xpGained;
   };
 
+  const getQuizHistory = useCallback(async (): Promise<QuizAttempt[]> => {
+    if (!auth.currentUser) return [];
+    const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
+    const q = query(historyRef, orderBy("completedAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+  }, [user]);
+
   const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
     if (!auth.currentUser) throw new Error("User not authenticated");
     
@@ -426,14 +434,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return xpGained;
-  };
-
-  const getQuizHistory = async (): Promise<QuizAttempt[]> => {
-    if (!auth.currentUser) return [];
-    const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
-    const q = query(historyRef, orderBy("completedAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
   };
 
   const getLeaderboard = async (category: 'badgeCount' | 'streak' | 'weeklyXP'): Promise<LeaderboardEntry[]> => {
