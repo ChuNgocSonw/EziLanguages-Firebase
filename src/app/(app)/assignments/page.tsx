@@ -111,10 +111,6 @@ export default function StudentAssignmentsPage() {
     if (selectedAssignment) {
         return <QuizSession assignment={selectedAssignment} onQuizFinish={handleBack} />;
     }
-    
-    if (reviewAttempt) {
-        return <ReviewAssignmentView attempt={reviewAttempt} onBack={handleBack} />
-    }
 
     return (
         <>
@@ -122,24 +118,75 @@ export default function StudentAssignmentsPage() {
                 title="My Assignments"
                 description="Quizzes and tasks assigned to you by your teacher."
             />
-            <div className="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Assigned Quizzes</CardTitle>
-                        <CardDescription>
-                            Complete these quizzes to practice and show your progress.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <div className="flex justify-center items-center h-48">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            </div>
-                        ) : assignments.length > 0 ? (
-                            <div className="space-y-3">
-                                {assignments.map((quiz) => {
-                                    const isCompleted = userProfile?.completedAssignments?.includes(quiz.id);
-                                    return (
+            {reviewAttempt ? (
+                <ReviewAssignmentView attempt={reviewAttempt} onBack={handleBack} />
+            ) : (
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Assigned Quizzes</CardTitle>
+                            <CardDescription>
+                                Complete these quizzes to practice and show your progress.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? (
+                                <div className="flex justify-center items-center h-48">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                </div>
+                            ) : assignments.length > 0 ? (
+                                <div className="space-y-3">
+                                    {assignments.map((quiz) => {
+                                        const isCompleted = userProfile?.completedAssignments?.includes(quiz.id);
+                                        return (
+                                            <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
+                                                <div>
+                                                    <h4 className="font-semibold">{quiz.title}</h4>
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        {quiz.questions.length} questions &bull; Language: {quiz.language}
+                                                    </p>
+                                                </div>
+                                                <div className="shrink-0">
+                                                    {isCompleted ? (
+                                                         <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+                                                            <Check className="mr-2 h-4 w-4" />
+                                                            Completed
+                                                        </Badge>
+                                                    ) : (
+                                                        <Button variant="outline" size="sm" onClick={() => handleStartQuiz(quiz)}>
+                                                            <BookOpen className="mr-2 h-4 w-4" />
+                                                            Start Quiz
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <h3 className="text-lg font-semibold">No Assignments</h3>
+                                    <p className="text-muted-foreground mt-2">You don't have any assignments from your teacher right now.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                    
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Assigned Quizzes History</CardTitle>
+                            <CardDescription>
+                                Review your performance on completed assignments.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             {isLoading ? (
+                                <div className="flex justify-center items-center h-48">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                </div>
+                            ) : completedAssignments.length > 0 ? (
+                                <div className="space-y-3">
+                                    {completedAssignments.map((quiz) => (
                                         <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
                                             <div>
                                                 <h4 className="font-semibold">{quiz.title}</h4>
@@ -148,71 +195,24 @@ export default function StudentAssignmentsPage() {
                                                 </p>
                                             </div>
                                             <div className="shrink-0">
-                                                {isCompleted ? (
-                                                     <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
-                                                        <Check className="mr-2 h-4 w-4" />
-                                                        Completed
-                                                    </Badge>
-                                                ) : (
-                                                    <Button variant="outline" size="sm" onClick={() => handleStartQuiz(quiz)}>
-                                                        <BookOpen className="mr-2 h-4 w-4" />
-                                                        Start Quiz
-                                                    </Button>
-                                                )}
+                                                 <Button variant="outline" size="sm" onClick={() => handleReviewAssignment(quiz.id)}>
+                                                    <BookOpen className="mr-2 h-4 w-4" />
+                                                    Review
+                                                </Button>
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12">
-                                <h3 className="text-lg font-semibold">No Assignments</h3>
-                                <p className="text-muted-foreground mt-2">You don't have any assignments from your teacher right now.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Assigned Quizzes History</CardTitle>
-                        <CardDescription>
-                            Review your performance on completed assignments.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                         {isLoading ? (
-                            <div className="flex justify-center items-center h-48">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            </div>
-                        ) : completedAssignments.length > 0 ? (
-                            <div className="space-y-3">
-                                {completedAssignments.map((quiz) => (
-                                    <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
-                                        <div>
-                                            <h4 className="font-semibold">{quiz.title}</h4>
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                                {quiz.questions.length} questions &bull; Language: {quiz.language}
-                                            </p>
-                                        </div>
-                                        <div className="shrink-0">
-                                             <Button variant="outline" size="sm" onClick={() => handleReviewAssignment(quiz.id)}>
-                                                <BookOpen className="mr-2 h-4 w-4" />
-                                                Review
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12">
-                                <h3 className="text-lg font-semibold">No Completed Assignments</h3>
-                                <p className="text-muted-foreground mt-2">Your completed assignments will appear here once you finish them.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <h3 className="text-lg font-semibold">No Completed Assignments</h3>
+                                    <p className="text-muted-foreground mt-2">Your completed assignments will appear here once you finish them.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </>
     );
 }
