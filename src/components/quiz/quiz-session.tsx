@@ -58,18 +58,10 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
       setQuestions(assignment.questions);
       setQuizTopic(assignment.title);
       setQuizState("active");
-    } else if (isRandomQuiz) {
-        const randomTopic = randomQuizTopics[Math.floor(Math.random() * randomQuizTopics.length)];
-        startQuizGeneration({
-            topic: randomTopic,
-            difficulty: "Medium",
-            numberOfQuestions: 5,
-            displayTopic: randomTopic
-        });
     } else {
       setQuizState("idle");
     }
-  }, [assignment, isRandomQuiz]);
+  }, [assignment]);
 
 
   const startQuizGeneration = async (generationParams: { topic: string; difficulty: Difficulty; numberOfQuestions: number; displayTopic: string; }) => {
@@ -408,6 +400,45 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                 Back to Dashboard
             </Button>
         </CardFooter>
+      </Card>
+    );
+  }
+  
+  const handleRandomQuizDifficultySelect = (difficulty: Difficulty) => {
+    const randomTopic = randomQuizTopics[Math.floor(Math.random() * randomQuizTopics.length)];
+    startQuizGeneration({
+      topic: randomTopic,
+      difficulty: difficulty,
+      numberOfQuestions: 5,
+      displayTopic: `Random Topic: ${randomTopic}`,
+    });
+  };
+
+  if (isRandomQuiz) {
+    return (
+      <Card>
+        <CardHeader>
+            <div className="flex items-start justify-between">
+                <div>
+                    <CardTitle className="font-headline">Random Quiz</CardTitle>
+                    <CardDescription>
+                        Choose a difficulty to start your random quiz.
+                    </CardDescription>
+                </div>
+                 <Button variant="outline" size="sm" onClick={onQuizFinish}>
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Back to Dashboard
+                </Button>
+            </div>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center gap-4 pt-6">
+            <h3 className="font-semibold text-lg">Select a Difficulty</h3>
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+                <Button onClick={() => handleRandomQuizDifficultySelect('Easy')} size="lg" variant="outline" className="w-full">Easy</Button>
+                <Button onClick={() => handleRandomQuizDifficultySelect('Medium')} size="lg" className="w-full bg-accent hover:bg-accent/90">Medium</Button>
+                <Button onClick={() => handleRandomQuizDifficultySelect('Hard')} size="lg" variant="destructive" className="w-full">Hard</Button>
+            </div>
+        </CardContent>
       </Card>
     );
   }
