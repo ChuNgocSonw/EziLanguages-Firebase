@@ -189,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [updateStreak]);
+  }, []);
   
   const setLastActivity = async (activity: LastActivity) => {
       if (!auth.currentUser) return;
