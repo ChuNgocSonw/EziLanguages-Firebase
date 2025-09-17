@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import type { Assignment, QuizAttempt } from "@/lib/types";
-import { Loader2, BookCopy, ChevronLeft, Check, X } from "lucide-react";
+import { Loader2, BookOpen, ChevronLeft, Check, X } from "lucide-react";
 import QuizSession from "@/components/quiz/quiz-session";
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
@@ -155,7 +155,7 @@ export default function StudentAssignmentsPage() {
                                                     </Badge>
                                                 ) : (
                                                     <Button variant="outline" size="sm" onClick={() => handleStartQuiz(quiz)}>
-                                                        <BookCopy className="mr-2 h-4 w-4" />
+                                                        <BookOpen className="mr-2 h-4 w-4" />
                                                         Start Quiz
                                                     </Button>
                                                 )}
@@ -196,8 +196,8 @@ export default function StudentAssignmentsPage() {
                                             </p>
                                         </div>
                                         <div className="shrink-0">
-                                             <Button variant="secondary" size="sm" onClick={() => handleReviewAssignment(quiz.id)}>
-                                                <BookCopy className="mr-2 h-4 w-4" />
+                                             <Button variant="outline" size="sm" onClick={() => handleReviewAssignment(quiz.id)}>
+                                                <BookOpen className="mr-2 h-4 w-4" />
                                                 Review
                                             </Button>
                                         </div>
