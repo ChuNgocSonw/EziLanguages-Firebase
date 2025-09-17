@@ -47,6 +47,7 @@ export interface AuthContextType {
   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
   getClassDetails: (classId: string) => Promise<Class | null>;
   getStudentsForClassManagement: (classId: string) => Promise<AdminUserView[]>;
+  getStudentsForClass: (classId: string) => Promise<AdminUserView[]>;
   addStudentToClass: (classId: string, studentId: string) => Promise<void>;
   removeStudentFromClass: (classId: string, studentId: string) => Promise<void>;
   searchStudentsByEmail: (emailQuery: string) => Promise<AdminUserView[]>;
@@ -513,6 +514,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   }, []);
+
+  const getStudentsForClass = useCallback(async (classId: string): Promise<AdminUserView[]> => {
+      const classDetails = await getClassDetails(classId);
+      if (!classDetails || classDetails.studentIds.length === 0) return [];
+      
+      const studentPromises = classDetails.studentIds.map(id => getDoc(doc(db, "users", id)));
+      const studentDocs = await Promise.all(studentPromises);
+      
+      return studentDocs
+        .filter(doc => doc.exists())
+        .map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
+  }, [getClassDetails]);
   
   const getStudentsForClassManagement = useCallback(async (classId: string): Promise<AdminUserView[]> => {
       const classDetails = await getClassDetails(classId);
@@ -694,6 +707,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateUserRole,
     getClassDetails,
     getStudentsForClassManagement,
+    getStudentsForClass,
     addStudentToClass,
     removeStudentFromClass,
     searchStudentsByEmail,
@@ -708,7 +722,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
       saveListeningScore, saveQuizAttempt, getQuizHistory, getLeaderboard, createClass, getTeacherClasses,
-      deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement,
+      deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement, getStudentsForClass,
       addStudentToClass, removeStudentFromClass, searchStudentsByEmail, createAssignment, updateAssignment,
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments
   ]);
