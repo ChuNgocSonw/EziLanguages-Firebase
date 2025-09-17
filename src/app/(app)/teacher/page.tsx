@@ -1,7 +1,7 @@
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BarChart2, MessageSquare, BookUser, BookCopy } from "lucide-react";
+import { BarChart2, MessageSquare, BookUser, BookCopy } from "lucide-react";
 import Link from "next/link";
 
 export default function TeacherPage() {
@@ -59,8 +59,8 @@ export default function TeacherPage() {
             </p>
           </CardContent>
            <CardFooter>
-             <Button className="w-full" variant="outline" disabled>
-                View Statistics
+             <Button className="w-full" variant="outline" asChild>
+                <Link href="/teacher/statistics">View Statistics</Link>
              </Button>
           </CardFooter>
         </Card>
@@ -85,7 +85,7 @@ export default function TeacherPage() {
         <CardHeader>
           <CardTitle>Coming Soon</CardTitle>
           <CardDescription>
-            The "Student Statistics" and "Send Feedback" features are currently under development. Stay tuned for updates!
+            The "Send Feedback" feature is currently under development. Stay tuned for updates!
           </CardDescription>
         </CardHeader>
       </Card>
