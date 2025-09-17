@@ -13,7 +13,8 @@ import {
   User,
   ShieldCheck,
   School,
-  BookCopy
+  BookCopy,
+  BarChart2
 } from 'lucide-react';
 import {
   Tooltip,
@@ -32,6 +33,7 @@ const allNavItems = [
   { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/teacher', icon: School, label: 'Teacher', roles: ['teacher', 'admin', 'superadmin'] },
+  { href: '/teacher/statistics', icon: BarChart2, label: 'Statistics', roles: ['teacher', 'admin', 'superadmin'] },
   { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin', 'superadmin'] },
 ];
 
