@@ -113,6 +113,8 @@ export interface UserProfile {
 
 export interface AdminUserView extends UserProfile {
   uid: string;
+  assignmentsCompletedCount?: number;
+  totalAssignmentsCount?: number;
 }
 
 export interface LeaderboardEntry {

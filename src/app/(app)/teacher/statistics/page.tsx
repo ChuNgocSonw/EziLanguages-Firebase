@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
 import type { Class, AdminUserView } from "@/lib/types";
-import { Loader2, Award, Flame, Star } from "lucide-react";
+import { Loader2, Award, Flame, Star, CheckCircle2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
 
-function StudentStatisticsTable({ students }: { students: AdminUserView[] }) {
+function StudentStatisticsTable({ students, totalAssignments }: { students: AdminUserView[], totalAssignments: number }) {
     if (students.length === 0) {
         return (
             <div className="text-center py-12 text-muted-foreground">
@@ -21,51 +22,68 @@ function StudentStatisticsTable({ students }: { students: AdminUserView[] }) {
     }
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead className="text-center">XP</TableHead>
-                    <TableHead className="text-center">Streak</TableHead>
-                    <TableHead className="text-center">Badges</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {students.map((student) => (
-                    <TableRow key={student.uid}>
-                        <TableCell>
-                            <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
-                                    <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <div className="font-medium">{student.name}</div>
-                                    <div className="text-xs text-muted-foreground">{student.email}</div>
-                                </div>
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1 font-semibold">
-                                <Star className="h-4 w-4 text-yellow-500" />
-                                {student.xp}
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                             <div className="flex items-center justify-center gap-1 font-semibold">
-                                <Flame className="h-4 w-4 text-orange-500" />
-                                {student.streak}
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1 font-semibold">
-                                <Award className="h-4 w-4 text-blue-500" />
-                                {student.badgeCount}
-                            </div>
-                        </TableCell>
+        <>
+            <p className="text-sm text-muted-foreground mb-4">
+                This class has <span className="font-semibold text-primary">{totalAssignments}</span> assigned quiz(zes).
+            </p>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead className="text-center">XP</TableHead>
+                        <TableHead className="text-center">Streak</TableHead>
+                        <TableHead className="text-center">Badges</TableHead>
+                        <TableHead>Assignments Completed</TableHead>
                     </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+                </TableHeader>
+                <TableBody>
+                    {students.map((student) => {
+                         const completionPercentage = totalAssignments > 0 ? (student.assignmentsCompletedCount! / totalAssignments) * 100 : 0;
+                        return (
+                        <TableRow key={student.uid}>
+                            <TableCell>
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <div className="font-medium">{student.name}</div>
+                                        <div className="text-xs text-muted-foreground">{student.email}</div>
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-1 font-semibold">
+                                    <Star className="h-4 w-4 text-yellow-500" />
+                                    {student.xp}
+                                </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-1 font-semibold">
+                                    <Flame className="h-4 w-4 text-orange-500" />
+                                    {student.streak}
+                                </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-1 font-semibold">
+                                    <Award className="h-4 w-4 text-blue-500" />
+                                    {student.badgeCount}
+                                </div>
+                            </TableCell>
+                             <TableCell>
+                                <div className="flex items-center gap-2">
+                                     <div className="flex items-center gap-1 font-semibold w-16 shrink-0">
+                                         <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                         {student.assignmentsCompletedCount} / {totalAssignments}
+                                     </div>
+                                     <Progress value={completionPercentage} className="h-2 w-full" />
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    )})}
+                </TableBody>
+            </Table>
+        </>
     );
 }
 
@@ -73,6 +91,7 @@ export default function TeacherStatisticsPage() {
     const [classes, setClasses] = useState<Class[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [students, setStudents] = useState<AdminUserView[]>([]);
+    const [totalAssignments, setTotalAssignments] = useState(0);
     const [isLoadingClasses, setIsLoadingClasses] = useState(true);
     const [isLoadingStudents, setIsLoadingStudents] = useState(false);
     const { getTeacherClasses, getStudentsForClass } = useAuth();
@@ -99,8 +118,9 @@ export default function TeacherStatisticsPage() {
                 setIsLoadingStudents(true);
                 setStudents([]);
                 try {
-                    const studentData = await getStudentsForClass(selectedClassId);
+                    const { students: studentData, totalAssignments: assignmentsCount } = await getStudentsForClass(selectedClassId);
                     setStudents(studentData);
+                    setTotalAssignments(assignmentsCount);
                 } catch (error) {
                     console.error("Failed to fetch students:", error);
                 } finally {
@@ -152,7 +172,7 @@ export default function TeacherStatisticsPage() {
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             </div>
                         ) : selectedClassId ? (
-                            <StudentStatisticsTable students={students} />
+                            <StudentStatisticsTable students={students} totalAssignments={totalAssignments} />
                         ) : (
                              <div className="text-center py-12 text-muted-foreground">
                                 <p>Please select a class to view student statistics.</p>

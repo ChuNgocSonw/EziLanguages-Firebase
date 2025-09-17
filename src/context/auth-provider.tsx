@@ -47,7 +47,7 @@ export interface AuthContextType {
   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
   getClassDetails: (classId: string) => Promise<Class | null>;
   getStudentsForClassManagement: (classId: string) => Promise<AdminUserView[]>;
-  getStudentsForClass: (classId: string) => Promise<AdminUserView[]>;
+  getStudentsForClass: (classId: string) => Promise<{ students: AdminUserView[], totalAssignments: number }>;
   addStudentToClass: (classId: string, studentId: string) => Promise<void>;
   removeStudentFromClass: (classId: string, studentId: string) => Promise<void>;
   searchStudentsByEmail: (emailQuery: string) => Promise<AdminUserView[]>;
@@ -515,16 +515,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   }, []);
 
-  const getStudentsForClass = useCallback(async (classId: string): Promise<AdminUserView[]> => {
+  const getStudentsForClass = useCallback(async (classId: string): Promise<{ students: AdminUserView[], totalAssignments: number }> => {
       const classDetails = await getClassDetails(classId);
-      if (!classDetails || classDetails.studentIds.length === 0) return [];
+      if (!classDetails) return { students: [], totalAssignments: 0 };
+      
+      // Get all assignments for this class
+      const assignmentsRef = collection(db, "assignments");
+      const qAssignments = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: classDetails.id, className: classDetails.className }));
+      const assignmentsSnapshot = await getDocs(qAssignments);
+      const classAssignments = assignmentsSnapshot.docs.map(doc => doc.id);
+      const totalAssignments = classAssignments.length;
+
+      if (classDetails.studentIds.length === 0) {
+        return { students: [], totalAssignments };
+      }
       
       const studentPromises = classDetails.studentIds.map(id => getDoc(doc(db, "users", id)));
       const studentDocs = await Promise.all(studentPromises);
       
-      return studentDocs
+      const students = studentDocs
         .filter(doc => doc.exists())
-        .map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
+        .map(doc => {
+            const studentData = doc.data() as UserProfile;
+            const completedCount = (studentData.completedAssignments || []).filter(id => classAssignments.includes(id)).length;
+            return { 
+                uid: doc.id, 
+                ...studentData,
+                assignmentsCompletedCount: completedCount,
+                totalAssignmentsCount: totalAssignments
+            } as AdminUserView
+        });
+
+      return { students, totalAssignments };
   }, [getClassDetails]);
   
   const getStudentsForClassManagement = useCallback(async (classId: string): Promise<AdminUserView[]> => {
@@ -669,21 +691,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const assignmentsRef = collection(db, "assignments");
     
-    // Firestore's array-contains does not work for partial object matches in arrays.
-    // We have to filter client-side.
-    // To optimize, we can query for assignments that have at least one class assigned.
-    const q = query(assignmentsRef, where("assignedClasses", "!=", []));
-    const querySnapshot = await getDocs(q);
-    const allAssignments = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
+    const q = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: profile.classId, className: "" }));
+    
+    const querySnapshot = await getDocs(query(assignmentsRef));
 
-    const studentAssignments = allAssignments.filter(assignment => 
-      assignment.assignedClasses?.some(c => c.classId === profile.classId)
-    );
+    const allAssignments = querySnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as Assignment))
+      .filter(assignment => assignment.assignedClasses?.some(c => c.classId === profile.classId));
     
     // Sort by creation date, newest first
-    studentAssignments.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    allAssignments.sort((a, b) => {
+        if (a.createdAt && b.createdAt) {
+            return b.createdAt.toMillis() - a.createdAt.toMillis();
+        }
+        return 0;
+    });
     
-    return studentAssignments;
+    return allAssignments;
   }, [userProfile]);
 
 
