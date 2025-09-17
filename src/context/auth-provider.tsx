@@ -442,7 +442,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return xpGained;
-  }, [setLastActivity, updateWeeklyXP, getQuizHistory, checkAndAwardBadges, toast]);
+  }, [setLastActivity, updateWeeklyXP, getQuizHistory, checkAndAwardBadges]);
 
   const getLeaderboard = useCallback(async (category: 'badgeCount' | 'streak' | 'weeklyXP'): Promise<LeaderboardEntry[]> => {
     const usersRef = collection(db, "users");
@@ -662,20 +662,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await updateDoc(assignmentRef, { assignedClasses: assignedClasses || [] });
   }, []);
 
-  const getStudentAssignments = useCallback(async (): Promise<Assignment[]> => {
-    if (!userProfile || !userProfile.classId) {
+  const getStudentAssignments = useCallback(async (userProfileParam?: UserProfile | null): Promise<Assignment[]> => {
+    const profile = userProfileParam || userProfile;
+    if (!profile || !profile.classId) {
         return [];
     }
     const assignmentsRef = collection(db, "assignments");
     
-    const querySnapshot = await getDocs(assignmentsRef);
-    const allAssignments = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
-
     // Firestore's array-contains does not work for partial object matches in arrays.
     // We have to filter client-side.
+    // To optimize, we can query for assignments that have at least one class assigned.
+    const q = query(assignmentsRef, where("assignedClasses", "!=", []));
+    const querySnapshot = await getDocs(q);
+    const allAssignments = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
+
     const studentAssignments = allAssignments.filter(assignment => 
-      assignment.assignedClasses?.some(c => c.classId === userProfile.classId)
+      assignment.assignedClasses?.some(c => c.classId === profile.classId)
     );
+    
+    // Sort by creation date, newest first
+    studentAssignments.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
     
     return studentAssignments;
   }, [userProfile]);
@@ -729,5 +735,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-    
