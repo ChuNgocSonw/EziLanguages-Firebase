@@ -58,6 +58,7 @@ function ReviewAssignmentView({ attempt, onBack }: { attempt: QuizAttempt, onBac
 export default function StudentAssignmentsPage() {
     const [assignments, setAssignments] = useState<Assignment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isReviewLoading, setIsReviewLoading] = useState<string | null>(null);
     const { userProfile, getStudentAssignments, getAssignmentAttempt } = useAuth();
     const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
     const [reviewAttempt, setReviewAttempt] = useState<QuizAttempt | null>(null);
@@ -85,7 +86,7 @@ export default function StudentAssignmentsPage() {
     };
     
     const handleReviewAssignment = async (assignmentId: string) => {
-        setIsLoading(true);
+        setIsReviewLoading(assignmentId);
         try {
             const attempt = await getAssignmentAttempt(assignmentId);
             if (attempt) {
@@ -94,7 +95,7 @@ export default function StudentAssignmentsPage() {
         } catch (error) {
             console.error("Could not fetch assignment attempt:", error);
         } finally {
-            setIsLoading(false);
+            setIsReviewLoading(null);
         }
     };
     
@@ -195,8 +196,17 @@ export default function StudentAssignmentsPage() {
                                                 </p>
                                             </div>
                                             <div className="shrink-0">
-                                                 <Button variant="outline" size="sm" onClick={() => handleReviewAssignment(quiz.id)}>
-                                                    <BookOpen className="mr-2 h-4 w-4" />
+                                                 <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    onClick={() => handleReviewAssignment(quiz.id)}
+                                                    disabled={isReviewLoading === quiz.id}
+                                                 >
+                                                    {isReviewLoading === quiz.id ? (
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <BookOpen className="mr-2 h-4 w-4" />
+                                                    )}
                                                     Review
                                                 </Button>
                                             </div>
