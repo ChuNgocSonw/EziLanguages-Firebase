@@ -27,14 +27,13 @@ import type { UserRole } from '@/lib/types';
 
 const allNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['student', 'teacher', 'admin', 'superadmin'] },
-  { href: '/assignments', icon: BookCopy, label: 'Assignments', roles: ['student', 'teacher', 'admin', 'superadmin'] },
+  { href: '/assignments', icon: BookCopy, label: 'Assignments', roles: ['student'] },
   { href: '/chat', icon: MessageSquare, label: 'AI Chat', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/reading', icon: BookOpen, label: 'Reading', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/listening', icon: Headphones, label: 'Listening', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/teacher', icon: School, label: 'Teacher', roles: ['teacher', 'admin', 'superadmin'] },
-  { href: '/teacher/statistics', icon: BarChart2, label: 'Statistics', roles: ['teacher', 'admin', 'superadmin'] },
   { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin', 'superadmin'] },
 ];
 
