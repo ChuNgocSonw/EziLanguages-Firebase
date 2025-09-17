@@ -3,40 +3,55 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { QuizAttempt } from "@/lib/types";
+import { Assignment, QuizAttempt } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen } from "lucide-react";
+import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen, BookCopy } from "lucide-react";
 import { format } from 'date-fns';
 import QuizSession from "./quiz-session";
 import { cn } from "@/lib/utils";
 import { Badge } from "../ui/badge";
+import { Separator } from "../ui/separator";
 
 export default function QuizDashboard() {
   const [view, setView] = useState<"dashboard" | "new_quiz" | "review_quiz">("dashboard");
   const [quizHistory, setQuizHistory] = useState<QuizAttempt[]>([]);
+  const [assignedQuizzes, setAssignedQuizzes] = useState<Assignment[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizAttempt | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { getQuizHistory } = useAuth();
+  const { getQuizHistory, getStudentAssignments } = useAuth();
 
   useEffect(() => {
     if (view === "dashboard") {
-      const fetchHistory = async () => {
+      const fetchDashboardData = async () => {
         setIsLoading(true);
         try {
-          const history = await getQuizHistory();
+          const historyPromise = getQuizHistory();
+          const assignmentsPromise = getStudentAssignments();
+          
+          const [history, assignments] = await Promise.all([historyPromise, assignmentsPromise]);
+
           setQuizHistory(history);
+          setAssignedQuizzes(assignments);
+
         } catch (error) {
-          console.error("Failed to fetch quiz history:", error);
+          console.error("Failed to fetch dashboard data:", error);
         } finally {
           setIsLoading(false);
         }
       };
-      fetchHistory();
+      fetchDashboardData();
     }
-  }, [view, getQuizHistory]);
+  }, [view, getQuizHistory, getStudentAssignments]);
   
   const handleStartNewQuiz = () => {
+    setSelectedAssignment(null);
+    setView("new_quiz");
+  };
+
+  const handleStartAssignedQuiz = (assignment: Assignment) => {
+    setSelectedAssignment(assignment);
     setView("new_quiz");
   };
   
@@ -48,6 +63,7 @@ export default function QuizDashboard() {
   const handleBackToDashboard = () => {
     setView("dashboard");
     setSelectedQuiz(null);
+    setSelectedAssignment(null);
   };
 
   if (isLoading && view === "dashboard") {
@@ -59,7 +75,7 @@ export default function QuizDashboard() {
   }
 
   if (view === "new_quiz") {
-    return <QuizSession onQuizFinish={handleBackToDashboard} />;
+    return <QuizSession onQuizFinish={handleBackToDashboard} assignment={selectedAssignment} />;
   }
 
   if (view === "review_quiz" && selectedQuiz) {
@@ -104,45 +120,81 @@ export default function QuizDashboard() {
   }
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between">
-        <div>
-            <CardTitle>Quiz History</CardTitle>
-            <CardDescription>Review your past quizzes or start a new one.</CardDescription>
-        </div>
-        <Button onClick={handleStartNewQuiz} className="bg-accent hover:bg-accent/90">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          New Quiz
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {quizHistory.length > 0 ? (
-          <div className="space-y-3">
-            {quizHistory.map((quiz) => (
-              <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted">
-                <div>
-                  <h4 className="font-semibold">{quiz.topic}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Completed on {format(quiz.completedAt.toDate(), 'PPP')}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Badge variant={quiz.percentage > 70 ? "default" : "secondary"} className={cn(quiz.percentage <= 70 && "bg-yellow-500 text-black", quiz.percentage < 50 && "bg-destructive text-destructive-foreground")}>{quiz.percentage}%</Badge>
-                  <Button variant="outline" size="sm" onClick={() => handleReviewQuiz(quiz)}>
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Review
-                  </Button>
-                </div>
-              </div>
-            ))}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+              <CardTitle>AI Quiz Generator</CardTitle>
+              <CardDescription>Generate a new quiz on any topic you want.</CardDescription>
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold">No Quiz History</h3>
-            <p className="text-muted-foreground mt-2">You haven't completed any quizzes yet. Start a new one to test your knowledge!</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          <Button onClick={handleStartNewQuiz} className="bg-accent hover:bg-accent/90">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            New Quiz
+          </Button>
+        </CardHeader>
+      </Card>
+      
+      {assignedQuizzes.length > 0 && (
+          <Card>
+              <CardHeader>
+                  <CardTitle>Assigned by Your Teacher</CardTitle>
+                  <CardDescription>Quizzes assigned to you by your teacher.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className="space-y-3">
+                      {assignedQuizzes.map((quiz) => (
+                          <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted">
+                              <div>
+                                  <h4 className="font-semibold">{quiz.title}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                      {quiz.questions.length} questions
+                                  </p>
+                              </div>
+                              <Button variant="outline" size="sm" onClick={() => handleStartAssignedQuiz(quiz)}>
+                                  <BookCopy className="mr-2 h-4 w-4" />
+                                  Start Quiz
+                              </Button>
+                          </div>
+                      ))}
+                  </div>
+              </CardContent>
+          </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Quiz History</CardTitle>
+          <CardDescription>Review your past quizzes.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {quizHistory.length > 0 ? (
+            <div className="space-y-3">
+              {quizHistory.map((quiz) => (
+                <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted">
+                  <div>
+                    <h4 className="font-semibold">{quiz.topic}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Completed on {format(quiz.completedAt.toDate(), 'PPP')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Badge variant={quiz.percentage > 70 ? "default" : "secondary"} className={cn(quiz.percentage <= 70 && "bg-yellow-500 text-black", quiz.percentage < 50 && "bg-destructive text-destructive-foreground")}>{quiz.percentage}%</Badge>
+                    <Button variant="outline" size="sm" onClick={() => handleReviewQuiz(quiz)}>
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Review
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <h3 className="text-lg font-semibold">No Quiz History</h3>
+              <p className="text-muted-foreground mt-2">You haven't completed any AI-generated quizzes yet.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

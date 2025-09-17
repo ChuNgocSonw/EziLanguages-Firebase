@@ -1,14 +1,14 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { generateQuizQuestions } from "@/lib/actions";
-import type { QuizQuestion } from "@/lib/types";
+import type { QuizQuestion, Assignment } from "@/lib/types";
 import { Loader2, ArrowRight, Check, X, RefreshCw, BookCopy, Pilcrow, ChevronLeft } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -24,9 +24,10 @@ type Difficulty = "Easy" | "Medium" | "Hard";
 
 interface QuizSessionProps {
     onQuizFinish: () => void;
+    assignment?: Assignment | null;
 }
 
-export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
+export default function QuizSession({ onQuizFinish, assignment = null }: QuizSessionProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [quizState, setQuizState] = useState<QuizState>("idle");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -36,6 +37,17 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
   const [quizTopic, setQuizTopic] = useState(""); // This will store the final topic for the summary page
   const { toast } = useToast();
   const { saveQuizAttempt } = useAuth();
+  
+  useEffect(() => {
+    if (assignment) {
+      setQuestions(assignment.questions);
+      setQuizTopic(assignment.title);
+      setQuizState("active");
+    } else {
+      setQuizState("idle");
+    }
+  }, [assignment]);
+
 
   const startQuizGeneration = async (generationParams: { topic: string; difficulty: Difficulty; numberOfQuestions: number; displayTopic: string; }) => {
     const { topic, difficulty, numberOfQuestions, displayTopic } = generationParams;
@@ -290,6 +302,11 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     return (
       <Card>
         <CardHeader>
+          {assignment && (
+            <div className="mb-2 text-sm font-semibold text-primary">
+              Assignment: {assignment.title}
+            </div>
+          )}
           <Progress value={((currentQuestionIndex + 1) / questions.length) * 100} className="mb-4" />
           <CardTitle className="font-headline text-xl">Question {currentQuestionIndex + 1} of {questions.length}</CardTitle>
           <CardDescription className="text-lg pt-2">{question.question}</CardDescription>

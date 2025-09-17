@@ -14,7 +14,7 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc, arrayContains } from 'firebase/firestore';
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
@@ -56,6 +56,7 @@ export interface AuthContextType {
   getAssignmentDetails: (assignmentId: string) => Promise<Assignment | null>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
   assignAssignmentToClasses: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => Promise<void>;
+  getStudentAssignments: () => Promise<Assignment[]>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -643,6 +644,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await updateDoc(assignmentRef, { assignedClasses: assignedClasses || [] });
   };
 
+  const getStudentAssignments = async (): Promise<Assignment[]> => {
+    if (!userProfile || !userProfile.classId) {
+        return [];
+    }
+    const assignmentsRef = collection(db, "assignments");
+    const q = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: userProfile.classId, className: "" }));
+    
+    const querySnapshot = await getDocs(assignmentsRef);
+    const allAssignments = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
+
+    // Firestore's array-contains does not work for partial object matches in arrays.
+    // We have to filter client-side.
+    const studentAssignments = allAssignments.filter(assignment => 
+      assignment.assignedClasses?.some(c => c.classId === userProfile.classId)
+    );
+    
+    return studentAssignments;
+  };
+
 
   const value: AuthContextType = {
     user,
@@ -679,6 +699,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getAssignmentDetails,
     deleteAssignment,
     assignAssignmentToClasses,
+    getStudentAssignments,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
