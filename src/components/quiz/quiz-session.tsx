@@ -343,7 +343,7 @@ export default function QuizSession({ onQuizFinish, assignment = null }: QuizSes
           )}
         </CardContent>
         <CardFooter>
-          <Button onClick={handleNextQuestion} disabled={!selectedOption} className="ml-auto bg-accent hover:bg-accent/90">
+          <Button onClick={handleNextQuestion} disabled={!selectedOption} className="bg-accent hover:bg-accent/90">
             {currentQuestionIndex < questions.length - 1 ? "Next Question" : "Finish & Save Quiz"}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
