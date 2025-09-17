@@ -55,21 +55,20 @@ export default function TeacherClassesPage() {
     defaultValues: { className: "" },
   });
 
-  const fetchClasses = async () => {
-    setIsLoading(true);
-    try {
-      const teacherClasses = await getTeacherClasses();
-      setClasses(teacherClasses);
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to fetch classes.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchClasses = async () => {
+        setIsLoading(true);
+        try {
+        const teacherClasses = await getTeacherClasses();
+        setClasses(teacherClasses);
+        } catch (error) {
+        toast({ title: "Error", description: "Failed to fetch classes.", variant: "destructive" });
+        } finally {
+        setIsLoading(false);
+        }
+    };
     fetchClasses();
-  }, []);
+  }, [getTeacherClasses]);
 
   const onSubmit = async (data: CreateClassFormData) => {
     setIsCreating(true);
@@ -78,7 +77,11 @@ export default function TeacherClassesPage() {
       toast({ title: "Success", description: "Class created successfully." });
       form.reset();
       setIsDialogOpen(false);
-      await fetchClasses(); // Refresh the list
+      
+      // Refetch classes after creation
+      const teacherClasses = await getTeacherClasses();
+      setClasses(teacherClasses);
+
     } catch (error) {
       toast({ title: "Error", description: "Failed to create class.", variant: "destructive" });
     } finally {
