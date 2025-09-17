@@ -25,7 +25,7 @@ export default function TeacherDashboardPage() {
           <CardFooter>
              <Button className="w-full" asChild>
                 <Link href="/teacher/classes">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Manage Your Classes
+                    Manage Your Classes
                 </Link>
              </Button>
           </CardFooter>
