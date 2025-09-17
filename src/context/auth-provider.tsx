@@ -58,6 +58,7 @@ export interface AuthContextType {
   deleteAssignment: (assignmentId: string) => Promise<void>;
   assignAssignmentToClasses: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => Promise<void>;
   getStudentAssignments: () => Promise<Assignment[]>;
+  getAssignmentAttempt: (assignmentId: string) => Promise<QuizAttempt | null>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -399,7 +400,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const getQuizHistory = useCallback(async (): Promise<QuizAttempt[]> => {
     if (!auth.currentUser) return [];
     const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
-    const q = query(historyRef, orderBy("completedAt", "desc"), where("assignmentId", "==", null));
+    const q = query(historyRef, orderBy("completedAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
   }, []);
@@ -411,14 +412,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const xpGained = attempt.score * 5;
     
-    // Only add to quizHistory if it's NOT an assignment
-    if (!attempt.assignmentId) {
-      const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
-      await addDoc(historyRef, {
-        ...attempt,
-        assignmentId: null, // Ensure field is explicitly null for queries
-        completedAt: serverTimestamp(),
-      });
+    if (attempt.assignmentId) {
+        // This is an assignment attempt
+        const assignmentAttemptsRef = collection(db, "users", auth.currentUser.uid, "assignmentAttempts");
+        await addDoc(assignmentAttemptsRef, {
+            ...attempt,
+            completedAt: serverTimestamp(),
+        });
+    } else {
+        // This is a self-generated quiz
+        const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
+        await addDoc(historyRef, {
+            ...attempt,
+            completedAt: serverTimestamp(),
+        });
     }
     
     const userDocRef = doc(db, "users", auth.currentUser.uid);
@@ -428,20 +435,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updates.completedAssignments = arrayUnion(attempt.assignmentId);
     }
 
-    // First, update weekly XP which relies on the current server state
     await updateWeeklyXP(xpGained);
-
-    // Then, update the total XP and completed assignments
     await updateDoc(userDocRef, updates);
 
-    // After all server updates, fetch the definitive state from the server
     const updatedProfileDoc = await getDoc(userDocRef);
     if (updatedProfileDoc.exists()) {
         const updatedProfile = updatedProfileDoc.data() as UserProfile;
-        // Update the local state with the fresh data from the server
         setUserProfile(updatedProfile);
         
-        // Run badge check with the most up-to-date profile
         const quizHistory = await getQuizHistory();
         await checkAndAwardBadges(auth.currentUser.uid, updatedProfile, quizHistory);
     }
@@ -524,7 +525,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const classDetails = await getClassDetails(classId);
       if (!classDetails) return { students: [], totalAssignments: 0 };
       
-      // Get all assignments for this class
       const assignmentsRef = collection(db, "assignments");
       const qAssignments = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: classDetails.id, className: classDetails.className }));
       const assignmentsSnapshot = await getDocs(qAssignments);
@@ -578,7 +578,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const querySnapshot = await getDocs(q);
     const results = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
 
-    // Filter out students who already have a class
     return results.filter(student => !student.classId);
   }, []);
   
@@ -670,13 +669,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteAssignment = useCallback(async (assignmentId: string) => {
-    if (!auth.currentUser) throw new Error("User not authenticated");
-    const assignmentRef = doc(db, "assignments", assignmentId);
-    const assignmentDoc = await getDoc(assignmentRef);
-    if (!assignmentDoc.exists() || assignmentDoc.data().teacherId !== auth.currentUser.uid) {
-      throw new Error("Assignment not found or you do not have permission to delete it.");
-    }
-    await deleteDoc(assignmentRef);
+      if (!auth.currentUser) throw new Error("User not authenticated");
+      const assignmentRef = doc(db, "assignments", assignmentId);
+      const assignmentDoc = await getDoc(assignmentRef);
+      if (!assignmentDoc.exists() || assignmentDoc.data().teacherId !== auth.currentUser.uid) {
+        throw new Error("Assignment not found or you do not have permission to delete it.");
+      }
+
+      const batch = writeBatch(db);
+      batch.delete(assignmentRef);
+
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("completedAssignments", "array-contains", assignmentId));
+      const usersSnapshot = await getDocs(q);
+
+      usersSnapshot.forEach(userDoc => {
+        const assignmentAttemptsRef = collection(userDoc.ref, "assignmentAttempts");
+        const attemptQuery = query(assignmentAttemptsRef, where("assignmentId", "==", assignmentId));
+        getDocs(attemptQuery).then(attemptSnapshot => {
+          attemptSnapshot.forEach(attemptDoc => {
+            batch.delete(attemptDoc.ref);
+          });
+        });
+      });
+      
+      await batch.commit();
   }, []);
 
   const assignAssignmentToClasses = useCallback(async (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => {
@@ -694,8 +711,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!profile || !profile.classId) {
         return [];
     }
-    const assignmentsRef = collection(db, "assignments");
     
+    const assignmentsRef = collection(db, "assignments");
     const q = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: profile.classId, className: "" }));
     
     const querySnapshot = await getDocs(query(assignmentsRef));
@@ -704,7 +721,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .map(doc => ({ id: doc.id, ...doc.data() } as Assignment))
       .filter(assignment => assignment.assignedClasses?.some(c => c.classId === profile.classId));
     
-    // Sort by creation date, newest first
     allAssignments.sort((a, b) => {
         if (a.createdAt && b.createdAt) {
             return b.createdAt.toMillis() - a.createdAt.toMillis();
@@ -714,6 +730,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     return allAssignments;
   }, [userProfile]);
+
+  const getAssignmentAttempt = useCallback(async (assignmentId: string): Promise<QuizAttempt | null> => {
+    if (!auth.currentUser) return null;
+    const attemptsRef = collection(db, "users", auth.currentUser.uid, "assignmentAttempts");
+    const q = query(attemptsRef, where("assignmentId", "==", assignmentId), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return { id: doc.id, ...doc.data() } as QuizAttempt;
+    }
+    return null;
+  }, []);
 
 
   const value: AuthContextType = useMemo(() => ({
@@ -753,13 +781,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     deleteAssignment,
     assignAssignmentToClasses,
     getStudentAssignments,
+    getAssignmentAttempt,
   }), [
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
       saveListeningScore, saveQuizAttempt, getQuizHistory, getLeaderboard, createClass, getTeacherClasses,
       deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement, getStudentsForClass,
       addStudentToClass, removeStudentFromClass, searchStudentsByEmail, createAssignment, updateAssignment,
-      getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments
+      getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
+      getAssignmentAttempt
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
