@@ -51,10 +51,11 @@ export interface AuthContextType {
   removeStudentFromClass: (classId: string, studentId: string) => Promise<void>;
   searchStudentsByEmail: (emailQuery: string) => Promise<AdminUserView[]>;
   createAssignment: (assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => Promise<void>;
-  updateAssignment: (assignmentId: string, assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => Promise<void>;
+  updateAssignment: (assignmentId: string, assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt' | 'assignedClasses'>) => Promise<void>;
   getTeacherAssignments: () => Promise<Assignment[]>;
   getAssignmentDetails: (assignmentId: string) => Promise<Assignment | null>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
+  assignAssignmentToClasses: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -399,7 +400,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const q = query(historyRef, orderBy("completedAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
-  }, [user]);
+  }, []);
 
   const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
     if (!auth.currentUser) throw new Error("User not authenticated");
@@ -594,7 +595,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const updateAssignment = async (assignmentId: string, assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => {
+  const updateAssignment = async (assignmentId: string, assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt' | 'assignedClasses'>) => {
       if (!auth.currentUser) throw new Error("Not authenticated");
       const assignmentRef = doc(db, "assignments", assignmentId);
       const docSnap = await getDoc(assignmentRef);
@@ -632,6 +633,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await deleteDoc(assignmentRef);
   };
 
+  const assignAssignmentToClasses = async (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => {
+    if (!auth.currentUser) throw new Error("Not authenticated");
+    const assignmentRef = doc(db, "assignments", assignmentId);
+    const docSnap = await getDoc(assignmentRef);
+    if (!docSnap.exists() || docSnap.data().teacherId !== auth.currentUser.uid) {
+      throw new Error("Permission denied or assignment not found.");
+    }
+    await updateDoc(assignmentRef, { assignedClasses: assignedClasses || [] });
+  };
+
 
   const value: AuthContextType = {
     user,
@@ -667,6 +678,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getTeacherAssignments,
     getAssignmentDetails,
     deleteAssignment,
+    assignAssignmentToClasses,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

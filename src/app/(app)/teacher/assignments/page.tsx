@@ -8,8 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, BookCopy, Languages, ListChecks, Trash2, Pencil } from "lucide-react";
-import type { Assignment } from "@/lib/types";
+import { Loader2, PlusCircle, BookCopy, Languages, ListChecks, Trash2, Pencil, Send } from "lucide-react";
+import type { Assignment, Class } from "@/lib/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +21,121 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+
+function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assignment; onAssignmentAssigned: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => void; }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<string[]>(() => 
+    (assignment.assignedClasses || []).map(c => c.classId)
+  );
+  const { getTeacherClasses, assignAssignmentToClasses } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (isOpen) {
+      const fetchClasses = async () => {
+        setIsLoading(true);
+        try {
+          const teacherClasses = await getTeacherClasses();
+          setClasses(teacherClasses);
+        } catch (error) {
+          toast({ title: "Error", description: "Could not fetch classes.", variant: "destructive" });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchClasses();
+    }
+  }, [isOpen, getTeacherClasses, toast]);
+
+  const handleAssign = async () => {
+    setIsAssigning(true);
+    try {
+      const newAssignedClasses = classes
+        .filter(c => selectedClasses.includes(c.id))
+        .map(c => ({ classId: c.id, className: c.className }));
+        
+      await assignAssignmentToClasses(assignment.id, newAssignedClasses);
+      onAssignmentAssigned(assignment.id, newAssignedClasses);
+      toast({ title: "Success", description: "Assignment has been assigned." });
+      setIsOpen(false);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+  
+  const handleCheckboxChange = (classId: string, checked: boolean | 'indeterminate') => {
+    setSelectedClasses(prev => 
+      checked ? [...prev, classId] : prev.filter(id => id !== classId)
+    );
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="w-full">
+            <Send className="mr-2 h-4 w-4" />
+            Assign
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Assign "{assignment.title}"</DialogTitle>
+          <DialogDescription>
+            Select the classes you want to assign this quiz to.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          {isLoading ? (
+            <div className="flex justify-center"><Loader2 className="animate-spin" /></div>
+          ) : classes.length > 0 ? (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {classes.map(c => (
+                <div key={c.id} className="flex items-center space-x-3 p-2 rounded-md border">
+                  <Checkbox 
+                    id={`class-${c.id}`} 
+                    checked={selectedClasses.includes(c.id)}
+                    onCheckedChange={(checked) => handleCheckboxChange(c.id, checked)}
+                  />
+                  <Label htmlFor={`class-${c.id}`} className="flex-1 cursor-pointer">
+                    <p className="font-semibold">{c.className}</p>
+                    <p className="text-xs text-muted-foreground">{c.studentIds.length} student(s)</p>
+                  </Label>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground">You haven't created any classes yet.</p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button onClick={handleAssign} disabled={isAssigning || isLoading || selectedClasses.length === 0}>
+            {isAssigning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Confirm Assignment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export default function TeacherAssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -62,6 +177,12 @@ export default function TeacherAssignmentsPage() {
     }
   };
 
+  const handleAssignmentUpdated = (assignmentId: string, newAssignedClasses: Assignment['assignedClasses']) => {
+    setAssignments(prev => prev.map(a => 
+      a.id === assignmentId ? { ...a, assignedClasses: newAssignedClasses } : a
+    ));
+  };
+
 
   return (
     <>
@@ -96,6 +217,16 @@ export default function TeacherAssignmentsPage() {
                         <BookCopy className="h-5 w-5 text-primary" />
                         {assignment.title}
                     </CardTitle>
+                     {assignment.assignedClasses && assignment.assignedClasses.length > 0 && (
+                        <div className="pt-2">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Assigned to:</p>
+                            <div className="flex flex-wrap gap-1">
+                                {assignment.assignedClasses.map(c => (
+                                    <Badge key={c.classId} variant="secondary">{c.className}</Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                   </CardHeader>
                   <CardContent className="flex-1 space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -108,7 +239,7 @@ export default function TeacherAssignmentsPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="flex gap-2">
-                    <Button variant="outline" className="w-full" disabled>Assign</Button>
+                    <AssignDialog assignment={assignment} onAssignmentAssigned={handleAssignmentUpdated} />
                     <Button variant="secondary" className="w-full" asChild>
                         <Link href={`/teacher/assignments/${assignment.id}/edit`}>
                            <Pencil className="mr-2 h-4 w-4" /> Edit

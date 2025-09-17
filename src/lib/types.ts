@@ -44,7 +44,7 @@ export interface Assignment {
   questions: QuizQuestion[];
   teacherId: string;
   createdAt: Timestamp;
-  // Later: assignedClasses: { classId: string; dueDate: Timestamp }[];
+  assignedClasses?: { classId: string; className: string }[];
 }
 
 
