@@ -14,7 +14,7 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc, arrayContains } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
@@ -649,7 +649,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return [];
     }
     const assignmentsRef = collection(db, "assignments");
-    const q = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: userProfile.classId, className: "" }));
     
     const querySnapshot = await getDocs(assignmentsRef);
     const allAssignments = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));

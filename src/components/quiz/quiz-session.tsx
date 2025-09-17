@@ -89,7 +89,7 @@ export default function QuizSession({ onQuizFinish, assignment = null }: QuizSes
   const handleFinishQuiz = async (finalAnswers: string[]) => {
     setIsSaving(true);
     const score = finalAnswers.reduce((score, answer, index) => {
-      if (answer === questions[index].answer) {
+      if (answer.trim().toLowerCase() === questions[index].answer.trim().toLowerCase()) {
         return score + 1;
       }
       return score;
@@ -136,7 +136,7 @@ export default function QuizSession({ onQuizFinish, assignment = null }: QuizSes
 
   const calculateScore = () => {
     return selectedAnswers.reduce((score, answer, index) => {
-      if (answer === questions[index].answer) {
+      if (answer.trim().toLowerCase() === questions[index].answer.trim().toLowerCase()) {
         return score + 1;
       }
       return score;
@@ -312,14 +312,35 @@ export default function QuizSession({ onQuizFinish, assignment = null }: QuizSes
           <CardDescription className="text-lg pt-2">{question.question}</CardDescription>
         </CardHeader>
         <CardContent>
-          <RadioGroup onValueChange={setSelectedOption} value={selectedOption ?? ""}>
-            {question.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
-                <RadioGroupItem value={option} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">{option}</Label>
-              </div>
-            ))}
-          </RadioGroup>
+          {question.type === 'multiple-choice' && (
+            <RadioGroup onValueChange={setSelectedOption} value={selectedOption ?? ""}>
+              {question.options?.map((option, index) => (
+                <div key={index} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
+                  <RadioGroupItem value={option} id={`option-${index}`} />
+                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">{option}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          )}
+          {question.type === 'true-false' && (
+              <RadioGroup onValueChange={setSelectedOption} value={selectedOption ?? ""}>
+                  <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
+                      <RadioGroupItem value="True" id="option-true" />
+                      <Label htmlFor="option-true" className="flex-1 cursor-pointer">True</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
+                      <RadioGroupItem value="False" id="option-false" />
+                      <Label htmlFor="option-false" className="flex-1 cursor-pointer">False</Label>
+                  </div>
+              </RadioGroup>
+          )}
+          {question.type === 'fill-in-the-blank' && (
+              <Input
+                  placeholder="Type your answer here..."
+                  onChange={(e) => setSelectedOption(e.target.value)}
+                  value={selectedOption ?? ""}
+              />
+          )}
         </CardContent>
         <CardFooter>
           <Button onClick={handleNextQuestion} disabled={!selectedOption} className="ml-auto bg-accent hover:bg-accent/90">
@@ -348,11 +369,11 @@ export default function QuizSession({ onQuizFinish, assignment = null }: QuizSes
                 {questions.map((q, i) => (
                     <div key={i} className="p-2 border rounded-md">
                         <p className="font-medium">{q.question}</p>
-                        <p className={cn("text-sm flex items-center gap-2", selectedAnswers[i] === q.answer ? "text-green-600" : "text-destructive")}>
-                           {selectedAnswers[i] === q.answer ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                        <p className={cn("text-sm flex items-center gap-2", selectedAnswers[i].trim().toLowerCase() === q.answer.trim().toLowerCase() ? "text-green-600" : "text-destructive")}>
+                           {selectedAnswers[i].trim().toLowerCase() === q.answer.trim().toLowerCase() ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                            Your answer: {selectedAnswers[i]}
                         </p>
-                         {selectedAnswers[i] !== q.answer && <p className="text-sm text-green-700">Correct answer: {q.answer}</p>}
+                         {selectedAnswers[i].trim().toLowerCase() !== q.answer.trim().toLowerCase() && <p className="text-sm text-green-700">Correct answer: {q.answer}</p>}
                     </div>
                 ))}
             </div>
