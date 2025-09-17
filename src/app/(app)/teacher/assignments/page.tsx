@@ -178,9 +178,11 @@ export default function TeacherAssignmentsPage() {
     }
   };
 
-  const handleAssignmentUpdated = useCallback(() => {
-    fetchAssignments();
-  }, [fetchAssignments]);
+  const handleAssignmentUpdated = useCallback((assignmentId: string, newAssignedClasses: Assignment['assignedClasses']) => {
+    setAssignments(prev => prev.map(a => 
+      a.id === assignmentId ? { ...a, assignedClasses: newAssignedClasses } : a
+    ));
+  }, []);
 
 
   return (
