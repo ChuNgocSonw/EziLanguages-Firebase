@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { QuizAttempt } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen } from "lucide-react";
+import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen, Wand2 } from "lucide-react";
 import { format } from 'date-fns';
 import QuizSession from "./quiz-session";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { Badge } from "../ui/badge";
 
 export default function QuizDashboard() {
   const [view, setView] = useState<"dashboard" | "new_quiz" | "review_quiz">("dashboard");
+  const [startRandomQuiz, setStartRandomQuiz] = useState(false);
   const [quizHistory, setQuizHistory] = useState<QuizAttempt[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizAttempt | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +39,12 @@ export default function QuizDashboard() {
   }, [view, fetchDashboardData]);
   
   const handleStartNewQuiz = () => {
+    setStartRandomQuiz(false);
+    setView("new_quiz");
+  };
+
+  const handleStartRandomQuiz = () => {
+    setStartRandomQuiz(true);
     setView("new_quiz");
   };
 
@@ -60,7 +67,7 @@ export default function QuizDashboard() {
   }
 
   if (view === "new_quiz") {
-    return <QuizSession onQuizFinish={handleBackToDashboard} />;
+    return <QuizSession onQuizFinish={handleBackToDashboard} isRandomQuiz={startRandomQuiz} />;
   }
 
   if (view === "review_quiz" && selectedQuiz) {
@@ -107,15 +114,21 @@ export default function QuizDashboard() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
               <CardTitle>AI Quiz Generator</CardTitle>
-              <CardDescription>Generate a new quiz on any topic you want.</CardDescription>
+              <CardDescription>Generate a new quiz on any topic or try a random one.</CardDescription>
           </div>
-          <Button onClick={handleStartNewQuiz} className="bg-accent hover:bg-accent/90">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Quiz
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+             <Button onClick={handleStartNewQuiz} variant="secondary" className="w-full">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Quiz
+            </Button>
+            <Button onClick={handleStartRandomQuiz} className="bg-accent hover:bg-accent/90 w-full">
+                <Wand2 className="mr-2 h-4 w-4" />
+                Start Random Quiz
+            </Button>
+          </div>
         </CardHeader>
       </Card>
 

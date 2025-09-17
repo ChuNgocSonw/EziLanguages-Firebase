@@ -25,9 +25,24 @@ type Difficulty = "Easy" | "Medium" | "Hard";
 interface QuizSessionProps {
     onQuizFinish: () => void;
     assignment?: Assignment | null;
+    isRandomQuiz?: boolean;
 }
 
-export default function QuizSession({ onQuizFinish, assignment = null }: QuizSessionProps) {
+const randomQuizTopics = [
+    "Common English Idioms",
+    "Japanese Travel Phrases",
+    "Korean Food Vocabulary",
+    "Vietnamese Tones and Pronunciation",
+    "Business English for Meetings",
+    "Phrasal Verbs with 'Get'",
+    "Ordering Food in a Restaurant",
+    "Past, Present, and Future Tenses",
+    "False Friends in Spanish and English",
+    "Essential French Greetings"
+];
+
+
+export default function QuizSession({ onQuizFinish, assignment = null, isRandomQuiz = false }: QuizSessionProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [quizState, setQuizState] = useState<QuizState>("idle");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -43,10 +58,18 @@ export default function QuizSession({ onQuizFinish, assignment = null }: QuizSes
       setQuestions(assignment.questions);
       setQuizTopic(assignment.title);
       setQuizState("active");
+    } else if (isRandomQuiz) {
+        const randomTopic = randomQuizTopics[Math.floor(Math.random() * randomQuizTopics.length)];
+        startQuizGeneration({
+            topic: randomTopic,
+            difficulty: "Medium",
+            numberOfQuestions: 5,
+            displayTopic: randomTopic
+        });
     } else {
       setQuizState("idle");
     }
-  }, [assignment]);
+  }, [assignment, isRandomQuiz]);
 
 
   const startQuizGeneration = async (generationParams: { topic: string; difficulty: Difficulty; numberOfQuestions: number; displayTopic: string; }) => {
