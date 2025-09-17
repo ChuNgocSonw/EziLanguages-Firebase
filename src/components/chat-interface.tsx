@@ -30,7 +30,7 @@ import { Label } from "./ui/label";
 const suggestedPrompts = [
     "Correct this for me: She don't like coffee.",
     "What does 'eloquent' mean?",
-    "How do you say 'good morning' in Japanese?",
+    "Translate 'Chào buổi sáng' to English",
 ];
 
 interface ChatInterfaceProps {
@@ -323,7 +323,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
                   <CornerDownLeft className="inline-block h-3 w-3 mr-1"/>
                   Send
                 </p>
-                <Button type="submit" size="icon" disabled={isLoading || isHistoryLoading || !inputValue.trim()} className="bg-accent hover:bg-accent/90">
+                <Button type="submit" size="icon" disabled={isLoading || isHistoryLoading || !inputValue.trim()} className="bg-accent hover:bg-accent/hover">
                     <SendHorizonal className="h-5 w-5" />
                 </Button>
             </div>
