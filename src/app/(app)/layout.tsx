@@ -207,19 +207,19 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           </DropdownMenu>
         </header>
         <main className="flex-1 flex flex-col bg-background overflow-hidden">
-            <ScrollArea className="h-full">
-                <div className={cn("p-4 lg:p-6 space-y-4 lg:space-y-6", pathname.includes('/chat') && 'flex flex-col flex-1 h-full')}>
-                    {!user.emailVerified && !user.email?.endsWith('@ezilanguages.com') && (
-                        <Alert variant="default" className="bg-yellow-100 border-yellow-500 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300">
-                            <AlertTitle className="font-bold">Verification Required</AlertTitle>
-                            <AlertDescription>
-                                Your email is not verified. Please check your inbox for a verification link to unlock all features.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    {children}
+             <div className={cn("p-4 lg:p-6 flex-1 flex flex-col", pathname.includes('/chat') ? 'p-0 lg:p-0' : 'space-y-4 lg:space-y-6')}>
+                {!user.emailVerified && !user.email?.endsWith('@ezilanguages.com') && (
+                    <Alert variant="default" className="bg-yellow-100 border-yellow-500 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300">
+                        <AlertTitle className="font-bold">Verification Required</AlertTitle>
+                        <AlertDescription>
+                            Your email is not verified. Please check your inbox for a verification link to unlock all features.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                <div className={cn("flex-1 flex flex-col", !pathname.includes('/chat') && 'p-4 lg:p-6')}>
+                     {children}
                 </div>
-            </ScrollArea>
+            </div>
         </main>
       </div>
     </div>

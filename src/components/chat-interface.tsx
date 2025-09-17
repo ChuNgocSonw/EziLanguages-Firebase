@@ -196,9 +196,9 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
   };
 
   return (
-    <Card className="flex-1 flex flex-col h-full">
+    <Card className="flex-1 flex flex-col h-full overflow-hidden">
         
-          <div className="flex items-center justify-between p-2 border-b">
+          <div className="flex items-center justify-between p-2 border-b shrink-0">
              <div className="flex items-center gap-2">
                 <Label htmlFor="language-select" className="text-sm font-medium">Explanation Language:</Label>
                 <Select value={explanationLanguage} onValueChange={setExplanationLanguage}>
@@ -308,7 +308,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
             </div>
           )}
         </ScrollArea>
-        <div className="border-t bg-card p-4 space-y-4">
+        <div className="border-t bg-card p-4 space-y-4 shrink-0">
           <form onSubmit={handleSendMessage} className="relative">
             <Textarea
               value={inputValue}
