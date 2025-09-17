@@ -399,47 +399,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getQuizHistory = useCallback(async (): Promise<QuizAttempt[]> => {
     if (!auth.currentUser) return [];
-
     const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
-    const historyQuery = query(historyRef, where("assignmentId", "==", null));
-    const historySnapshot = await getDocs(historyQuery);
-    const selfGenerated = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
-
-    const assignmentAttemptsRef = collection(db, "users", auth.currentUser.uid, "assignmentAttempts");
-    const assignmentAttemptsSnapshot = await getDocs(assignmentAttemptsRef);
-    const assignments = assignmentAttemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
-
-    const allAttempts = [...selfGenerated, ...assignments];
-    allAttempts.sort((a, b) => b.completedAt.toMillis() - a.completedAt.toMillis());
-
-    return allAttempts;
+    const q = query(historyRef, orderBy("completedAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
   }, []);
 
   const saveQuizAttempt = useCallback(async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
     if (!auth.currentUser) throw new Error("User not authenticated");
     
-    await setLastActivity({ type: 'quiz', title: `Quiz on ${attempt.topic}` });
+    const isAssignment = !!attempt.assignmentId;
+    const activityTitle = isAssignment ? `Assignment: ${attempt.topic}` : `Quiz on ${attempt.topic}`;
+    await setLastActivity({ type: 'quiz', title: activityTitle });
     
     const xpGained = attempt.score * 5;
     
-    if (attempt.assignmentId) {
-        const assignmentAttemptsRef = collection(db, "users", auth.currentUser.uid, "assignmentAttempts");
-        await addDoc(assignmentAttemptsRef, {
-            ...attempt,
-            completedAt: serverTimestamp(),
-        });
-    } else {
-        const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
-        await addDoc(historyRef, {
-            ...attempt,
-            completedAt: serverTimestamp(),
-        });
-    }
+    const collectionName = isAssignment ? "assignmentAttempts" : "quizHistory";
+    const ref = collection(db, "users", auth.currentUser.uid, collectionName);
+    await addDoc(ref, {
+        ...attempt,
+        completedAt: serverTimestamp(),
+    });
     
     const userDocRef = doc(db, "users", auth.currentUser.uid);
     const updates: any = { xp: increment(xpGained) };
 
-    if (attempt.assignmentId) {
+    if (isAssignment) {
         updates.completedAssignments = arrayUnion(attempt.assignmentId);
     }
 
@@ -721,7 +706,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     const assignmentsRef = collection(db, "assignments");
-    const q = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: profile.classId, className: "" }));
     
     const querySnapshot = await getDocs(query(assignmentsRef));
 

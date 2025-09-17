@@ -3,39 +3,33 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Assignment, QuizAttempt } from "@/lib/types";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import { QuizAttempt } from "@/lib/types";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen, BookCopy } from "lucide-react";
+import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen } from "lucide-react";
 import { format } from 'date-fns';
 import QuizSession from "./quiz-session";
 import { cn } from "@/lib/utils";
 import { Badge } from "../ui/badge";
 
 export default function QuizDashboard() {
-  const [view, setView] = useState<"dashboard" | "new_quiz" | "review_quiz" | "start_assignment">("dashboard");
-  const [assignedQuizzes, setAssignedQuizzes] = useState<Assignment[]>([]);
+  const [view, setView] = useState<"dashboard" | "new_quiz" | "review_quiz">("dashboard");
   const [quizHistory, setQuizHistory] = useState<QuizAttempt[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizAttempt | null>(null);
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { getStudentAssignments, getQuizHistory, userProfile } = useAuth();
+  const { getQuizHistory } = useAuth();
 
   const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [assignments, history] = await Promise.all([
-        getStudentAssignments(),
-        getQuizHistory(),
-      ]);
-      setAssignedQuizzes(assignments);
+      const history = await getQuizHistory();
       setQuizHistory(history);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [getStudentAssignments, getQuizHistory]);
+  }, [getQuizHistory]);
 
   useEffect(() => {
     if (view === "dashboard") {
@@ -47,11 +41,6 @@ export default function QuizDashboard() {
     setView("new_quiz");
   };
 
-  const handleStartAssignment = (assignment: Assignment) => {
-    setSelectedAssignment(assignment);
-    setView("start_assignment");
-  };
-  
   const handleReviewQuiz = (quiz: QuizAttempt) => {
     setSelectedQuiz(quiz);
     setView("review_quiz");
@@ -60,7 +49,6 @@ export default function QuizDashboard() {
   const handleBackToDashboard = () => {
     setView("dashboard");
     setSelectedQuiz(null);
-    setSelectedAssignment(null);
   };
 
   if (isLoading && view === "dashboard") {
@@ -73,10 +61,6 @@ export default function QuizDashboard() {
 
   if (view === "new_quiz") {
     return <QuizSession onQuizFinish={handleBackToDashboard} />;
-  }
-  
-  if (view === "start_assignment") {
-    return <QuizSession assignment={selectedAssignment} onQuizFinish={handleBackToDashboard} />;
   }
 
   if (view === "review_quiz" && selectedQuiz) {
@@ -137,52 +121,8 @@ export default function QuizDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Assigned by Your Teacher</CardTitle>
-          <CardDescription>Quizzes and tasks assigned to you by your teacher.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {assignedQuizzes.length > 0 ? (
-            <div className="space-y-3">
-              {assignedQuizzes.map((quiz) => {
-                 const isCompleted = userProfile?.completedAssignments?.includes(quiz.id);
-                 if (isCompleted) return null; // Don't show completed assignments here
-                 return (
-                    <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
-                        <div>
-                            <h4 className="font-semibold">{quiz.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                {quiz.questions.length} questions &bull; Language: {quiz.language}
-                            </p>
-                        </div>
-                        <div className="shrink-0">
-                            <Button variant="outline" size="sm" onClick={() => handleStartAssignment(quiz)}>
-                                <BookCopy className="mr-2 h-4 w-4" />
-                                Start Quiz
-                            </Button>
-                        </div>
-                    </div>
-                 );
-              })}
-              {assignedQuizzes.every(q => userProfile?.completedAssignments?.includes(q.id)) && (
-                 <div className="text-center py-12">
-                    <h3 className="text-lg font-semibold">All Caught Up!</h3>
-                    <p className="text-muted-foreground mt-2">You've completed all your assigned quizzes.</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold">No Assignments</h3>
-              <p className="text-muted-foreground mt-2">You don't have any assignments from your teacher right now.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
           <CardTitle>Quiz History</CardTitle>
-          <CardDescription>Review your past quizzes and assignments.</CardDescription>
+          <CardDescription>Review your past quizzes.</CardDescription>
         </CardHeader>
         <CardContent>
           {quizHistory.length > 0 ? (
