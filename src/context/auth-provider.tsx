@@ -414,16 +414,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const xpGained = attempt.score * 5;
 
+    // Determine the correct collection and data payload
     const collectionName = isAssignment ? "assignmentAttempts" : "quizHistory";
     const ref = collection(db, "users", auth.currentUser.uid, collectionName);
 
-    // Prepare data, ensuring no undefined fields are sent to Firestore.
     const dataToSave: any = {
         ...attempt,
         completedAt: serverTimestamp(),
     };
+
+    // Explicitly remove assignmentId for self-generated quizzes to avoid Firestore errors.
     if (!isAssignment) {
-        // Explicitly remove assignmentId for self-generated quizzes to avoid Firestore errors.
         delete dataToSave.assignmentId;
     }
 
