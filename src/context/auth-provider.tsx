@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   onAuthStateChanged,
@@ -136,8 +136,160 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [checkAndAwardBadges]);
   
-  // Client-side logic to update weekly XP
-  const updateWeeklyXP = async (xpGained: number) => {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const profileData = userDoc.data() as UserProfile;
+          setUserProfile(profileData);
+          await updateStreak(user.uid, profileData);
+        }
+      } else {
+        setUserProfile(null);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [updateStreak]);
+  
+  const setLastActivity = useCallback(async (activity: LastActivity) => {
+      if (!auth.currentUser) return;
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userDocRef, { lastActivity: activity });
+  }, []);
+
+
+  const signUp = useCallback(async (data: SignupFormData) => {
+    const { name, email, password } = data;
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(userCredential.user, { displayName: name });
+    
+    const newUserProfile: UserProfile = {
+      name: name,
+      email: email,
+      age: 0,
+      language: "EN",
+      role: 'student',
+      xp: 0,
+      weeklyXP: 0,
+      streak: 0,
+      badges: [],
+      badgeCount: 0,
+      pronunciationScores: {},
+      listeningScores: {},
+      completedAssignments: [],
+    };
+
+    await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
+
+    await sendEmailVerification(userCredential.user);
+    await signOut(auth); // Log out user until they are verified
+    router.push('/verify-email');
+  }, [router]);
+
+  const logIn = useCallback(async (data: LoginFormData) => {
+    const { email, password } = data;
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    setUser(userCredential.user);
+    if (userCredential.user.emailVerified) {
+        router.push('/dashboard');
+    } else {
+        router.push('/verify-email');
+    }
+  }, [router]);
+
+  const logOut = useCallback(async () => {
+    await signOut(auth);
+    setUser(null);
+    setUserProfile(null);
+    router.push('/');
+  }, [router]);
+  
+  const updateUserProfile = useCallback(async (displayName: string) => {
+    if (auth.currentUser) {
+      await updateProfile(auth.currentUser, { displayName });
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userDocRef, { name: displayName });
+      setUser({ ...auth.currentUser });
+      setUserProfile((prev) => prev ? { ...prev, name: displayName } : null);
+    }
+  }, []);
+
+  const updateUserAppData = useCallback(async (data: Partial<UserProfile>) => {
+    if (auth.currentUser) {
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userDocRef, data);
+      setUserProfile((prev) => prev ? { ...prev, ...data } : null);
+    }
+  }, []);
+
+
+  const sendPasswordReset = useCallback(async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  }, []);
+
+  const getChatList = useCallback(async (): Promise<ChatSession[]> => {
+    if (!auth.currentUser) return [];
+    const chatsRef = collection(db, "users", auth.currentUser.uid, "chats");
+    const q = query(chatsRef, orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatSession));
+  }, []);
+
+  const getChatMessages = useCallback(async (chatId: string): Promise<ChatMessage[]> => {
+    if (!auth.currentUser) return [];
+    const messagesRef = collection(db, "users", auth.currentUser.uid, "chats", chatId, "messages");
+    const q = query(messagesRef, orderBy("timestamp", "asc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage));
+  }, []);
+
+  const saveChatMessage = useCallback(async (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>): Promise<{ chatId: string }> => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+    
+    let currentChatId = chatId;
+    
+    const activityTitle = message.original ? `Chat: "${message.original.substring(0, 30)}..."` : "Started a new chat";
+    await setLastActivity({ type: 'chat', title: activityTitle });
+    
+    if (!currentChatId) {
+      const chatRef = await addDoc(collection(db, "users", auth.currentUser.uid, "chats"), {
+        title: message.original?.substring(0, 40) || "New Chat",
+        createdAt: serverTimestamp(),
+      });
+      currentChatId = chatRef.id;
+    }
+
+    const messagesRef = collection(db, "users", auth.currentUser.uid, "chats", currentChatId, "messages");
+    await addDoc(messagesRef, {
+      ...message,
+      timestamp: serverTimestamp(),
+    });
+
+    return { chatId: currentChatId };
+  }, [setLastActivity]);
+  
+  const deleteChatSession = useCallback(async (chatId: string): Promise<void> => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+    
+    const chatRef = doc(db, "users", auth.currentUser.uid, "chats", chatId);
+    const messagesRef = collection(chatRef, "messages");
+
+    const batch = writeBatch(db);
+
+    const messagesSnapshot = await getDocs(messagesRef);
+    messagesSnapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    batch.delete(chatRef);
+
+    await batch.commit();
+  }, []);
+
+  const updateWeeklyXP = useCallback(async (xpGained: number) => {
       if (!auth.currentUser) return;
 
       const userDocRef = doc(db, "users", auth.currentUser.uid);
@@ -170,163 +322,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Failed to update weekly XP:", error);
       }
-  };
-
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const profileData = userDoc.data() as UserProfile;
-          setUserProfile(profileData);
-          await updateStreak(user.uid, profileData);
-        }
-      } else {
-        setUserProfile(null);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
   }, []);
-  
-  const setLastActivity = async (activity: LastActivity) => {
-      if (!auth.currentUser) return;
-      const userDocRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userDocRef, { lastActivity: activity });
-  };
 
 
-  const signUp = async (data: SignupFormData) => {
-    const { name, email, password } = data;
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(userCredential.user, { displayName: name });
-    
-    const newUserProfile: UserProfile = {
-      name: name,
-      email: email,
-      age: 0,
-      language: "EN",
-      role: 'student',
-      xp: 0,
-      weeklyXP: 0,
-      streak: 0,
-      badges: [],
-      badgeCount: 0,
-      pronunciationScores: {},
-      listeningScores: {},
-      completedAssignments: [],
-    };
-
-    await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
-
-    await sendEmailVerification(userCredential.user);
-    await signOut(auth); // Log out user until they are verified
-    router.push('/verify-email');
-  };
-
-  const logIn = async (data: LoginFormData) => {
-    const { email, password } = data;
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    setUser(userCredential.user);
-    if (userCredential.user.emailVerified) {
-        router.push('/dashboard');
-    } else {
-        router.push('/verify-email');
-    }
-  };
-
-  const logOut = async () => {
-    await signOut(auth);
-    setUser(null);
-    setUserProfile(null);
-    router.push('/');
-  };
-  
-  const updateUserProfile = async (displayName: string) => {
-    if (auth.currentUser) {
-      await updateProfile(auth.currentUser, { displayName });
-      const userDocRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userDocRef, { name: displayName });
-      setUser({ ...auth.currentUser });
-      setUserProfile((prev) => prev ? { ...prev, name: displayName } : null);
-    }
-  };
-
-  const updateUserAppData = async (data: Partial<UserProfile>) => {
-    if (auth.currentUser) {
-      const userDocRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userDocRef, data);
-      setUserProfile((prev) => prev ? { ...prev, ...data } : null);
-    }
-  };
-
-
-  const sendPasswordReset = async (email: string) => {
-    await sendPasswordResetEmail(auth, email);
-  };
-
-  const getChatList = async (): Promise<ChatSession[]> => {
-    if (!auth.currentUser) return [];
-    const chatsRef = collection(db, "users", auth.currentUser.uid, "chats");
-    const q = query(chatsRef, orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatSession));
-  };
-
-  const getChatMessages = async (chatId: string): Promise<ChatMessage[]> => {
-    if (!auth.currentUser) return [];
-    const messagesRef = collection(db, "users", auth.currentUser.uid, "chats", chatId, "messages");
-    const q = query(messagesRef, orderBy("timestamp", "asc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage));
-  };
-
-  const saveChatMessage = async (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>): Promise<{ chatId: string }> => {
-    if (!auth.currentUser) throw new Error("User not authenticated");
-    
-    let currentChatId = chatId;
-    
-    const activityTitle = message.original ? `Chat: "${message.original.substring(0, 30)}..."` : "Started a new chat";
-    await setLastActivity({ type: 'chat', title: activityTitle });
-    
-    if (!currentChatId) {
-      const chatRef = await addDoc(collection(db, "users", auth.currentUser.uid, "chats"), {
-        title: message.original?.substring(0, 40) || "New Chat",
-        createdAt: serverTimestamp(),
-      });
-      currentChatId = chatRef.id;
-    }
-
-    const messagesRef = collection(db, "users", auth.currentUser.uid, "chats", currentChatId, "messages");
-    await addDoc(messagesRef, {
-      ...message,
-      timestamp: serverTimestamp(),
-    });
-
-    return { chatId: currentChatId };
-  };
-  
-  const deleteChatSession = async (chatId: string): Promise<void> => {
-    if (!auth.currentUser) throw new Error("User not authenticated");
-    
-    const chatRef = doc(db, "users", auth.currentUser.uid, "chats", chatId);
-    const messagesRef = collection(chatRef, "messages");
-
-    const batch = writeBatch(db);
-
-    const messagesSnapshot = await getDocs(messagesRef);
-    messagesSnapshot.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-
-    batch.delete(chatRef);
-
-    await batch.commit();
-  };
-
-  const savePronunciationAttempt = async (sentence: string, attempt: PronunciationAttempt): Promise<number> => {
+  const savePronunciationAttempt = useCallback(async (sentence: string, attempt: PronunciationAttempt): Promise<number> => {
     if (!auth.currentUser || !userProfile) {
         return 0;
     }
@@ -365,9 +364,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }
     return xpGained;
-  };
+  }, [userProfile, setLastActivity, updateWeeklyXP, checkAndAwardBadges]);
 
-  const saveListeningScore = async (exerciseId: string, isCorrect: boolean): Promise<number> => {
+  const saveListeningScore = useCallback(async (exerciseId: string, isCorrect: boolean): Promise<number> => {
     if (!auth.currentUser || !userProfile) {
       return 0;
     }
@@ -394,7 +393,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await checkAndAwardBadges(auth.currentUser.uid, updatedProfile);
     }
     return xpGained;
-  };
+  }, [userProfile, setLastActivity, updateWeeklyXP, checkAndAwardBadges]);
 
   const getQuizHistory = useCallback(async (): Promise<QuizAttempt[]> => {
     if (!auth.currentUser) return [];
@@ -404,7 +403,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
   }, []);
 
-  const saveQuizAttempt = async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
+  const saveQuizAttempt = useCallback(async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
     if (!auth.currentUser) throw new Error("User not authenticated");
     
     await setLastActivity({ type: 'quiz', title: `Quiz on ${attempt.topic}` });
@@ -442,9 +441,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return xpGained;
-  };
+  }, [setLastActivity, updateWeeklyXP, getQuizHistory, checkAndAwardBadges, toast]);
 
-  const getLeaderboard = async (category: 'badgeCount' | 'streak' | 'weeklyXP'): Promise<LeaderboardEntry[]> => {
+  const getLeaderboard = useCallback(async (category: 'badgeCount' | 'streak' | 'weeklyXP'): Promise<LeaderboardEntry[]> => {
     const usersRef = collection(db, "users");
     const q = query(usersRef, orderBy(category, "desc"), limit(100));
     const querySnapshot = await getDocs(q);
@@ -458,9 +457,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             value: data[category] || 0,
         };
     });
-  };
+  }, []);
 
-  const createClass = async (className: string) => {
+  const createClass = useCallback(async (className: string) => {
     if (!auth.currentUser || !userProfile || userProfile.role === 'student') {
         throw new Error("You do not have permission to create classes.");
     }
@@ -472,17 +471,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         studentIds: [],
         createdAt: serverTimestamp(),
     });
-  };
+  }, [userProfile]);
 
-  const getTeacherClasses = async (): Promise<Class[]> => {
+  const getTeacherClasses = useCallback(async (): Promise<Class[]> => {
     if (!auth.currentUser) return [];
     const classesRef = collection(db, "classes");
     const q = query(classesRef, where("teacherId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
-  };
+  }, []);
   
-  const deleteClass = async (classId: string) => {
+  const deleteClass = useCallback(async (classId: string) => {
     if (!auth.currentUser) throw new Error("User not authenticated");
 
     const classRef = doc(db, "classes", classId);
@@ -503,7 +502,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     await batch.commit();
-  };
+  }, []);
   
   const getClassDetails = useCallback(async (classId: string): Promise<Class | null> => {
     if (!auth.currentUser) return null;
@@ -526,7 +525,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
   }, [getClassDetails]);
 
-  const searchStudentsByEmail = async (emailQuery: string): Promise<AdminUserView[]> => {
+  const searchStudentsByEmail = useCallback(async (emailQuery: string): Promise<AdminUserView[]> => {
     const usersRef = collection(db, "users");
     const endStr = emailQuery + '\uf8ff';
     const q = query(
@@ -541,9 +540,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Filter out students who already have a class
     return results.filter(student => !student.classId);
-  }
+  }, []);
   
-  const addStudentToClass = async (classId: string, studentId: string) => {
+  const addStudentToClass = useCallback(async (classId: string, studentId: string) => {
       const studentDoc = await getDoc(doc(db, "users", studentId));
       if (studentDoc.exists() && studentDoc.data().classId) {
           throw new Error("This student is already assigned to another class.");
@@ -556,9 +555,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       batch.update(classRef, { studentIds: arrayUnion(studentId) });
       batch.update(studentRef, { classId: classId });
       await batch.commit();
-  }
+  }, []);
   
-  const removeStudentFromClass = async (classId: string, studentId: string) => {
+  const removeStudentFromClass = useCallback(async (classId: string, studentId: string) => {
       const classRef = doc(db, "classes", classId);
       const studentRef = doc(db, "users", studentId);
 
@@ -566,18 +565,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       batch.update(classRef, { studentIds: arrayRemove(studentId) });
       batch.update(studentRef, { classId: deleteField() });
       await batch.commit();
-  }
+  }, []);
 
-  const getAllUsers = async (): Promise<AdminUserView[]> => {
+  const getAllUsers = useCallback(async (): Promise<AdminUserView[]> => {
     if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superadmin')) {
       throw new Error("You do not have permission to view users.");
     }
     const usersRef = collection(db, "users");
     const querySnapshot = await getDocs(usersRef);
     return querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as AdminUserView));
-  };
+  }, [userProfile]);
 
-  const updateUserRole = async (userId: string, role: UserRole) => {
+  const updateUserRole = useCallback(async (userId: string, role: UserRole) => {
     if (!userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
       throw new Error("You do not have permission to update roles.");
     }
@@ -588,9 +587,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const userDocRef = doc(db, "users", userId);
     await updateDoc(userDocRef, { role: role });
-  };
+  }, [userProfile]);
 
-  const createAssignment = async (assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => {
+  const createAssignment = useCallback(async (assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => {
     if (!auth.currentUser || !userProfile || userProfile.role === 'student') {
       throw new Error("You do not have permission to create assignments.");
     }
@@ -600,9 +599,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       teacherId: auth.currentUser.uid,
       createdAt: serverTimestamp(),
     });
-  };
+  }, [userProfile]);
 
-  const updateAssignment = async (assignmentId: string, assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt' | 'assignedClasses'>) => {
+  const updateAssignment = useCallback(async (assignmentId: string, assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt' | 'assignedClasses'>) => {
       if (!auth.currentUser) throw new Error("Not authenticated");
       const assignmentRef = doc(db, "assignments", assignmentId);
       const docSnap = await getDoc(assignmentRef);
@@ -610,17 +609,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Permission denied or assignment not found.");
       }
       await updateDoc(assignmentRef, assignmentData);
-  };
+  }, []);
 
-  const getTeacherAssignments = async (): Promise<Assignment[]> => {
+  const getTeacherAssignments = useCallback(async (): Promise<Assignment[]> => {
     if (!auth.currentUser) return [];
     const assignmentsRef = collection(db, "assignments");
     const q = query(assignmentsRef, where("teacherId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
-  };
+  }, []);
   
-  const getAssignmentDetails = async (assignmentId: string): Promise<Assignment | null> => {
+  const getAssignmentDetails = useCallback(async (assignmentId: string): Promise<Assignment | null> => {
     if (!auth.currentUser) throw new Error("Not authenticated");
     const assignmentRef = doc(db, "assignments", assignmentId);
     const docSnap = await getDoc(assignmentRef);
@@ -628,9 +627,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { id: docSnap.id, ...docSnap.data() } as Assignment;
     }
     return null;
-  };
+  }, []);
 
-  const deleteAssignment = async (assignmentId: string) => {
+  const deleteAssignment = useCallback(async (assignmentId: string) => {
     if (!auth.currentUser) throw new Error("User not authenticated");
     const assignmentRef = doc(db, "assignments", assignmentId);
     const assignmentDoc = await getDoc(assignmentRef);
@@ -638,9 +637,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error("Assignment not found or you do not have permission to delete it.");
     }
     await deleteDoc(assignmentRef);
-  };
+  }, []);
 
-  const assignAssignmentToClasses = async (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => {
+  const assignAssignmentToClasses = useCallback(async (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => {
     if (!auth.currentUser) throw new Error("Not authenticated");
     const assignmentRef = doc(db, "assignments", assignmentId);
     const docSnap = await getDoc(assignmentRef);
@@ -648,9 +647,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error("Permission denied or assignment not found.");
     }
     await updateDoc(assignmentRef, { assignedClasses: assignedClasses || [] });
-  };
+  }, []);
 
-  const getStudentAssignments = async (): Promise<Assignment[]> => {
+  const getStudentAssignments = useCallback(async (): Promise<Assignment[]> => {
     if (!userProfile || !userProfile.classId) {
         return [];
     }
@@ -666,10 +665,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     
     return studentAssignments;
-  };
+  }, [userProfile]);
 
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     userProfile,
     loading,
@@ -705,7 +704,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     deleteAssignment,
     assignAssignmentToClasses,
     getStudentAssignments,
-  };
+  }), [
+      user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
+      getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
+      saveListeningScore, saveQuizAttempt, getQuizHistory, getLeaderboard, createClass, getTeacherClasses,
+      deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement,
+      addStudentToClass, removeStudentFromClass, searchStudentsByEmail, createAssignment, updateAssignment,
+      getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+    
