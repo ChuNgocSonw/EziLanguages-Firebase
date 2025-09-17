@@ -10,14 +10,6 @@ export default function LandingHeader() {
           <Logo />
           <span className="whitespace-nowrap">Ezi Languages</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link href="#features" className="text-foreground/80 hover:text-foreground">
-            Features
-          </Link>
-          <Link href="#pricing" className="text-foreground/80 hover:text-foreground">
-            Pricing
-          </Link>
-        </nav>
         <div className="flex items-center gap-4">
           <Button variant="ghost" asChild>
             <Link href="/login">Log In</Link>
