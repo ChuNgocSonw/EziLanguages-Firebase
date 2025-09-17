@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { generateQuizQuestions } from "@/lib/actions";
 import type { QuizQuestion } from "@/lib/types";
-import { Loader2, ArrowRight, Check, X, RefreshCw, BookCopy, Pilcrow } from "lucide-react";
+import { Loader2, ArrowRight, Check, X, RefreshCw, BookCopy, Pilcrow, ChevronLeft } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -136,13 +136,13 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
       setDifficulty: (d: Difficulty) => void;
       numberOfQuestions: number;
       setNumberOfQuestions: (n: number) => void;
-      onGenerate: (params: any) => void;
+      onGenerate: (topic: string, displayTopic: string) => void;
   }) => {
     const [topic, setTopic] = useState("");
     
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onGenerate({ topic: topic, difficulty, numberOfQuestions, displayTopic: topic });
+        onGenerate(topic, topic);
     };
 
     return (
@@ -178,7 +178,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
       setDifficulty: (d: Difficulty) => void;
       numberOfQuestions: number;
       setNumberOfQuestions: (n: number) => void;
-      onGenerate: (params: any) => void;
+      onGenerate: (topic: string, displayTopic: string) => void;
   }) => {
       const [lessonContent, setLessonContent] = useState("");
       const [lessonTitle, setLessonTitle] = useState("");
@@ -193,7 +193,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
       
       const handleSubmit = (e: React.FormEvent) => {
           e.preventDefault();
-          onGenerate({ topic: lessonContent, difficulty, numberOfQuestions, displayTopic: lessonTitle });
+          onGenerate(lessonContent, lessonTitle);
       };
 
       return (
@@ -354,6 +354,10 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
     const [difficulty, setDifficulty] = useState<Difficulty>("Medium");
     const [numberOfQuestions, setNumberOfQuestions] = useState(5);
     
+    const handleGenerate = (topic: string, displayTopic: string) => {
+        startQuizGeneration({ topic, difficulty, numberOfQuestions, displayTopic });
+    };
+
     return (
        <Tabs defaultValue="topic" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -372,7 +376,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
                     setDifficulty={setDifficulty}
                     numberOfQuestions={numberOfQuestions}
                     setNumberOfQuestions={setNumberOfQuestions}
-                    onGenerate={startQuizGeneration}
+                    onGenerate={handleGenerate}
                 />
             </TabsContent>
             <TabsContent value="lesson">
@@ -381,7 +385,7 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
                     setDifficulty={setDifficulty}
                     numberOfQuestions={numberOfQuestions}
                     setNumberOfQuestions={setNumberOfQuestions}
-                    onGenerate={startQuizGeneration}
+                    onGenerate={handleGenerate}
                 />
             </TabsContent>
         </Tabs>
@@ -391,19 +395,22 @@ export default function QuizSession({ onQuizFinish }: QuizSessionProps) {
   return (
     <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Generate a New Quiz</CardTitle>
-          <CardDescription>
-            Create a quiz by entering a custom topic or by selecting from your lessons.
-          </CardDescription>
+            <div className="flex items-start justify-between">
+                <div>
+                    <CardTitle className="font-headline">Generate a New Quiz</CardTitle>
+                    <CardDescription>
+                        Create a quiz by entering a custom topic or by selecting from your lessons.
+                    </CardDescription>
+                </div>
+                 <Button variant="outline" size="sm" onClick={onQuizFinish}>
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Back to Dashboard
+                </Button>
+            </div>
         </CardHeader>
         <CardContent>
            <GenerationWizard />
         </CardContent>
-        <CardFooter className="flex justify-center">
-           <Button variant="outline" onClick={onQuizFinish}>
-            Cancel
-          </Button>
-        </CardFooter>
     </Card>
   );
 }
