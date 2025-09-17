@@ -10,7 +10,6 @@ import { useAuth } from "@/hooks/use-auth";
 import type { Class, AdminUserView } from "@/lib/types";
 import { Loader2, Award, Flame, Star, CheckCircle2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
 
 function StudentStatisticsTable({ students, totalAssignments }: { students: AdminUserView[], totalAssignments: number }) {
     if (students.length === 0) {
@@ -24,7 +23,7 @@ function StudentStatisticsTable({ students, totalAssignments }: { students: Admi
     return (
         <>
             <p className="text-sm text-muted-foreground mb-4">
-                This class has <span className="font-semibold text-primary">{totalAssignments}</span> assigned quiz(zes).
+                This class has <span className="font-semibold text-primary">{totalAssignments}</span> assigned {totalAssignments === 1 ? 'quiz' : 'quizzes'}.
             </p>
             <Table>
                 <TableHeader>
@@ -38,7 +37,6 @@ function StudentStatisticsTable({ students, totalAssignments }: { students: Admi
                 </TableHeader>
                 <TableBody>
                     {students.map((student) => {
-                         const completionPercentage = totalAssignments > 0 ? (student.assignmentsCompletedCount! / totalAssignments) * 100 : 0;
                         return (
                         <TableRow key={student.uid}>
                             <TableCell>
