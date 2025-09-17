@@ -71,12 +71,9 @@ function StudentStatisticsTable({ students, totalAssignments }: { students: Admi
                                 </div>
                             </TableCell>
                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                     <div className="flex items-center gap-1 font-semibold w-16 shrink-0">
-                                         <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                         {student.assignmentsCompletedCount} / {totalAssignments}
-                                     </div>
-                                     <Progress value={completionPercentage} className="h-2 w-full" />
+                                <div className="flex items-center gap-1 font-semibold">
+                                     <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                     {student.assignmentsCompletedCount} / {totalAssignments}
                                 </div>
                             </TableCell>
                         </TableRow>
