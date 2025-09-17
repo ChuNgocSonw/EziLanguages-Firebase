@@ -103,6 +103,7 @@ export default function QuizSession({ onQuizFinish, assignment = null }: QuizSes
             selectedAnswers: finalAnswers,
             score,
             percentage,
+            assignmentId: assignment?.id,
         });
         toast({
             title: "Quiz Saved!",
@@ -365,7 +366,7 @@ export default function QuizSession({ onQuizFinish, assignment = null }: QuizSes
         </CardHeader>
         <CardContent>
             <h3 className="font-semibold mb-4 text-center">Review Your Answers</h3>
-            <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
+            <div className="space-y-4">
                 {questions.map((q, i) => (
                     <div key={i} className="p-2 border rounded-md">
                         <p className="font-medium">{q.question}</p>

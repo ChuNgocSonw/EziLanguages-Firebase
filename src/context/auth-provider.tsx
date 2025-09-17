@@ -216,6 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       badgeCount: 0,
       pronunciationScores: {},
       listeningScores: {},
+      completedAssignments: [],
     };
 
     await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
@@ -416,12 +417,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     const userDocRef = doc(db, "users", auth.currentUser.uid);
+    const updates: any = { xp: increment(xpGained) };
+
+    if (attempt.assignmentId) {
+        updates.completedAssignments = arrayUnion(attempt.assignmentId);
+    }
 
     // First, update weekly XP which relies on the current server state
     await updateWeeklyXP(xpGained);
 
-    // Then, update the total XP
-    await updateDoc(userDocRef, { xp: increment(xpGained) });
+    // Then, update the total XP and completed assignments
+    await updateDoc(userDocRef, updates);
 
     // After all server updates, fetch the definitive state from the server
     const updatedProfileDoc = await getDoc(userDocRef);

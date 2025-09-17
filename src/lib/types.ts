@@ -26,6 +26,7 @@ export interface QuizAttempt {
   score: number;
   percentage: number;
   completedAt: Timestamp;
+  assignmentId?: string;
 }
 
 export interface Class {
@@ -107,6 +108,7 @@ export interface UserProfile {
   listeningScores?: { [exerciseId: string]: number }; // Store XP earned instead of boolean
   lastActivity?: LastActivity;
   classId?: string;
+  completedAssignments?: string[];
 }
 
 export interface AdminUserView extends UserProfile {

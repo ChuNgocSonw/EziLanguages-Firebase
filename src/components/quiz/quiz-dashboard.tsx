@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Assignment, QuizAttempt } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen, BookCopy } from "lucide-react";
+import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen, BookCopy, CheckCircle2 } from "lucide-react";
 import { format } from 'date-fns';
 import QuizSession from "./quiz-session";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ export default function QuizDashboard() {
   const [selectedQuiz, setSelectedQuiz] = useState<QuizAttempt | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { getQuizHistory, getStudentAssignments } = useAuth();
+  const { userProfile, getQuizHistory, getStudentAssignments } = useAuth();
 
   useEffect(() => {
     if (view === "dashboard") {
@@ -142,20 +142,30 @@ export default function QuizDashboard() {
               </CardHeader>
               <CardContent>
                   <div className="space-y-3">
-                      {assignedQuizzes.map((quiz) => (
-                          <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted">
-                              <div>
-                                  <h4 className="font-semibold">{quiz.title}</h4>
-                                  <p className="text-sm text-muted-foreground">
-                                      {quiz.questions.length} questions
-                                  </p>
+                      {assignedQuizzes.map((quiz) => {
+                          const isCompleted = userProfile?.completedAssignments?.includes(quiz.id);
+                          return (
+                              <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted">
+                                  <div>
+                                      <h4 className="font-semibold">{quiz.title}</h4>
+                                      <p className="text-sm text-muted-foreground">
+                                          {quiz.questions.length} questions
+                                      </p>
+                                  </div>
+                                  {isCompleted ? (
+                                    <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+                                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                                      Completed
+                                    </Badge>
+                                  ) : (
+                                    <Button variant="outline" size="sm" onClick={() => handleStartAssignedQuiz(quiz)}>
+                                      <BookCopy className="mr-2 h-4 w-4" />
+                                      Start Quiz
+                                    </Button>
+                                  )}
                               </div>
-                              <Button variant="outline" size="sm" onClick={() => handleStartAssignedQuiz(quiz)}>
-                                  <BookCopy className="mr-2 h-4 w-4" />
-                                  Start Quiz
-                              </Button>
-                          </div>
-                      ))}
+                          );
+                      })}
                   </div>
               </CardContent>
           </Card>
