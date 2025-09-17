@@ -399,10 +399,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getQuizHistory = useCallback(async (): Promise<QuizAttempt[]> => {
     if (!auth.currentUser) return [];
+
     const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
-    const q = query(historyRef, orderBy("completedAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+    const historyQuery = query(historyRef, where("assignmentId", "==", null));
+    const historySnapshot = await getDocs(historyQuery);
+    const selfGenerated = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+
+    const assignmentAttemptsRef = collection(db, "users", auth.currentUser.uid, "assignmentAttempts");
+    const assignmentAttemptsSnapshot = await getDocs(assignmentAttemptsRef);
+    const assignments = assignmentAttemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+
+    const allAttempts = [...selfGenerated, ...assignments];
+    allAttempts.sort((a, b) => b.completedAt.toMillis() - a.completedAt.toMillis());
+
+    return allAttempts;
   }, []);
 
   const saveQuizAttempt = useCallback(async (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>): Promise<number> => {
@@ -413,14 +423,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const xpGained = attempt.score * 5;
     
     if (attempt.assignmentId) {
-        // This is an assignment attempt
         const assignmentAttemptsRef = collection(db, "users", auth.currentUser.uid, "assignmentAttempts");
         await addDoc(assignmentAttemptsRef, {
             ...attempt,
             completedAt: serverTimestamp(),
         });
     } else {
-        // This is a self-generated quiz
         const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
         await addDoc(historyRef, {
             ...attempt,
@@ -443,8 +451,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const updatedProfile = updatedProfileDoc.data() as UserProfile;
         setUserProfile(updatedProfile);
         
-        const quizHistory = await getQuizHistory();
-        await checkAndAwardBadges(auth.currentUser.uid, updatedProfile, quizHistory);
+        const allQuizHistory = await getQuizHistory();
+        await checkAndAwardBadges(auth.currentUser.uid, updatedProfile, allQuizHistory);
     }
 
     return xpGained;
