@@ -1,3 +1,4 @@
+
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +60,7 @@ export default function TeacherPage() {
             </p>
           </CardContent>
            <CardFooter>
-             <Button className="w-full" variant="outline" asChild>
+             <Button className="w-full" asChild>
                 <Link href="/teacher/statistics">View Statistics</Link>
              </Button>
           </CardFooter>
