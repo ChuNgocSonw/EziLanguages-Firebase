@@ -44,7 +44,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     }
 
     // If email is not verified, redirect to verification page, allowing access to profile
-    if (!user.emailVerified) {
+    if (!user.emailVerified && !user.email?.endsWith('@ezilanguages.com')) {
         if (pathname !== '/profile') {
             router.push('/verify-email');
             return;
@@ -206,10 +206,10 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <div className="flex-1 bg-background overflow-hidden">
+        <main className="flex-1 flex flex-col bg-background overflow-hidden">
             <ScrollArea className="h-full">
-                <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
-                    {!user.emailVerified && (
+                <div className={cn("p-4 lg:p-6 space-y-4 lg:space-y-6", pathname.includes('/chat') && 'flex flex-col flex-1 h-full')}>
+                    {!user.emailVerified && !user.email?.endsWith('@ezilanguages.com') && (
                         <Alert variant="default" className="bg-yellow-100 border-yellow-500 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300">
                             <AlertTitle className="font-bold">Verification Required</AlertTitle>
                             <AlertDescription>
@@ -220,7 +220,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                     {children}
                 </div>
             </ScrollArea>
-        </div>
+        </main>
       </div>
     </div>
   );

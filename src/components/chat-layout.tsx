@@ -52,7 +52,7 @@ export default function ChatLayout() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4 h-full">
+    <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4 h-full flex-1">
       <div className="hidden md:flex flex-col gap-4 border-r pr-4">
         <Button onClick={handleNewChat} className="bg-accent hover:bg-accent/90">
           <PlusCircle className="mr-2 h-5 w-5" /> New Chat
