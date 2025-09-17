@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -223,7 +224,8 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  const [aiQuestions, setAiQuestions] = useState<QuizQuestion[]>([]);
+  const [allAiQuestions, setAllAiQuestions] = useState<QuizQuestion[]>([]);
+  const [availableAiQuestions, setAvailableAiQuestions] = useState<QuizQuestion[]>([]);
   
   const detailsForm = useForm<DetailsFormData>({ 
       resolver: zodResolver(detailsSchema), 
@@ -247,19 +249,26 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
 
   const { fields, append, remove } = useFieldArray({ control: selectionForm.control, name: "questions" });
 
+  useEffect(() => {
+    // When all AI questions change, filter out the ones already selected
+    const selectedQuestionTexts = new Set(fields.map(q => q.question));
+    setAvailableAiQuestions(allAiQuestions.filter(q => !selectedQuestionTexts.has(q.question)));
+  }, [allAiQuestions, fields]);
+
+
   const handleDetailsSubmit = (data: DetailsFormData) => { setAssignmentDetails(data); setStep("questions"); };
   const handleBackToDetails = () => { setStep('details'); };
 
   const handleGenerateQuestions = async (data: GenerationFormData) => {
     setIsGenerating(true);
-    setAiQuestions([]);
+    setAllAiQuestions([]);
     try {
       toast({ title: "Generating Questions...", description: "Please wait while the AI creates the quiz questions." });
       const generated = await generateQuizQuestions(data);
       if (!generated || generated.length === 0) throw new Error("The AI failed to generate questions for this topic.");
       
-      const questionsWithIds = generated.map(q => ({ ...q, id: new Date().getTime().toString() + Math.random() }));
-      setAiQuestions(questionsWithIds);
+      const questionsWithIds = generated.map(q => ({ ...q, id: `ai-${new Date().getTime()}-${Math.random()}`}));
+      setAllAiQuestions(questionsWithIds);
 
     } catch (error: any) {
       console.error("Failed to generate questions:", error);
@@ -268,20 +277,11 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   };
   
   const handleAddQuestionToSelection = (index: number) => {
-    const question = aiQuestions[index];
-    if (fields.some(q => q.question === question.question)) {
-        toast({ title: "Duplicate Question", description: "This question is already in your selected list.", variant: "destructive" });
-        return;
-    }
+    const question = availableAiQuestions[index];
     append(question);
-    setAiQuestions(prev => prev.filter((_, i) => i !== index));
   };
   
   const handleRemoveQuestionFromSelection = (index: number) => {
-    const questionToRemove = fields[index];
-    if (questionToRemove.id?.includes("ai-")) {
-        setAiQuestions(prev => [questionToRemove, ...prev]);
-    }
     remove(index);
   };
 
@@ -392,43 +392,50 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                         <div className="p-4 border rounded-md min-h-full space-y-3">
                             <h4 className="font-medium text-center mb-2">AI-Generated</h4>
                             {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
-                            {!isGenerating && aiQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
-                            {aiQuestions.map((q, index) => (<QuestionCard key={q.id || index} q={q} index={index} onAction={handleAddQuestionToSelection} actionType="add" />))}
+                            {!isGenerating && availableAiQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
+                            {availableAiQuestions.map((q, index) => (<QuestionCard key={q.id || index} q={q} index={index} onAction={handleAddQuestionToSelection} actionType="add" />))}
                         </div>
                         <div>
                            <ManualQuestionForm onAddQuestion={handleAddManualQuestion} />
                         </div>
                     </div>
                 </div>
-                <div>
-                    <h3 className="font-semibold mb-2">Selected Questions for Assignment ({fields.length})</h3>
-                    <div className="p-4 border rounded-md min-h-[10rem] space-y-3 max-h-96 overflow-y-auto">
-                        {fields.length === 0 && (<div className="text-center text-muted-foreground pt-12"><BookCheck className="mx-auto h-8 w-8 mb-2" /><p>Your chosen questions will appear here.</p></div>)}
-                        <Form {...selectionForm}>
-                            <form onSubmit={selectionForm.handleSubmit(handleSaveAssignment)}>
-                                {fields.map((field, index) => (
-                                    <QuestionCard 
-                                        key={field.id} 
-                                        q={field as QuizQuestion} 
-                                        index={index} 
-                                        onAction={handleRemoveQuestionFromSelection} 
-                                        actionType="remove" 
-                                    />
-                                ))}
-                            </form>
-                        </Form>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex justify-between items-center mt-6">
-                <Button type="button" variant="outline" onClick={handleBackToDetails} disabled={isSaving || isEditMode}>
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Details
-                </Button>
-                <Button onClick={selectionForm.handleSubmit(handleSaveAssignment)} disabled={isSaving || fields.length === 0}>
-                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {isSaving ? "Saving..." : `${isEditMode ? "Update" : "Save"} Assignment (${fields.length} questions)`}
-                </Button>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Selected Questions for Assignment ({fields.length})</CardTitle>
+                    </CardHeader>
+                    <Form {...selectionForm}>
+                        <form onSubmit={selectionForm.handleSubmit(handleSaveAssignment)}>
+                            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+                                {fields.length === 0 ? (
+                                    <div className="text-center text-muted-foreground pt-12">
+                                        <BookCheck className="mx-auto h-8 w-8 mb-2" />
+                                        <p>Your chosen questions will appear here.</p>
+                                    </div>
+                                ) : (
+                                    fields.map((field, index) => (
+                                        <QuestionCard 
+                                            key={field.id} 
+                                            q={field as QuizQuestion} 
+                                            index={index} 
+                                            onAction={handleRemoveQuestionFromSelection} 
+                                            actionType="remove" 
+                                        />
+                                    ))
+                                )}
+                            </CardContent>
+                            <CardFooter className="justify-between">
+                                <Button type="button" variant="outline" onClick={handleBackToDetails} disabled={isSaving || isEditMode}>
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Details
+                                </Button>
+                                <Button type="submit" disabled={isSaving || fields.length === 0}>
+                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    {isSaving ? "Saving..." : `${isEditMode ? "Update" : "Save"} Assignment (${fields.length} questions)`}
+                                </Button>
+                            </CardFooter>
+                        </form>
+                    </Form>
+                </Card>
             </div>
          </div>
       )}
