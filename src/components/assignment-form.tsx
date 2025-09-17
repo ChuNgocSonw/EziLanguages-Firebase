@@ -25,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 const detailsSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters."),
-  language: z.enum(["EN", "JP", "KR", "VI"]),
+  language: z.enum(["EN"]).default("EN"),
 });
 type DetailsFormData = z.infer<typeof detailsSchema>;
 
@@ -231,7 +231,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
       resolver: zodResolver(detailsSchema), 
       defaultValues: { 
           title: existingAssignment?.title || "", 
-          language: existingAssignment?.language || "EN" 
+          language: "EN" 
       } 
   });
   
@@ -308,7 +308,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     try {
         const payload = { 
             title: assignmentDetails.title, 
-            language: assignmentDetails.language, 
+            language: "EN" as const, 
             questions: data.questions 
         };
 
@@ -338,10 +338,9 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
       
       {step === 'details' && (
         <Card><Form {...detailsForm}><form onSubmit={detailsForm.handleSubmit(handleDetailsSubmit)}>
-            <CardHeader><CardTitle>Step 1: Assignment Details</CardTitle><CardDescription>Provide a title and language for your new assignment.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Step 1: Assignment Details</CardTitle><CardDescription>Provide a title for your new assignment. The language is set to English.</CardDescription></CardHeader>
             <CardContent className="space-y-6">
                 <FormField control={detailsForm.control} name="title" render={({ field }) => (<FormItem><FormLabel>Assignment Title</FormLabel><FormControl><Input placeholder="e.g., Idioms Quiz 1" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                <FormField control={detailsForm.control} name="language" render={({ field }) => (<FormItem><FormLabel>Language</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a language" /></SelectTrigger></FormControl><SelectContent><SelectItem value="EN">English</SelectItem><SelectItem value="JP">Japanese</SelectItem><SelectItem value="KR">Korean</SelectItem><SelectItem value="VI">Vietnamese</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
             </CardContent>
             <CardFooter><Button type="submit">Continue to Questions <ArrowRight className="ml-2 h-4 w-4" /></Button></CardFooter>
         </form></Form></Card>

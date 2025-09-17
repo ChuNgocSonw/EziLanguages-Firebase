@@ -10,8 +10,6 @@ import { SendHorizonal, Bot, CornerDownLeft, Sparkles, HelpCircle, Languages, Lo
 import { chatWithTutor } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { Card } from "./ui/card";
-import { Label } from "./ui/label";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { useAuth } from "@/hooks/use-auth";
 import type { ChatMessage } from "@/lib/types";
 import {
@@ -26,8 +24,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-
-type ExplanationLanguage = "English" | "Vietnamese";
 
 const suggestedPrompts = [
     "Correct this for me: She don't like coffee.",
@@ -46,7 +42,6 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
-  const [explanationLanguage, setExplanationLanguage] = useState<ExplanationLanguage>("English");
   const viewportRef = useRef<HTMLDivElement>(null);
   const { getChatMessages, saveChatMessage, deleteChatSession } = useAuth();
   const { toast } = useToast();
@@ -72,7 +67,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
         setMessages([
           {
             role: 'bot',
-            response: "Hello! How can I help you practice your language skills today?",
+            response: "Hello! How can I help you practice your English skills today?",
             explanation: "You can start a conversation, ask for a translation, or ask a vocabulary question.",
             suggestions: suggestedPrompts,
             isCorrection: false,
@@ -108,7 +103,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
         await saveChatMessage(newChatId, userMessage);
       }
       
-      const aiResult = await chatWithTutor({ text: messageText, language: explanationLanguage });
+      const aiResult = await chatWithTutor({ text: messageText, language: "English" });
       
       const botMessage: Omit<ChatMessage, 'id' | 'timestamp'> = {
         role: "bot",
@@ -316,24 +311,6 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
                 </Button>
             </div>
           </form>
-           <div className="flex items-center gap-4">
-              <Label className="text-sm font-medium">Explanation Language:</Label>
-              <RadioGroup 
-                value={explanationLanguage}
-                className="flex items-center gap-4"
-                onValueChange={(value: ExplanationLanguage) => setExplanationLanguage(value)}
-                disabled={isLoading || isHistoryLoading}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="English" id="lang-en" />
-                  <Label htmlFor="lang-en" className="cursor-pointer">English</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Vietnamese" id="lang-vi" />
-                  <Label htmlFor="lang-vi" className="cursor-pointer">Tiếng Việt</Label>
-                </div>
-              </RadioGroup>
-            </div>
         </div>
     </Card>
   );

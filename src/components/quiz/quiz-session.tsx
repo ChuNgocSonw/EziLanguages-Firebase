@@ -30,15 +30,15 @@ interface QuizSessionProps {
 
 const randomQuizTopics = [
     "Common English Idioms",
-    "Japanese Travel Phrases",
-    "Korean Food Vocabulary",
-    "Vietnamese Tones and Pronunciation",
+    "English Travel Phrases",
+    "English Food Vocabulary",
+    "English Tones and Pronunciation",
     "Business English for Meetings",
     "Phrasal Verbs with 'Get'",
-    "Ordering Food in a Restaurant",
+    "Ordering Food in an English Restaurant",
     "Past, Present, and Future Tenses",
     "False Friends in Spanish and English",
-    "Essential French Greetings"
+    "Essential English Greetings"
 ];
 
 
@@ -180,7 +180,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                     <Label htmlFor="topic">Topic</Label>
                     <Input 
                         id="topic" 
-                        placeholder="e.g., French Past Tense" 
+                        placeholder="e.g., English Past Tense" 
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                     />

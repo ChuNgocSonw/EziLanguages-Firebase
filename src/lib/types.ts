@@ -41,7 +41,7 @@ export interface Class {
 export interface Assignment {
   id: string;
   title: string;
-  language: "EN" | "JP" | "KR" | "VI";
+  language: "EN";
   questions: QuizQuestion[];
   teacherId: string;
   createdAt: Timestamp;
@@ -75,7 +75,7 @@ export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export const profileSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters."),
     age: z.coerce.number().min(0, "Age must be a positive number.").optional(),
-    language: z.enum(["EN", "JP", "KR", "VI"]).optional(),
+    language: z.enum(["EN"]).default("EN").optional(),
 });
 export type ProfileFormData = z.infer<typeof profileSchema>;
 
