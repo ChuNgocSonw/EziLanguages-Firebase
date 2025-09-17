@@ -32,7 +32,7 @@ function StudentStatisticsTable({ students, totalAssignments }: { students: Admi
                         <TableHead className="text-center">XP</TableHead>
                         <TableHead className="text-center">Streak</TableHead>
                         <TableHead className="text-center">Badges</TableHead>
-                        <TableHead>Assignments Completed</TableHead>
+                        <TableHead className="text-center">Assignments Completed</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -68,8 +68,8 @@ function StudentStatisticsTable({ students, totalAssignments }: { students: Admi
                                     {student.badgeCount}
                                 </div>
                             </TableCell>
-                             <TableCell>
-                                <div className="flex items-center gap-1 font-semibold">
+                             <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-1 font-semibold">
                                      <CheckCircle2 className="h-4 w-4 text-green-600" />
                                      {student.assignmentsCompletedCount} / {totalAssignments}
                                 </div>
