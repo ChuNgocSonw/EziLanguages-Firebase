@@ -31,15 +31,19 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
-
   useEffect(() => {
-    if (loading) return;
+    // 1. Chờ cho đến khi quá trình xác thực ban đầu hoàn tất
+    if (loading) {
+      return;
+    }
 
+    // 2. Nếu không có người dùng sau khi tải xong, chuyển hướng đến trang đăng nhập
     if (!user) {
       router.push('/login');
       return;
     }
 
+    // 3. Nếu email chưa được xác thực, chuyển hướng đến trang yêu cầu xác thực
     if (!user.emailVerified) {
         if (pathname !== '/profile') {
             router.push('/verify-email');
@@ -47,12 +51,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         }
     }
     
-    // Wait until user profile is loaded before checking roles
+    // 4. Chờ cho đến khi userProfile được tải về
     if (!userProfile) {
       return;
     }
 
-    // Role-based route protection
+    // 5. Khi đã có userProfile, thực hiện kiểm tra vai trò để bảo vệ tuyến đường
     if (pathname.startsWith('/admin') && !['admin', 'superadmin'].includes(userProfile.role)) {
       router.push('/dashboard'); 
     }
@@ -63,6 +67,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
   }, [user, userProfile, loading, router, pathname]);
 
+  // Hiển thị trạng thái tải trong khi chờ user hoặc userProfile
   if (loading || !user) {
     return (
        <div className="flex items-center justify-center min-h-screen">
