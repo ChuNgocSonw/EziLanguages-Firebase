@@ -33,6 +33,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Toast } from "@radix-ui/react-toast";
 
 function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assignment; onAssignmentAssigned: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => void; }) {
   const [isOpen, setIsOpen] = useState(false);
