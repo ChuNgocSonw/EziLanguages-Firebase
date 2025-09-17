@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +33,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Toast } from "@radix-ui/react-toast";
 
 function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assignment; onAssignmentAssigned: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => void; }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -145,25 +144,26 @@ export default function TeacherAssignmentsPage() {
   const { getTeacherAssignments, deleteAssignment } = useAuth();
   const { toast } = useToast();
 
+  const fetchAssignments = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const teacherAssignments = await getTeacherAssignments();
+      setAssignments(teacherAssignments);
+    } catch (error: any) {
+      console.error("Failed to fetch assignments:", error);
+      toast({
+        title: "Error",
+        description: `Failed to fetch assignments. ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getTeacherAssignments, toast]);
+
   useEffect(() => {
-    const fetchAssignments = async () => {
-      setIsLoading(true);
-      try {
-        const teacherAssignments = await getTeacherAssignments();
-        setAssignments(teacherAssignments);
-      } catch (error: any) {
-        console.error("Failed to fetch assignments:", error);
-        toast({ 
-            title: "Error", 
-            description: `Failed to fetch assignments. ${error.message}`, 
-            variant: "destructive" 
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchAssignments();
-  }, [getTeacherAssignments]);
+  }, [fetchAssignments]);
 
   const handleDeleteAssignment = async (assignmentId: string) => {
     setIsDeleting(assignmentId);
@@ -178,11 +178,9 @@ export default function TeacherAssignmentsPage() {
     }
   };
 
-  const handleAssignmentUpdated = (assignmentId: string, newAssignedClasses: Assignment['assignedClasses']) => {
-    setAssignments(prev => prev.map(a => 
-      a.id === assignmentId ? { ...a, assignedClasses: newAssignedClasses } : a
-    ));
-  };
+  const handleAssignmentUpdated = useCallback(() => {
+    fetchAssignments();
+  }, [fetchAssignments]);
 
 
   return (
