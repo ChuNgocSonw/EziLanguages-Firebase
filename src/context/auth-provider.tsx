@@ -238,7 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOut(auth);
     setUser(null);
     setUserProfile(null);
-    router.push('/login');
+    router.push('/');
   };
   
   const updateUserProfile = async (displayName: string) => {
