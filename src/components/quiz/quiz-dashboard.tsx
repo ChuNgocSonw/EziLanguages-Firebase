@@ -6,35 +6,26 @@ import { useAuth } from "@/hooks/use-auth";
 import { Assignment, QuizAttempt } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen, BookCopy, CheckCircle2 } from "lucide-react";
+import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen } from "lucide-react";
 import { format } from 'date-fns';
 import QuizSession from "./quiz-session";
 import { cn } from "@/lib/utils";
 import { Badge } from "../ui/badge";
-import { Separator } from "../ui/separator";
 
 export default function QuizDashboard() {
   const [view, setView] = useState<"dashboard" | "new_quiz" | "review_quiz">("dashboard");
   const [quizHistory, setQuizHistory] = useState<QuizAttempt[]>([]);
-  const [assignedQuizzes, setAssignedQuizzes] = useState<Assignment[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizAttempt | null>(null);
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { userProfile, getQuizHistory, getStudentAssignments } = useAuth();
+  const { getQuizHistory } = useAuth();
 
   useEffect(() => {
     if (view === "dashboard") {
       const fetchDashboardData = async () => {
         setIsLoading(true);
         try {
-          const historyPromise = getQuizHistory();
-          const assignmentsPromise = getStudentAssignments();
-          
-          const [history, assignments] = await Promise.all([historyPromise, assignmentsPromise]);
-
+          const history = await getQuizHistory();
           setQuizHistory(history);
-          setAssignedQuizzes(assignments);
-
         } catch (error) {
           console.error("Failed to fetch dashboard data:", error);
         } finally {
@@ -43,15 +34,9 @@ export default function QuizDashboard() {
       };
       fetchDashboardData();
     }
-  }, [view, getQuizHistory, getStudentAssignments]);
+  }, [view, getQuizHistory]);
   
   const handleStartNewQuiz = () => {
-    setSelectedAssignment(null);
-    setView("new_quiz");
-  };
-
-  const handleStartAssignedQuiz = (assignment: Assignment) => {
-    setSelectedAssignment(assignment);
     setView("new_quiz");
   };
   
@@ -63,7 +48,6 @@ export default function QuizDashboard() {
   const handleBackToDashboard = () => {
     setView("dashboard");
     setSelectedQuiz(null);
-    setSelectedAssignment(null);
   };
 
   if (isLoading && view === "dashboard") {
@@ -75,7 +59,7 @@ export default function QuizDashboard() {
   }
 
   if (view === "new_quiz") {
-    return <QuizSession onQuizFinish={handleBackToDashboard} assignment={selectedAssignment} />;
+    return <QuizSession onQuizFinish={handleBackToDashboard} />;
   }
 
   if (view === "review_quiz" && selectedQuiz) {
@@ -134,47 +118,10 @@ export default function QuizDashboard() {
         </CardHeader>
       </Card>
       
-      {assignedQuizzes.length > 0 && (
-          <Card>
-              <CardHeader>
-                  <CardTitle>Assigned by Your Teacher</CardTitle>
-                  <CardDescription>Quizzes assigned to you by your teacher.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <div className="space-y-3">
-                      {assignedQuizzes.map((quiz) => {
-                          const isCompleted = userProfile?.completedAssignments?.includes(quiz.id);
-                          return (
-                              <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted">
-                                  <div>
-                                      <h4 className="font-semibold">{quiz.title}</h4>
-                                      <p className="text-sm text-muted-foreground">
-                                          {quiz.questions.length} questions
-                                      </p>
-                                  </div>
-                                  {isCompleted ? (
-                                    <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
-                                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                                      Completed
-                                    </Badge>
-                                  ) : (
-                                    <Button variant="outline" size="sm" onClick={() => handleStartAssignedQuiz(quiz)}>
-                                      <BookCopy className="mr-2 h-4 w-4" />
-                                      Start Quiz
-                                    </Button>
-                                  )}
-                              </div>
-                          );
-                      })}
-                  </div>
-              </CardContent>
-          </Card>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle>Quiz History</CardTitle>
-          <CardDescription>Review your past quizzes.</CardDescription>
+          <CardDescription>Review your past self-generated quizzes.</CardDescription>
         </CardHeader>
         <CardContent>
           {quizHistory.length > 0 ? (

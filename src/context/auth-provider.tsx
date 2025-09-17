@@ -399,7 +399,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const getQuizHistory = useCallback(async (): Promise<QuizAttempt[]> => {
     if (!auth.currentUser) return [];
     const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
-    const q = query(historyRef, orderBy("completedAt", "desc"));
+    const q = query(historyRef, orderBy("completedAt", "desc"), where("assignmentId", "==", null));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
   }, []);
@@ -410,11 +410,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await setLastActivity({ type: 'quiz', title: `Quiz on ${attempt.topic}` });
     
     const xpGained = attempt.score * 5;
-    const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
-    await addDoc(historyRef, {
-      ...attempt,
-      completedAt: serverTimestamp(),
-    });
+    
+    // Only add to quizHistory if it's NOT an assignment
+    if (!attempt.assignmentId) {
+      const historyRef = collection(db, "users", auth.currentUser.uid, "quizHistory");
+      await addDoc(historyRef, {
+        ...attempt,
+        assignmentId: null, // Ensure field is explicitly null for queries
+        completedAt: serverTimestamp(),
+      });
+    }
     
     const userDocRef = doc(db, "users", auth.currentUser.uid);
     const updates: any = { xp: increment(xpGained) };
