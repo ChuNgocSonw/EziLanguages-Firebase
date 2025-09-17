@@ -12,12 +12,12 @@ export default function TeacherPage() {
         description="Manage your classes, students, and feedback from here."
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Manage Classes</CardTitle>
             <BookUser className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
             <p className="text-xs text-muted-foreground">
               Create classes and add your students to track their progress.
             </p>
@@ -30,12 +30,12 @@ export default function TeacherPage() {
              </Button>
           </CardFooter>
         </Card>
-         <Card>
+         <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Manage Assignments</CardTitle>
             <BookCopy className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
              <p className="text-xs text-muted-foreground">
               Create and assign quizzes to your classes.
             </p>
@@ -48,12 +48,12 @@ export default function TeacherPage() {
              </Button>
           </CardFooter>
         </Card>
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Student Statistics</CardTitle>
             <BarChart2 className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
              <p className="text-xs text-muted-foreground">
               View student progress, scores, and activity analytics.
             </p>
@@ -64,12 +64,12 @@ export default function TeacherPage() {
              </Button>
           </CardFooter>
         </Card>
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Send Feedback</CardTitle>
             <MessageSquare className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
              <p className="text-xs text-muted-foreground">
               Provide personalized feedback to your students.
             </p>
