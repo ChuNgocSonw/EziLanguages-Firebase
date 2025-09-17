@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -78,29 +78,28 @@ export default function LeaderboardPage() {
     });
     const { getLeaderboard } = useAuth();
 
-    useEffect(() => {
-        const fetchLeaderboard = async () => {
-            if (leaderboardData[activeTab] !== null) return;
-            
-            try {
-                if (activeTab === "badges") {
-                    const data = await getLeaderboard('badgeCount');
-                    setLeaderboardData(prev => ({ ...prev, badges: data }));
-                } else if (activeTab === "streak") {
-                    const data = await getLeaderboard('streak');
-                    setLeaderboardData(prev => ({ ...prev, streak: data }));
-                } else if (activeTab === "weekly-xp") {
-                    const data = await getLeaderboard('weeklyXP');
-                    setLeaderboardData(prev => ({ ...prev, "weekly-xp": data }));
-                }
-            } catch (error) {
-                console.error(`Failed to fetch ${activeTab} leaderboard:`, error);
-                // Handle error state if necessary
+    const fetchLeaderboard = useCallback(async (category: LeaderboardCategory) => {
+        if (leaderboardData[category] !== null) return;
+        
+        try {
+            if (category === "badges") {
+                const data = await getLeaderboard('badgeCount');
+                setLeaderboardData(prev => ({ ...prev, badges: data }));
+            } else if (category === "streak") {
+                const data = await getLeaderboard('streak');
+                setLeaderboardData(prev => ({ ...prev, streak: data }));
+            } else if (category === "weekly-xp") {
+                const data = await getLeaderboard('weeklyXP');
+                setLeaderboardData(prev => ({ ...prev, "weekly-xp": data }));
             }
-        };
+        } catch (error) {
+            console.error(`Failed to fetch ${category} leaderboard:`, error);
+        }
+    }, [getLeaderboard, leaderboardData]);
 
-        fetchLeaderboard();
-    }, [activeTab, getLeaderboard, leaderboardData]);
+    useEffect(() => {
+        fetchLeaderboard(activeTab);
+    }, [activeTab, fetchLeaderboard]);
 
     return (
         <>

@@ -159,7 +159,7 @@ export default function TeacherAssignmentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [getTeacherAssignments]);
+  }, [getTeacherAssignments, toast]);
 
   useEffect(() => {
     fetchAssignments();

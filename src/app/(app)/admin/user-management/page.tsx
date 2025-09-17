@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -78,25 +78,26 @@ export default function UserManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const userList = await getAllUsers();
+      setUsers(userList);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+      toast({
+        title: "Error",
+        description: "Could not fetch user list.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getAllUsers, toast]);
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        const userList = await getAllUsers();
-        setUsers(userList);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-        toast({
-          title: "Error",
-          description: "Could not fetch user list.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchUsers();
-  }, [getAllUsers]);
+  }, [fetchUsers]);
 
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
     try {

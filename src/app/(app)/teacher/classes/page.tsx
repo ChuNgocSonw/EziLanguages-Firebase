@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -55,20 +55,21 @@ export default function TeacherClassesPage() {
     defaultValues: { className: "" },
   });
 
+  const fetchClasses = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const teacherClasses = await getTeacherClasses();
+      setClasses(teacherClasses);
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to fetch classes.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getTeacherClasses, toast]);
+
   useEffect(() => {
-    const fetchClasses = async () => {
-        setIsLoading(true);
-        try {
-        const teacherClasses = await getTeacherClasses();
-        setClasses(teacherClasses);
-        } catch (error) {
-        toast({ title: "Error", description: "Failed to fetch classes.", variant: "destructive" });
-        } finally {
-        setIsLoading(false);
-        }
-    };
     fetchClasses();
-  }, [getTeacherClasses]);
+  }, [fetchClasses]);
 
   const onSubmit = async (data: CreateClassFormData) => {
     setIsCreating(true);
@@ -77,11 +78,7 @@ export default function TeacherClassesPage() {
       toast({ title: "Success", description: "Class created successfully." });
       form.reset();
       setIsDialogOpen(false);
-      
-      // Refetch classes after creation
-      const teacherClasses = await getTeacherClasses();
-      setClasses(teacherClasses);
-
+      await fetchClasses();
     } catch (error) {
       toast({ title: "Error", description: "Failed to create class.", variant: "destructive" });
     } finally {
