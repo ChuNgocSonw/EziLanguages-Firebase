@@ -282,7 +282,11 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   };
   
   const handleRemoveQuestionFromSelection = (index: number) => {
+    const removedQuestion = fields[index] as QuizQuestion;
     remove(index);
+    if(removedQuestion.id?.startsWith('ai-')) {
+        setAllAiQuestions(prev => [...prev, removedQuestion]);
+    }
   };
 
   const handleAddManualQuestion = (question: QuizQuestion) => {
@@ -400,42 +404,44 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                         </div>
                     </div>
                 </div>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Selected Questions for Assignment ({fields.length})</CardTitle>
-                    </CardHeader>
-                    <Form {...selectionForm}>
-                        <form onSubmit={selectionForm.handleSubmit(handleSaveAssignment)}>
-                            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
-                                {fields.length === 0 ? (
-                                    <div className="text-center text-muted-foreground pt-12">
-                                        <BookCheck className="mx-auto h-8 w-8 mb-2" />
-                                        <p>Your chosen questions will appear here.</p>
-                                    </div>
-                                ) : (
-                                    fields.map((field, index) => (
-                                        <QuestionCard 
-                                            key={field.id} 
-                                            q={field as QuizQuestion} 
-                                            index={index} 
-                                            onAction={handleRemoveQuestionFromSelection} 
-                                            actionType="remove" 
-                                        />
-                                    ))
-                                )}
-                            </CardContent>
-                            <CardFooter className="justify-between">
-                                <Button type="button" variant="outline" onClick={handleBackToDetails} disabled={isSaving || isEditMode}>
-                                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Details
-                                </Button>
-                                <Button type="submit" disabled={isSaving || fields.length === 0}>
-                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    {isSaving ? "Saving..." : `${isEditMode ? "Update" : "Save"} Assignment (${fields.length} questions)`}
-                                </Button>
-                            </CardFooter>
-                        </form>
-                    </Form>
-                </Card>
+                 <Form {...selectionForm}>
+                    <Card className="flex flex-col">
+                        <CardHeader>
+                            <CardTitle>Selected Questions for Assignment ({fields.length})</CardTitle>
+                        </CardHeader>
+                        <div className="flex flex-col flex-1 min-h-0">
+                            <form onSubmit={selectionForm.handleSubmit(handleSaveAssignment)} className="flex flex-col flex-1">
+                                <CardContent className="space-y-3 flex-1 min-h-0 overflow-y-auto">
+                                    {fields.length === 0 ? (
+                                        <div className="text-center text-muted-foreground pt-12">
+                                            <BookCheck className="mx-auto h-8 w-8 mb-2" />
+                                            <p>Your chosen questions will appear here.</p>
+                                        </div>
+                                    ) : (
+                                        fields.map((field, index) => (
+                                            <QuestionCard 
+                                                key={field.id} 
+                                                q={field as QuizQuestion} 
+                                                index={index} 
+                                                onAction={handleRemoveQuestionFromSelection} 
+                                                actionType="remove" 
+                                            />
+                                        ))
+                                    )}
+                                </CardContent>
+                                <CardFooter className="justify-between mt-auto">
+                                    <Button type="button" variant="outline" onClick={handleBackToDetails} disabled={isSaving || isEditMode}>
+                                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Details
+                                    </Button>
+                                    <Button type="submit" disabled={isSaving || fields.length === 0}>
+                                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                        {isSaving ? "Saving..." : `${isEditMode ? "Update" : "Save"} Assignment (${fields.length} questions)`}
+                                    </Button>
+                                </CardFooter>
+                            </form>
+                        </div>
+                    </Card>
+                 </Form>
             </div>
          </div>
       )}
