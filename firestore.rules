@@ -3,69 +3,78 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
   
+    // =================================================================
+    // Functions
+    // =================================================================
     function getRequestingUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
+
+    function getRequestingUserRole() {
+      return getRequestingUserData().role;
+    }
     
     function isTeacherOfStudent(studentId) {
-      let studentData = get(/databases/$(database)/documents/users/$(studentId)).data;
-      let classExists = exists(/databases/$(database)/documents/classes/$(studentData.classId));
-      
-      return classExists && get(/databases/$(database)/documents/classes/$(studentData.classId)).data.teacherId == request.auth.uid;
+      let studentClassId = get(/databases/$(database)/documents/users/$(studentId)).data.classId;
+      return studentClassId != null &&
+             get(/databases/$(database)/documents/classes/$(studentClassId)).data.teacherId == request.auth.uid;
     }
     
-    function isStudentInAssignedClass(assignment) {
-      let studentClassId = getRequestingUserData().classId;
-      // Check if any map in the assignedClasses list has a classId that matches the student's classId.
-      return assignment.assignedClasses.filter(c => c.classId == studentClassId).size() > 0;
-    }
-    
+    // =================================================================
+    // User Profiles
+    // =================================================================
     match /users/{userId} {
       allow list: if request.auth != null;
       allow read, write: if request.auth.uid == userId;
-      allow read: if getRequestingUserData().role in ['admin', 'superadmin'];
-      allow read: if getRequestingUserData().role == 'teacher' && isTeacherOfStudent(userId);
+      // Admins can read any user profile
+      allow read: if getRequestingUserRole() in ['admin', 'superadmin'];
+      // Teachers can read profiles of students in their classes
+      allow read: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
     }
     
-    match /users/{userId}/chats/{chatId} {
+    // =================================================================
+    // User-specific Subcollections
+    // =================================================================
+    match /users/{userId}/{collection}/{docId} {
         allow read, write, delete: if request.auth.uid == userId;
-    }
-    
-     match /users/{userId}/chats/{chatId}/messages/{messageId} {
-        allow read, write, delete: if request.auth.uid == userId;
-    }
-    
-    match /users/{userId}/quizHistory/{attemptId} {
-        allow read, write: if request.auth.uid == userId;
     }
 
     match /users/{userId}/assignmentAttempts/{attemptId} {
-        allow read, write: if request.auth.uid == userId;
-        allow read: if getRequestingUserData().role == 'teacher' && isTeacherOfStudent(userId);
+        allow read: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
     }
     
+    // =================================================================
+    // Classes
+    // =================================================================
     match /classes/{classId} {
-        allow read, write: if get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
-        allow create: if getRequestingUserData().role in ['teacher', 'admin', 'superadmin'];
+        allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
+        allow read, write, delete: if resource.data.teacherId == request.auth.uid;
     }
 
+    // =================================================================
+    // Assignments
+    // =================================================================
     match /assignments/{assignmentId} {
+      allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
       allow read, write, delete: if resource.data.teacherId == request.auth.uid;
-      allow create: if getRequestingUserData().role in ['teacher', 'admin', 'superadmin'];
       // Students can read assignments assigned to their class
-      allow read: if isStudentInAssignedClass(resource.data);
+      allow read: if getRequestingUserData().role == 'student' &&
+                     (getRequestingUserData().classId in resource.data.assignedClasses.map(c => c.classId));
+    }
+    
+    // =================================================================
+    // Feedback
+    // =================================================================
+    match /feedback/{feedbackId} {
+      // Student can read/update feedback sent to them
+      allow read, update: if resource.data.studentId == request.auth.uid;
+      // Teacher can create/read/delete feedback they sent
+      allow create, read, delete: if resource.data.teacherId == request.auth.uid;
     }
     
     match /feedback/{document=**} {
-      // Teachers can list the feedback they sent
-      allow list: if getRequestingUserData().role == 'teacher';
-    }
-
-    match /feedback/{feedbackId} {
-      // Student can read/update their own feedback
-      allow read, update: if resource.data.studentId == request.auth.uid;
-      // Teacher can create, read, and delete their own feedback
-      allow create, read, delete: if request.auth.uid == resource.data.teacherId;
+      // Teachers can list the feedback they have sent
+      allow list: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
     }
   }
 }
