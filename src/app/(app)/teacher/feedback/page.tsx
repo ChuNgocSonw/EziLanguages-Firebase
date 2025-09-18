@@ -272,7 +272,7 @@ export default function TeacherFeedbackPage() {
 
                             <div className="space-y-4">
                                 <h3 className="font-semibold text-lg">2. Write Message</h3>
-                                 <div className="flex justify-end items-center gap-2">
+                                 <div className="flex justify-start items-center gap-2">
                                     <Select value={aiLanguage} onValueChange={setAiLanguage}>
                                         <SelectTrigger className="w-[120px]">
                                             <SelectValue />
@@ -366,3 +366,5 @@ export default function TeacherFeedbackPage() {
     </>
   );
 }
+
+    
