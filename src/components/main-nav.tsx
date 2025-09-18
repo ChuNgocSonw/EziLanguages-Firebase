@@ -27,6 +27,7 @@ import type { UserRole } from '@/lib/types';
 
 
 const allNavItems = [
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['student', 'admin', 'superadmin'] },
   { href: '/assignments', icon: BookCopy, label: 'Assignments', roles: ['student'] },
   { href: '/chat', icon: MessageSquare, label: 'AI Chat', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/reading', icon: BookOpen, label: 'Reading', roles: ['student', 'teacher', 'admin', 'superadmin'] },
@@ -54,6 +55,25 @@ export function MainNav({ isMobile = false, isCollapsed = false, userRole }: Mai
         if (a.href === '/teacher') return -1;
         if (b.href === '/teacher') return 1;
         return 0;
+    });
+  }
+
+  if (userRole === 'admin' || userRole === 'superadmin') {
+    navItems = navItems.sort((a, b) => {
+      const order = ['/admin', '/teacher'];
+      const aIndex = order.indexOf(a.href);
+      const bIndex = order.indexOf(b.href);
+
+      if (aIndex > -1 && bIndex > -1) {
+        return aIndex - bIndex;
+      }
+      if (aIndex > -1) {
+        return -1;
+      }
+      if (bIndex > -1) {
+        return 1;
+      }
+      return 0;
     });
   }
 
