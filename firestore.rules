@@ -1,72 +1,72 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
+
     // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isStudent() {
-      return isSignedIn() && getUserData().role == 'student';
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
     }
 
     function isTeacher() {
-      return isSignedIn() && (getUserData().role == 'teacher' || isAdmin());
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
     }
-
+    
     function isAdmin() {
-      return isSignedIn() && (getUserData().role == 'admin' || getUserData().role == 'superadmin');
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
     }
 
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    // Default deny all, unless specifically allowed by isAdmin
+    // Admins have god mode
     match /{document=**} {
       allow read, write: if isAdmin();
     }
 
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId;
     }
-
+    
     match /classes/{classId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+      // Teachers can list their own classes
+      allow list: if isTeacher();
+      // Teachers can manage their own class, students can read the class they are in
+      allow get: if (isTeacher() && resource.data.teacherId == request.auth.uid) || (isStudent() && request.auth.uid in resource.data.studentIds);
+      allow create, update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
     }
 
     match /assignments/{assignmentId} {
-      allow read: if isTeacher() || 
-                   (isStudent() && 
-                    {
-                      'classId': getUserData().classId, 
-                      'className': get(/databases/$(database)/documents/classes/$(getUserData().classId)).data.className
-                    } in resource.data.assignedClasses);
-      allow create, update, delete: if isTeacher();
+      // Teachers can list and get their own assignments
+      allow list, get: if isTeacher() && resource.data.teacherId == request.auth.uid;
+      // Students can read assignments assigned to their class
+      allow get: if isStudent() && {
+          'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId,
+          'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className
+        } in resource.data.assignedClasses;
+        
+      allow create, update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
     }
     
     match /feedback/{docId} {
-        allow create, delete: if isTeacher();
+      // Teachers can list feedback they sent. Students can list feedback they received.
+      allow list: if isTeacher() || isStudent();
+      
+      // Teachers can read feedback they sent. Students can read feedback they received.
+      allow get: if (isTeacher() && resource.data.teacherId == request.auth.uid) || (isStudent() && resource.data.studentId == request.auth.uid);
+      
+      // Teachers can create and delete feedback.
+      allow create: if isTeacher();
+      allow delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
 
-        allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid) || 
-                       (isStudent() && resource.data.studentId == request.auth.uid);
-        
-        allow update: if isStudent() && 
-                         resource.data.studentId == request.auth.uid &&
-                         request.resource.data.isRead == true &&
-                         resource.data.isRead == false &&
-                         request.resource.data.title == resource.data.title &&
-                         request.resource.data.content == resource.data.content &&
-                         request.resource.data.teacherId == resource.data.teacherId;
-    }
-    
-     match /feedback/{docId=**} {
-      // Allow teachers to list the feedback they have sent
-      allow list: if isTeacher();
+      // A student can only update the isRead flag to true on their own feedback.
+      allow update: if isStudent() && resource.data.studentId == request.auth.uid
+                  && request.resource.data.isRead == true
+                  && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
     }
   }
 }
