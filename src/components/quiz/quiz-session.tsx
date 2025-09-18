@@ -463,7 +463,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                         </div>
                         <div className="flex items-center space-x-3">
                             <RadioGroupItem value="Vietnamese" id="lang-vi" className="h-5 w-5" />
-                            <Label htmlFor="lang-vi" className="text-lg">Tiếng Việt</Label>
+                            <Label htmlFor="lang-vi" className="text-lg">Vietnamese</Label>
                         </div>
                     </RadioGroup>
                 </div>
