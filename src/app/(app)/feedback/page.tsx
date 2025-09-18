@@ -72,7 +72,7 @@ export default function StudentFeedbackPage() {
                         <Accordion type="single" collapsible className="w-full" onValueChange={handleAccordionChange}>
                             {feedbackList.map(feedback => (
                                 <AccordionItem value={feedback.id} key={feedback.id}>
-                                    <AccordionTrigger>
+                                    <AccordionTrigger className="hover:no-underline">
                                         <div className="flex items-center justify-between w-full pr-4">
                                             <div className="flex items-center gap-3 text-left">
                                                 {!feedback.isRead && <Badge className="bg-accent text-accent-foreground">New</Badge>}
