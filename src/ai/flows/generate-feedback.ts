@@ -65,13 +65,6 @@ You MUST generate both a suitable title and the full feedback content.
 4.  **Provide Actionable Advice**: For each area of improvement, suggest specific actions. For example, if pronunciation is weak, suggest they re-practice those sentences. If a quiz topic is a problem, suggest they generate more quizzes on that topic.
 5.  **Maintain a Supportive Tone**: The feedback should be encouraging and motivating, not critical. Frame areas for improvement as opportunities for growth.
 
-**Output Structure:**
-- Start with a friendly greeting addressing the student by name.
-- Begin with positive reinforcement based on their strengths.
-- Gently transition to areas for improvement, providing specific examples from the data.
-- Offer clear, actionable next steps or suggestions.
-- End with an encouraging closing statement.
-
 **Student's Name**: {{{studentName}}}
 
 **Performance Data (JSON format):**
