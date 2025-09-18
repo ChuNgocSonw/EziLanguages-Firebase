@@ -46,7 +46,8 @@ service cloud.firestore {
       allow read, write, delete: if get(/databases/$(database)/documents/assignments/$(assignmentId)).data.teacherId == request.auth.uid;
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
       // Students can read assignments assigned to their class
-      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in resource.data.assignedClasses.map(c => c.classId);
+      allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                     resource.data.assignedClasses.filter(c, c.classId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId).size() > 0;
     }
     
     match /feedback/{feedbackId} {
