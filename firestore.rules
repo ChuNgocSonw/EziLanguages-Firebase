@@ -1,84 +1,92 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
 
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
     function isStudent() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+      return isSignedIn() && getUserRole() == 'student';
     }
 
     function isTeacher() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
+      return isSignedIn() && getUserRole() in ['teacher', 'admin', 'superadmin'];
     }
 
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
+      return isSignedIn() && getUserRole() in ['admin', 'superadmin'];
     }
 
-    // Default deny all - this should be the first rule
+    // Default deny all unless specified
     match /{document=**} {
       allow read, write: if false;
     }
     
-    // Global Admin/Superadmin access - this overrides all other rules for them
+    // Admins have full access
     match /{document=**} {
         allow read, write: if isAdmin();
     }
 
     // Users Collection
+    // - Users can read/update their own profile.
+    // - Teachers can update user profiles (e.g., to assign a classId).
+    // - Any signed-in user can list users (for leaderboards).
     match /users/{userId} {
-      // Teachers and Admins can read any user profile. A user can read their own.
-      allow read: if isTeacher() || request.auth.uid == userId;
-      // Anyone can create their own user document (sign up)
-      allow create: if isSignedIn();
-      // A user can update their own profile, OR a teacher can update any user's profile (e.g., to add a classId)
+      allow read: if request.auth.uid == userId;
       allow update: if request.auth.uid == userId || isTeacher();
-      // Allow any signed-in user to list users for features like leaderboards
       allow list: if isSignedIn();
+      // Create is open to any signed in user during sign up process
+      allow create: if isSignedIn();
     }
 
     // Classes Collection
+    // - Only Teachers can read or write classes.
     match /classes/{classId} {
       allow read, write: if isTeacher();
     }
 
     // Assignments Collection
+    // - Teachers can write.
+    // - Teachers can read.
+    // - Students can read if they are in a class that the assignment is assigned to.
     match /assignments/{assignmentId} {
-      allow read: if isTeacher() || (isStudent() && 
-          size(resource.data.assignedClasses.filter(c => c.classId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)) > 0);
       allow write: if isTeacher();
+      allow read: if isTeacher() || 
+                    (isStudent() && {
+                      'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId,
+                      'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className
+                    } in resource.data.assignedClasses);
     }
 
     // Feedback Collection
+    // - Teachers can create feedback.
+    // - Teachers can read/delete feedback they sent.
+    // - Students can read/update (only isRead field) feedback they received.
     match /feedback/{feedbackId} {
-      allow read, delete: if (isTeacher() && resource.data.teacherId == request.auth.uid) || (isStudent() && resource.data.studentId == request.auth.uid);
       allow create: if isTeacher();
-      // Allow student to only mark feedback as read
-      allow update: if isStudent() && request.auth.uid == resource.data.studentId && request.resource.data.isRead == true && resource.data.diff(request.resource.data).affectedKeys().hasOnly(['isRead']);
+      allow read, delete: if (isTeacher() && resource.data.teacherId == request.auth.uid) || (isStudent() && resource.data.studentId == request.auth.uid);
+      allow update: if isStudent() && request.auth.uid == resource.data.studentId
+                      && request.resource.data.isRead == true
+                      && resource.data.diff(request.resource.data).affectedKeys().hasOnly(['isRead']);
+      allow list: if isTeacher();
     }
     
-    // Allow teachers to list their sent feedback. Student can list their received feedback.
-    match /feedback/{feedbackId=**} {
-       allow list: if isSignedIn();
-    }
-    
-    // Quiz History & Assignment Attempts Subcollections
-    match /users/{userId}/{subcollection}/{attemptId} {
-      // This covers quizHistory and assignmentAttempts
-      allow read, write: if request.auth.uid == userId;
+    // User Subcollections (Quiz History, Attempts, Chats)
+    // - Users can only access their own subcollections.
+    match /users/{userId}/{subcollection}/{docId} {
+      allow read, write, delete: if request.auth.uid == userId;
     }
 
-    // Chats Subcollection
-    match /users/{userId}/chats/{chatId} {
-        allow read, write, delete: if request.auth.uid == userId;
-    }
     match /users/{userId}/chats/{chatId}/messages/{messageId} {
-        allow read, write: if request.auth.uid == userId;
+      allow read, write: if request.auth.uid == userId;
     }
   }
 }
