@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -32,40 +33,49 @@ service cloud.firestore {
 
     // Rules for the 'users' collection
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if request.auth.uid == userId; // Users can only edit their own profile
+      // Allow users to read their own profile, and teachers/admins to read any profile
+      allow read: if isSignedIn() && (request.auth.uid == userId || isTeacher() || isAdmin());
+      // Allow users to only edit their own profile
+      allow write: if request.auth.uid == userId;
     }
 
     // Rules for the 'classes' collection
     match /classes/{classId} {
-      allow read: if isTeacher() && resource.data.teacherId == request.auth.uid;
-      allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+      // Teachers can read, create, update, delete their own classes
+      allow read, create, update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
     }
 
     // Rules for the 'assignments' collection
     match /assignments/{assignmentId} {
       // Teachers can manage their own assignments
       allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
-      
+
       // Read access is more complex
-      allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid) ||
-                   (isStudent() && resource.data.assignedClasses[?({'classId': getUserData().classId})].size() > 0);
+      allow read: if isTeacher() && resource.data.teacherId == request.auth.uid
+                  || (
+                      isStudent() && {
+                        'classId': getUserData().classId,
+                        'className': get(/databases/$(database)/documents/classes/$(getUserData().classId)).data.className
+                      } in resource.data.assignedClasses
+                  );
     }
-    
+
     // Rules for the 'feedback' collection
     match /feedback/{docId} {
       // Allow read if user is the teacher who sent it OR the student who received it.
-      // This single rule allows the teacher's list query to work.
-      allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid) || 
-                   (isStudent() && resource.data.studentId == request.auth.uid);
+      // This single rule allows the teacher's 'list' query to work.
+      allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid)
+                  || (isStudent() && resource.data.studentId == request.auth.uid);
 
+      // Students cannot create feedback, only teachers can for their students
       allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
 
       // Teachers can delete their own feedback. Students cannot delete feedback.
       allow delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
 
       // Students can only update the 'isRead' field to true, and nothing else.
-      allow update: if isStudent() && resource.data.studentId == request.auth.uid
+      allow update: if isStudent()
+                    && resource.data.studentId == request.auth.uid
                     && request.resource.data.isRead == true
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
     }
