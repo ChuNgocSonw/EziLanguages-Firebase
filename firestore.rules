@@ -1,27 +1,27 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
     }
 
-    function isStudent() {
-      return isSignedIn() && getUserData(request.auth.uid).role == 'student';
+    function isStudent(userId) {
+      return getUserRole(userId) == 'student';
     }
 
-    function isTeacher() {
-      return isSignedIn() && getUserData(request.auth.uid).role in ['teacher', 'admin', 'superadmin'];
+    function isTeacher(userId) {
+      return getUserRole(userId) in ['teacher', 'admin', 'superadmin'];
     }
 
-    function isAdmin() {
-      return isSignedIn() && getUserData(request.auth.uid).role in ['admin', 'superadmin'];
+    function isAdmin(userId) {
+      return getUserRole(userId) in ['admin', 'superadmin'];
     }
 
     // Default deny all
@@ -31,32 +31,31 @@ service cloud.firestore {
 
     // Users Collection
     match /users/{userId} {
-      allow get: if isTeacher() || request.auth.uid == userId;
+      allow read: if isAdmin(request.auth.uid) || isTeacher(request.auth.uid) || request.auth.uid == userId;
       allow create: if isSignedIn();
-      allow update: if isTeacher() || request.auth.uid == userId;
-      allow list: if isSignedIn(); // For leaderboard
-      allow write: if isAdmin(); // Admins can manage users
+      allow update: if isAdmin(request.auth.uid) || isTeacher(request.auth.uid) || request.auth.uid == userId;
+      allow list: if isSignedIn();
     }
 
     // Classes Collection
     match /classes/{classId} {
-      allow read, write: if isTeacher();
+      allow read, write: if isTeacher(request.auth.uid);
     }
 
     // Assignments Collection
     match /assignments/{assignmentId} {
-      allow get: if isTeacher() || (isStudent() && 
-        get(/databases/$(database)/documents/classes/$(getUserData(request.auth.uid).classId)).data.className 
-        in resource.data.assignedClasses.map(c => c.className));
-      allow write: if isTeacher();
+      allow read: if isTeacher(request.auth.uid) || (isStudent(request.auth.uid) &&
+        { 'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId, 'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className }
+        in resource.data.assignedClasses);
+      allow write: if isTeacher(request.auth.uid);
     }
-    
+
     // Feedback Collection
     match /feedback/{feedbackId} {
-      allow read, delete: if (isTeacher() && resource.data.teacherId == request.auth.uid) || (isStudent() && resource.data.studentId == request.auth.uid);
-      allow create: if isTeacher();
-      allow update: if isStudent() && request.auth.uid == resource.data.studentId && request.resource.data.isRead == true && resource.data.diff(request.resource.data).affectedKeys().hasOnly(['isRead']);
-      allow list: if isTeacher();
+      allow read, delete: if (isTeacher(request.auth.uid) && resource.data.teacherId == request.auth.uid) || (isStudent(request.auth.uid) && resource.data.studentId == request.auth.uid);
+      allow create: if isTeacher(request.auth.uid);
+      allow update: if isStudent(request.auth.uid) && request.auth.uid == resource.data.studentId && request.resource.data.isRead == true && resource.data.diff(request.resource.data).affectedKeys().hasOnly(['isRead']);
+      allow list: if isTeacher(request.auth.uid);
     }
     
     // Quiz History & Assignment Attempts Subcollections
