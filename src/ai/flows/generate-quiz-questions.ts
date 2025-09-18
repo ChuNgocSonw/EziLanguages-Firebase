@@ -36,7 +36,7 @@ const generateQuizQuestionsPrompt = ai.definePrompt({
   output: {schema: GenerateQuizQuestionsOutputSchema},
   prompt: `You are a quiz generator.
 Your ONLY task is to create {{{numberOfQuestions}}} questions about the following topic, at the specified difficulty level, and in the specified format.
-The questions and answers MUST be in the same language as the topic.
+The questions and answers MUST be in English, regardless of the language of the topic provided.
 
 IMPORTANT: If the provided topic contains a list of sentences or specific content, you MUST base your questions exclusively on that content. Do not introduce outside knowledge. If it's a general topic, you can use your general knowledge.
 
@@ -62,3 +62,4 @@ const generateQuizQuestionsFlow = ai.defineFlow(
     return output!;
   }
 );
+
