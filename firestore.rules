@@ -10,13 +10,10 @@ service cloud.firestore {
 
     // Helper function to check if the requesting user is the teacher of a given student
     function isTeacherOfStudent(studentId) {
-      let student = get(/databases/$(database)/documents/users/$(studentId)).data;
-      // Check if the student has a classId assigned
-      if (!('classId' in student)) {
-        return false;
-      }
-      let class = get(/databases/$(database)/documents/classes/$(student.classId)).data;
-      return class.teacherId == request.auth.uid;
+      // Get the student's data
+      let studentData = get(/databases/$(database)/documents/users/$(studentId)).data;
+      // Check if student has a classId, and if so, get the class data and check if the teacherId matches the requester's uid
+      return 'classId' in studentData && get(/databases/$(database)/documents/classes/$(studentData.classId)).data.teacherId == request.auth.uid;
     }
 
     match /users/{userId} {
