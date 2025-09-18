@@ -73,7 +73,7 @@ export default function LeaderboardRanks() {
     }, [user, getLeaderboard]);
 
     return (
-        <Card className="col-span-3">
+        <Card className="col-span-3 flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
                 <Trophy className="text-amber-500" />
@@ -81,7 +81,7 @@ export default function LeaderboardRanks() {
             </CardTitle>
             <CardDescription>Your current position across all leaderboards.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex-1 space-y-4">
             <RankItem icon={Award} label="All-Time Badges" rank={ranks.badgeCount} isLoading={isLoading} color="text-blue-500" />
             <RankItem icon={Star} label="Weekly XP" rank={ranks.weeklyXP} isLoading={isLoading} color="text-yellow-500" />
             <RankItem icon={Flame} label="Daily Streak" rank={ranks.streak} isLoading={isLoading} color="text-orange-500" />

@@ -70,12 +70,12 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4 flex flex-col">
           <CardHeader>
             <CardTitle>Continue Learning</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
              {lastActivity ? (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
