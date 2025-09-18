@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   School,
   BookCopy,
-  BarChart2
+  BarChart2,
+  Send
 } from 'lucide-react';
 import {
   Tooltip,
@@ -33,6 +34,7 @@ const allNavItems = [
   { href: '/listening', icon: Headphones, label: 'Listening', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student', 'teacher', 'admin', 'superadmin'] },
+  { href: '/feedback', icon: Send, label: 'Feedback', roles: ['student'] },
   { href: '/teacher', icon: School, label: 'Teacher', roles: ['teacher', 'admin', 'superadmin'] },
   { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin', 'superadmin'] },
 ];

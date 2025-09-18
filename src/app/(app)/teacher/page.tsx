@@ -76,20 +76,12 @@ export default function TeacherPage() {
             </p>
           </CardContent>
           <CardFooter>
-             <Button className="w-full" variant="outline" disabled>
-                Send Feedback
+             <Button className="w-full" asChild>
+                <Link href="/teacher/feedback">Send Feedback</Link>
              </Button>
           </CardFooter>
         </Card>
       </div>
-       <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-          <CardDescription>
-            The "Send Feedback" feature is currently under development. Stay tuned for updates!
-          </CardDescription>
-        </CardHeader>
-      </Card>
     </>
   );
 }

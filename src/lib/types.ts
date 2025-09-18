@@ -48,6 +48,19 @@ export interface Assignment {
   assignedClasses?: { classId: string; className: string }[];
 }
 
+export interface Feedback {
+  id: string;
+  teacherId: string;
+  teacherName: string;
+  studentId: string;
+  studentName: string;
+  classId: string;
+  title: string;
+  content: string;
+  createdAt: Timestamp;
+  isRead: boolean;
+}
+
 
 export const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -87,7 +100,7 @@ export interface PronunciationAttempt {
 }
 
 export interface LastActivity {
-  type: 'chat' | 'reading' | 'listening' | 'quiz';
+  type: 'chat' | 'reading' | 'listening' | 'quiz' | 'feedback';
   title: string;
 }
 
