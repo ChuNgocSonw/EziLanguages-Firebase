@@ -249,7 +249,7 @@ export default function TeacherAssignmentsPage() {
                      <AlertDialog>
                       <AlertDialogTrigger asChild>
                          <Button variant="ghost" size="icon" disabled={isDeleting === assignment.id} className="shrink-0 hover:bg-destructive/10">
-                           {isDeleting === assignment.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive" />}
+                           {isDeleting === assignment.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive hover:text-destructive" />}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

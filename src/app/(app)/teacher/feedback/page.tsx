@@ -290,7 +290,7 @@ export default function TeacherFeedbackPage() {
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive/10">
-                                                {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4"/>}
+                                                {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 hover:text-destructive" />}
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
