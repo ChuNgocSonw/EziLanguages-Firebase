@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -5,6 +6,10 @@ service cloud.firestore {
   
     function getRequestingUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function getRequestingUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
     function isTeacherOfStudent(studentId) {
@@ -14,11 +19,8 @@ service cloud.firestore {
     }
     
     match /users/{userId} {
-      // Any authenticated user can list users for leaderboard purposes
       allow list: if request.auth != null;
-      // Users can only read/write their own full document
       allow read, write: if request.auth.uid == userId;
-      // Admins and teachers have specific read permissions
       allow read: if getRequestingUserRole() in ['admin', 'superadmin'];
       allow read: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
     }
@@ -49,7 +51,7 @@ service cloud.firestore {
       allow read, write, delete: if get(/databases/$(database)/documents/assignments/$(assignmentId)).data.teacherId == request.auth.uid;
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
       // Students can read assignments assigned to their class
-      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in resource.data.assignedClasses.map(c => c.classId);
+      allow read: if getRequestingUser().classId in resource.data.assignedClasses.map(c => c.classId);
     }
     
     match /feedback/{feedbackId} {
