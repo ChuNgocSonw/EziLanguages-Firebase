@@ -154,3 +154,30 @@ export interface ChatMessage {
   suggestions?: string[];
   timestamp: Timestamp;
 }
+
+
+// Duplicating the type from generate-feedback.ts to be used on the client
+const PronunciationScoreSchema = z.record(z.string(), z.object({
+  score: z.number(),
+  transcribedText: z.string(),
+}));
+
+const ListeningScoreSchema = z.record(z.string(), z.number());
+
+const QuizAttemptSchema = z.object({
+    topic: z.string(),
+    score: z.number(),
+    percentage: z.number(),
+    questions: z.array(z.object({ question: z.string() })).length,
+});
+
+export const GenerateFeedbackInputSchema = z.object({
+  studentName: z.string().describe("The name of the student receiving the feedback."),
+  performanceData: z.object({
+      pronunciationScores: z.optional(PronunciationScoreSchema).describe("Student's pronunciation scores. The key is the sentence, value contains score and transcribed text."),
+      listeningScores: z.optional(ListeningScoreSchema).describe("Student's listening scores. The key is the exercise ID, value is the XP earned (10 for correct)."),
+      quizHistory: z.optional(z.array(QuizAttemptSchema)).describe("History of self-generated quizzes taken by the student."),
+      assignmentHistory: z.optional(z.array(QuizAttemptSchema)).describe("History of assigned quizzes taken by the student."),
+  }).describe("A collection of the student's performance data across different activities."),
+});
+export type GenerateFeedbackInput = z.infer<typeof GenerateFeedbackInputSchema>;

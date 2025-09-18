@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment, Feedback } from '@/lib/types';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment, Feedback, GenerateFeedbackInput } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
@@ -66,6 +66,7 @@ export interface AuthContextType {
   getReceivedFeedback: () => Promise<Feedback[]>;
   markFeedbackAsRead: (feedbackId: string) => Promise<void>;
   deleteFeedback: (feedbackId: string) => Promise<void>;
+  getStudentPerformanceDataForFeedback: (studentId: string) => Promise<GenerateFeedbackInput>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -838,6 +839,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const getStudentPerformanceDataForFeedback = useCallback(async (studentId: string): Promise<GenerateFeedbackInput> => {
+      if (!auth.currentUser) throw new Error("Not authenticated");
+      const userDocRef = doc(db, "users", studentId);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+          throw new Error("Student not found");
+      }
+
+      const userProfile = userDoc.data() as UserProfile;
+
+      const quizHistoryRef = collection(db, "users", studentId, "quizHistory");
+      const quizHistoryQuery = query(quizHistoryRef, orderBy("completedAt", "desc"));
+      const quizHistorySnapshot = await getDocs(quizHistoryQuery);
+      const quizHistory = quizHistorySnapshot.docs.map(doc => doc.data() as QuizAttempt);
+      
+      const assignmentHistoryRef = collection(db, "users", studentId, "assignmentAttempts");
+      const assignmentHistoryQuery = query(assignmentHistoryRef, orderBy("completedAt", "desc"));
+      const assignmentHistorySnapshot = await getDocs(assignmentHistoryQuery);
+      const assignmentHistory = assignmentHistorySnapshot.docs.map(doc => doc.data() as QuizAttempt);
+
+      return {
+          studentName: userProfile.name,
+          performanceData: {
+              pronunciationScores: userProfile.pronunciationScores,
+              listeningScores: userProfile.listeningScores,
+              quizHistory: quizHistory,
+              assignmentHistory: assignmentHistory,
+          }
+      };
+  }, []);
+
 
   const value: AuthContextType = useMemo(() => ({
     user,
@@ -884,6 +917,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getReceivedFeedback,
     markFeedbackAsRead,
     deleteFeedback,
+    getStudentPerformanceDataForFeedback,
   }), [
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
@@ -892,7 +926,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       addStudentToClass, removeStudentFromClass, searchStudentsByEmail, createAssignment, updateAssignment,
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
       getAssignmentAttempt, getStudentCompletedAttempts, getStudentAssignmentAttemptsForClass, sendFeedback,
-      getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback
+      getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback, getStudentPerformanceDataForFeedback
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

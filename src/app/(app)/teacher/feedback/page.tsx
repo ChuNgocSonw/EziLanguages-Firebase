@@ -36,6 +36,7 @@ export default function TeacherFeedbackPage() {
     sendFeedback,
     getSentFeedback,
     deleteFeedback,
+    getStudentPerformanceDataForFeedback,
   } = useAuth();
   const { toast } = useToast();
 
@@ -157,7 +158,11 @@ export default function TeacherFeedbackPage() {
     setIsGenerating(true);
     try {
         const studentId = selectedStudentIds[0];
-        const result = await generateFeedback(studentId);
+        // Fetch data on the client with user credentials
+        const performanceData = await getStudentPerformanceDataForFeedback(studentId);
+        
+        // Send the fetched data to the server action for AI processing
+        const result = await generateFeedback(performanceData);
         
         form.setValue("title", result.title);
         form.setValue("content", result.feedbackText);
