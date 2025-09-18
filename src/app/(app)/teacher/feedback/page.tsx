@@ -48,7 +48,6 @@ export default function TeacherFeedbackPage() {
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiKeywords, setAiKeywords] = useState("");
 
   const [sentFeedback, setSentFeedback] = useState<Feedback[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -136,7 +135,6 @@ export default function TeacherFeedbackPage() {
         await sendFeedback(selectedClassId, studentDetails, data.title, data.content);
         toast({ title: "Success!", description: `Feedback sent to ${selectedStudentIds.length} student(s).`});
         form.reset();
-        setAiKeywords("");
         setSelectedStudentIds([]);
         fetchHistory();
     } catch (error: any) {
@@ -147,32 +145,26 @@ export default function TeacherFeedbackPage() {
   };
 
   const handleGenerateFeedback = async () => {
-    if (!aiKeywords.trim()) {
-        toast({ title: "Keywords required", description: "Please enter some keywords for the AI.", variant: "destructive" });
+    if (selectedStudentIds.length === 0) {
+        toast({ title: "Student required", description: "Please select one student to generate feedback for.", variant: "destructive"});
         return;
     }
-    if (selectedStudentIds.length === 0) {
-        toast({ title: "Student required", description: "Please select at least one student to generate feedback for.", variant: "destructive"});
+    if (selectedStudentIds.length > 1) {
+        toast({ title: "Select only one student", description: "AI analysis currently works for one student at a time.", variant: "destructive"});
         return;
     }
 
     setIsGenerating(true);
     try {
-        // We'll generate for the first selected student as an example. 
-        // Teachers can adjust as needed if sending to multiple students.
-        const firstSelectedStudent = students.find(s => s.uid === selectedStudentIds[0]);
-        if (!firstSelectedStudent) return;
+        const studentId = selectedStudentIds[0];
+        const result = await generateFeedback(studentId);
         
-        const result = await generateFeedback({
-            keywords: aiKeywords,
-            studentName: firstSelectedStudent.name,
-        });
-        
+        form.setValue("title", result.title);
         form.setValue("content", result.feedbackText);
         toast({ title: "Feedback Generated!", description: "AI has drafted a feedback message for you below." });
 
     } catch (error: any) {
-        toast({ title: "Generation Failed", description: error.message, variant: "destructive"});
+        toast({ title: "Generation Failed", description: error.message || "Could not analyze student data.", variant: "destructive"});
     } finally {
         setIsGenerating(false);
     }
@@ -207,7 +199,7 @@ export default function TeacherFeedbackPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Compose Feedback</CardTitle>
-                    <CardDescription>Select recipients and write your feedback message, or use the AI assistant to help you.</CardDescription>
+                    <CardDescription>Select recipients and write your feedback message, or use the AI assistant to analyze student data and draft a message for you.</CardDescription>
                 </CardHeader>
                 <CardContent>
                 <Form {...form}>
@@ -221,8 +213,8 @@ export default function TeacherFeedbackPage() {
                                     <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="animate-spin" /> Loading classes...</div>
                                 ) : (
                                     <Select 
+                                      value={selectedClassId || ""}
                                       onValueChange={setSelectedClassId} 
-                                      value={selectedClassId || ""} 
                                       disabled={classes.length === 0}
                                     >
                                       <SelectTrigger id="class-select"><SelectValue placeholder="Select a class..." /></SelectTrigger>
@@ -270,17 +262,9 @@ export default function TeacherFeedbackPage() {
                             </div>
 
                             <div className="space-y-4">
-                                <h3 className="font-semibold text-lg">2. Write Message</h3>
-                                 <div className="space-y-2">
-                                    <Label htmlFor="ai-keywords">AI Assistant Keywords (Optional)</Label>
-                                    <Textarea 
-                                        id="ai-keywords"
-                                        placeholder="Enter keywords for the AI, e.g., 'good on idioms, needs work on past tense'"
-                                        value={aiKeywords}
-                                        onChange={(e) => setAiKeywords(e.target.value)}
-                                        rows={2}
-                                    />
-                                     <Button type="button" variant="outline" size="sm" onClick={handleGenerateFeedback} disabled={isGenerating}>
+                                <div className="flex justify-between items-center">
+                                    <h3 className="font-semibold text-lg">2. Write Message</h3>
+                                    <Button type="button" variant="outline" size="sm" onClick={handleGenerateFeedback} disabled={isGenerating}>
                                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                                         Generate with AI
                                     </Button>
@@ -295,7 +279,7 @@ export default function TeacherFeedbackPage() {
                                 <FormField control={form.control} name="content" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Content</FormLabel>
-                                    <FormControl><Textarea placeholder="Write your detailed feedback here, or generate it with AI." {...field} rows={8} /></FormControl>
+                                    <FormControl><Textarea placeholder="Write your detailed feedback here, or generate it with AI." {...field} rows={10} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                                 )}/>
@@ -339,8 +323,8 @@ export default function TeacherFeedbackPage() {
                                     </div>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10">
-                                                {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 hover:text-destructive" />}
+                                            <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 hover:bg-destructive/10">
+                                                {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive hover:text-destructive" />}
                                             </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
