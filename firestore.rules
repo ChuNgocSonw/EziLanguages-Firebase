@@ -9,11 +9,13 @@ service cloud.firestore {
     
     function isTeacherOfStudent(studentId) {
       let studentDoc = get(/databases/$(database)/documents/users/$(studentId)).data;
-      let studentClassId = studentDoc.classId;
-      if (!exists(/databases/$(database)/documents/classes/$(studentClassId))) {
-        return false;
-      }
-      return get(/databases/$(database)/documents/classes/$(studentClassId)).data.teacherId == request.auth.uid;
+      return exists(/databases/$(database)/documents/classes/$(studentDoc.classId)) &&
+             get(/databases/$(database)/documents/classes/$(studentDoc.classId)).data.teacherId == request.auth.uid;
+    }
+
+    function isStudentInAssignedClass(assignment) {
+        let studentClassId = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId;
+        return assignment.assignedClasses.exists(c => c.classId == studentClassId);
     }
     
     match /users/{userId} {
@@ -48,20 +50,12 @@ service cloud.firestore {
     match /assignments/{assignmentId} {
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
       allow read, write, delete: if get(/databases/$(database)/documents/assignments/$(assignmentId)).data.teacherId == request.auth.uid;
-      // Students can read assignments assigned to their class
-      allow read: if request.auth != null && 'classId' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
-        resource.data.assignedClasses.filter(c, c.classId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId).size() > 0;
-    }
-    
-    match /feedback/{document=**} {
-      allow list: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
+      allow read: if isStudentInAssignedClass(resource.data);
     }
     
     match /feedback/{feedbackId} {
-      // Student can read/update
-      allow read, update: if request.auth.uid == resource.data.studentId;
-      // Teacher can create/read/delete their own feedback
-      allow create, read, delete: if request.auth.uid == resource.data.teacherId;
+      allow read, update: if resource.data.studentId == request.auth.uid;
+      allow create, read, delete, list: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
     }
   }
 }
