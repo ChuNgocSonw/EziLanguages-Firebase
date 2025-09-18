@@ -73,7 +73,7 @@ export default function LeaderboardRanks() {
     }, [user, getLeaderboard]);
 
     return (
-        <Card className="col-span-3 flex flex-col">
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
                 <Trophy className="text-amber-500" />

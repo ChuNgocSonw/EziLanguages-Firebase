@@ -70,8 +70,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 flex flex-col">
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Continue Learning</CardTitle>
           </CardHeader>
