@@ -1,12 +1,16 @@
 
 import { z } from "zod";
 import type { Timestamp } from "firebase/firestore";
+import type { ReadingSentence, ListeningExercise } from "./lessons";
 
 export const UserRole = z.enum(["student", "teacher", "admin", "superadmin"]);
 export type UserRole = z.infer<typeof UserRole>;
 
 export const QuestionType = z.enum(['multiple-choice', 'true-false', 'fill-in-the-blank']);
 export type QuestionType = z.infer<typeof QuestionType>;
+
+export const AssignmentType = z.enum(['quiz', 'reading', 'listening']);
+export type AssignmentType = z.infer<typeof AssignmentType>;
 
 export const QuizQuestionSchema = z.object({
   id: z.string().optional(),
@@ -42,7 +46,10 @@ export interface Assignment {
   id: string;
   title: string;
   language: "EN";
-  questions: QuizQuestion[];
+  assignmentType: AssignmentType;
+  questions?: QuizQuestion[];
+  readingSentences?: ReadingSentence[];
+  listeningExercises?: ListeningExercise[];
   teacherId: string;
   createdAt: Timestamp;
   assignedClasses?: { classId: string; className: string }[];
