@@ -2,88 +2,57 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Helper function to check if the requesting user has a specific role.
-    // This is the correct way to check roles for use in 'allow' rules.
-    function isRole(userId, role) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role == role;
-    }
-    
-    function isRoleIn(userId, roles) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role in roles;
-    }
 
-    // Rules for the 'users' collection and its subcollections
+    // Quy tắc cho collection 'users'
     match /users/{userId} {
-      // Any authenticated user can read their own data.
-      // Teachers and Admins can read any user's data.
-      allow get: if request.auth != null && 
-                    (request.auth.uid == userId || isRoleIn(request.auth.uid, ['teacher', 'admin', 'superadmin']));
-      
-      // Users can only update their own data.
-      allow update: if request.auth != null && request.auth.uid == userId;
-      
-      // Admins can create/delete users (useful for backend operations). Regular users are created via signup.
-      allow create, delete: if request.auth != null && isRoleIn(request.auth.uid, ['admin', 'superadmin']);
+      // Bất kỳ ai đã đăng nhập đều có thể đọc thông tin người dùng (cần thiết cho leaderboard và quản lý lớp học)
+      allow get: if request.auth != null;
+      // Người dùng chỉ có thể tự tạo hoặc tự cập nhật thông tin của chính mình
+      allow write: if request.auth != null && request.auth.uid == userId;
 
-      // Allow listing users only for admins/teachers (e.g., for user management or adding students to a class)
-      allow list: if request.auth != null && isRoleIn(request.auth.uid, ['teacher', 'admin', 'superadmin']);
-      
-      // Rules for the 'quizHistory' subcollection
-      match /quizHistory/{historyId} {
-        // Users can read/write their own quiz history.
-        // Teachers/Admins can read any student's quiz history for feedback generation.
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        allow list: if request.auth != null && 
-                      (request.auth.uid == userId || isRoleIn(request.auth.uid, ['teacher', 'admin', 'superadmin']));
+      // Giáo viên có thể đọc lịch sử làm bài kiểm tra tự tạo của học sinh
+      match /quizHistory/{quizId} {
+        allow list, get: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+        // Học sinh có thể tự tạo lịch sử bài làm của mình
+        allow write: if request.auth != null && request.auth.uid == userId;
       }
-      
-      // Rules for the 'assignmentAttempts' subcollection
+
+      // Giáo viên có thể đọc lịch sử làm bài tập được giao của học sinh
       match /assignmentAttempts/{attemptId} {
-        // Users can read/write their own assignment attempts.
-        // Teachers/Admins can read any student's attempts for feedback generation.
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        allow list: if request.auth != null && 
-                      (request.auth.uid == userId || isRoleIn(request.auth.uid, ['teacher', 'admin', 'superadmin']));
+         allow list, get: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+         // Học sinh có thể tự tạo lịch sử bài làm của mình
+         allow write: if request.auth != null && request.auth.uid == userId;
       }
-
-      // Rules for 'chats' subcollection
-       match /chats/{chatId}/{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-    }
-    
-    // Rules for the 'classes' collection
-    match /classes/{classId} {
-      // Any authenticated user can read class lists (e.g., for display purposes).
-      allow get, list: if request.auth != null;
       
-      // Only teachers or admins can create, update, or delete classes.
-      // For update/delete, we also check if they are the owner of the class.
-      allow create: if request.auth != null && isRoleIn(request.auth.uid, ['teacher', 'admin', 'superadmin']);
-      allow update, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
+      // Người dùng có thể tự quản lý các sub-collection khác của mình
+      match /{subcollection}/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
-    
-    // Rules for the 'assignments' collection
-    match /assignments/{assignmentId} {
-       // Any authenticated user can read assignments.
-      allow get, list: if request.auth != null;
 
-      // Only teachers or admins can create assignments.
-      // Only the teacher who created the assignment can update or delete it.
-      allow create: if request.auth != null && isRoleIn(request.auth.uid, ['teacher', 'admin', 'superadmin']);
-      allow update, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
+    // Quy tắc cho collection 'classes'
+    match /classes/{classId} {
+      // Bất kỳ ai đã đăng nhập đều có thể đọc thông tin lớp học (cần cho học sinh xem lớp của mình)
+      allow read: if request.auth != null;
+      // Chỉ giáo viên hoặc admin mới có thể tạo, cập nhật, xóa lớp học
+      allow write: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
     }
     
-    // Rules for the 'feedback' collection
+    // Quy tắc cho collection 'assignments'
+    match /assignments/{assignmentId} {
+      // Bất kỳ ai đã đăng nhập đều có thể đọc bài tập (để học sinh có thể xem bài được giao)
+      allow read: if request.auth != null;
+      // Chỉ giáo viên hoặc admin mới có thể tạo, cập nhật, xóa bài tập
+      allow write: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+    }
+
+    // Quy tắc cho collection 'feedback'
     match /feedback/{feedbackId} {
-      // Teachers can create feedback.
-      // A teacher can only read/delete feedback they have sent.
-      // A student can only read/update (for isRead) feedback sent to them.
-      allow create: if request.auth != null && isRole(request.auth.uid, 'teacher');
-      allow read, delete: if request.auth != null && (resource.data.teacherId == request.auth.uid || resource.data.studentId == request.auth.uid);
-      allow update: if request.auth != null && resource.data.studentId == request.auth.uid;
-      allow list: if request.auth != null;
+      // Giáo viên có thể tạo, đọc và xóa feedback họ đã gửi
+      // Học sinh có thể đọc và cập nhật (để đánh dấu đã đọc) feedback họ nhận được
+      allow read, update: if request.auth != null && (request.auth.uid == resource.data.studentId || request.auth.uid == resource.data.teacherId);
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.teacherId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.teacherId;
     }
   }
 }
