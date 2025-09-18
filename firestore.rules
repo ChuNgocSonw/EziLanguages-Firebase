@@ -1,4 +1,5 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -45,35 +46,34 @@ service cloud.firestore {
       // Teachers can create classes
       allow create: if isTeacher();
       // Only the teacher who owns the class can update or delete it
-      allow update, delete: if isOwner(resource.data.teacherId);
+      allow write: if isOwner(resource.data.teacherId);
     }
 
     // Rules for 'assignments' collection
     match /assignments/{assignmentId} {
-      // Teachers can read assignments they created
-      // Students can read assignments assigned to their class
-      allow read: if isOwner(resource.data.teacherId) ||
-                    (isStudent() && exists(/databases/$(database)/documents/assignments/$(assignmentId),
-                      where resource.data.assignedClasses, 'array-contains', 
-                      { 'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId,
-                        'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className
-                      }
-                    ));
-      // Teachers can create, update, and delete assignments
-      allow write: if isTeacher();
+        // Teachers can read assignments they created
+        // Students can read assignments assigned to their class
+        allow read: if isTeacher() && isOwner(resource.data.teacherId) ||
+                    (isStudent() &&
+                      let studentClassId = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId;
+                      let studentClassName = get(/databases/$(database)/documents/classes/$(studentClassId)).data.className;
+                      let classRepresentation = {'classId': studentClassId, 'className': studentClassName};
+                      classRepresentation in resource.data.assignedClasses
+                    );
+        // Teachers can create, update, and delete assignments
+        allow write: if isTeacher();
     }
-
+    
     // Rules for 'feedback' collection
     match /feedback/{feedbackId} {
+        // Teachers can manage feedback they have sent
+        allow read, delete: if isTeacher() && isOwner(resource.data.teacherId);
         // Students can read feedback sent to them
-        // Teachers can read feedback they sent
-        allow read: if isOwner(resource.data.studentId) || isOwner(resource.data.teacherId);
+        allow read, update: if isStudent() && isOwner(resource.data.studentId);
         // Teachers can create feedback
         allow create: if isTeacher();
-        // Teachers can delete feedback they sent
-        allow delete: if isOwner(resource.data.teacherId);
-        // Teachers can list feedback they sent
-        allow list: if isTeacher() && request.query.where[0][2] == request.auth.uid;
+        // Allow teachers to list feedback they have sent
+        allow list: if isTeacher();
     }
   }
 }
