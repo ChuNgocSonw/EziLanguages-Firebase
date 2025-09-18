@@ -6,7 +6,7 @@ import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import type { Feedback } from "@/lib/types";
-import { Loader2, Send, MailOpen, User } from "lucide-react";
+import { Loader2, Send, MailOpen, User, Calendar } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -79,7 +79,7 @@ export default function StudentFeedbackPage() {
                                                 <span className="font-semibold group-hover:underline">{feedback.title}</span>
                                             </div>
                                             <div className="text-sm text-muted-foreground font-normal">
-                                                <span className="group-hover:underline">{format(feedback.createdAt.toDate(), 'PPP')}</span>
+                                                <span className="group-hover:underline">From: {feedback.teacherName}</span>
                                             </div>
                                         </div>
                                     </AccordionTrigger>
@@ -88,7 +88,7 @@ export default function StudentFeedbackPage() {
                                             <p>{feedback.content}</p>
                                         </div>
                                         <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                                            <User className="h-3 w-3" /> From: {feedback.teacherName}
+                                            <Calendar className="h-3 w-3" /> Received on: {format(feedback.createdAt.toDate(), 'PPP')}
                                         </p>
                                     </AccordionContent>
                                 </AccordionItem>
