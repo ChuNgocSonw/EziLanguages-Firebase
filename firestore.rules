@@ -47,8 +47,11 @@ service cloud.firestore {
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
       // Students can read assignments assigned to their class
       allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-                   (let studentClassId = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId;
-                    resource.data.assignedClasses.exists(c, c.classId == studentClassId));
+                     exists(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)) &&
+                     {
+                       'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId,
+                       'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className
+                     } in resource.data.assignedClasses;
     }
     
     match /feedback/{feedbackId} {
