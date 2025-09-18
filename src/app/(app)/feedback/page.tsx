@@ -89,7 +89,7 @@ export default function StudentFeedbackPage() {
                                     </AccordionTrigger>
                                     <AccordionContent>
                                         <div className="prose dark:prose-invert max-w-none p-2 bg-muted/50 rounded-md">
-                                            <p>{feedback.content}</p>
+                                            <p style={{ whiteSpace: 'pre-wrap' }}>{feedback.content}</p>
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
