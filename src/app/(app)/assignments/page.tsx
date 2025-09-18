@@ -57,23 +57,37 @@ function ReviewAssignmentView({ attempt, onBack }: { attempt: QuizAttempt, onBac
 
 export default function StudentAssignmentsPage() {
     const [assignments, setAssignments] = useState<Assignment[]>([]);
+    const [completedScores, setCompletedScores] = useState<Record<string, number>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [isReviewLoading, setIsReviewLoading] = useState<string | null>(null);
-    const { userProfile, getStudentAssignments, getAssignmentAttempt } = useAuth();
+    const { userProfile, getStudentAssignments, getAssignmentAttempt, getStudentCompletedAttempts } = useAuth();
     const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
     const [reviewAttempt, setReviewAttempt] = useState<QuizAttempt | null>(null);
 
     const fetchAssignments = useCallback(async () => {
         setIsLoading(true);
         try {
-            const studentAssignments = await getStudentAssignments();
+            const [studentAssignments, completedAttempts] = await Promise.all([
+                getStudentAssignments(),
+                getStudentCompletedAttempts()
+            ]);
+            
             setAssignments(studentAssignments);
+
+            const scores: Record<string, number> = {};
+            completedAttempts.forEach(attempt => {
+                if (attempt.assignmentId) {
+                    scores[attempt.assignmentId] = attempt.percentage;
+                }
+            });
+            setCompletedScores(scores);
+
         } catch (error) {
             console.error("Failed to fetch assignments:", error);
         } finally {
             setIsLoading(false);
         }
-    }, [getStudentAssignments]);
+    }, [getStudentAssignments, getStudentCompletedAttempts]);
 
     useEffect(() => {
         if (!selectedAssignment && !reviewAttempt) {
@@ -139,6 +153,7 @@ export default function StudentAssignmentsPage() {
                                 <div className="space-y-3">
                                     {assignments.map((quiz) => {
                                         const isCompleted = userProfile?.completedAssignments?.includes(quiz.id);
+                                        const score = completedScores[quiz.id];
                                         return (
                                             <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
                                                 <div>
@@ -151,7 +166,7 @@ export default function StudentAssignmentsPage() {
                                                     {isCompleted ? (
                                                          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
                                                             <Check className="mr-2 h-4 w-4" />
-                                                            Completed
+                                                            Completed {score !== undefined && `- ${score}%`}
                                                         </Badge>
                                                     ) : (
                                                         <Button variant="outline" size="sm" onClick={() => handleStartQuiz(quiz)}>

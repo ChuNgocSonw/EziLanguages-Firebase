@@ -59,6 +59,7 @@ export interface AuthContextType {
   assignAssignmentToClasses: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => Promise<void>;
   getStudentAssignments: () => Promise<Assignment[]>;
   getAssignmentAttempt: (assignmentId: string) => Promise<QuizAttempt | null>;
+  getStudentCompletedAttempts: () => Promise<QuizAttempt[]>;
   getStudentAssignmentAttemptsForClass: (studentId: string, classId: string) => Promise<QuizAttempt[]>;
 }
 
@@ -745,6 +746,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   }, []);
+
+  const getStudentCompletedAttempts = useCallback(async (): Promise<QuizAttempt[]> => {
+    if (!auth.currentUser) return [];
+    const attemptsRef = collection(db, "users", auth.currentUser.uid, "assignmentAttempts");
+    const q = query(attemptsRef, orderBy("completedAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+  }, []);
   
   const getStudentAssignmentAttemptsForClass = useCallback(async (studentId: string, classId: string): Promise<QuizAttempt[]> => {
     if (!auth.currentUser) throw new Error("Not authenticated");
@@ -805,6 +814,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     assignAssignmentToClasses,
     getStudentAssignments,
     getAssignmentAttempt,
+    getStudentCompletedAttempts,
     getStudentAssignmentAttemptsForClass,
   }), [
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
@@ -813,7 +823,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement, getStudentsForClass,
       addStudentToClass, removeStudentFromClass, searchStudentsByEmail, createAssignment, updateAssignment,
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
-      getAssignmentAttempt, getStudentAssignmentAttemptsForClass
+      getAssignmentAttempt, getStudentCompletedAttempts, getStudentAssignmentAttemptsForClass
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
