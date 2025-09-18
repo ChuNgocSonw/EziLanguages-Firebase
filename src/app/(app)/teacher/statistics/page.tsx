@@ -69,7 +69,7 @@ function ReviewStudentAssignmentsDialog({ student, classId }: { student: AdminUs
                         <Accordion type="single" collapsible className="w-full">
                             {attempts.map(attempt => (
                                 <AccordionItem value={attempt.id!} key={attempt.id}>
-                                    <AccordionTrigger>
+                                    <AccordionTrigger className="hover:no-underline">
                                         <div className="flex justify-between w-full pr-4">
                                             <div>
                                                 <p className="font-semibold text-left">{attempt.topic}</p>
