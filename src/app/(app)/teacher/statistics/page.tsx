@@ -169,7 +169,7 @@ function StudentStatisticsTable({ students, totalAssignments, classId }: { stude
                                 </div>
                             </TableCell>
                              <TableCell>
-                                <div className="flex items-center justify-center gap-2">
+                                <div className="flex items-center justify-center gap-4">
                                      <div className="flex items-center justify-center gap-1 font-semibold">
                                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                                         {student.assignmentsCompletedCount} / {totalAssignments}
