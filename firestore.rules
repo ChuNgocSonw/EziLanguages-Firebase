@@ -1,54 +1,63 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper Functions to check user roles by reading their profile
+
     function isAdmin(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role in ['admin', 'superadmin'];
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.role in ['admin', 'superadmin'];
     }
 
     function isTeacher(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role in ['teacher', 'admin', 'superadmin'];
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.role in ['teacher', 'admin', 'superadmin'];
     }
 
-    // Rules for collections
+    // Rule for the user document itself
     match /users/{userId} {
-      // Users can read their own profile. Teachers and Admins can read any user's profile.
-      allow read: if request.auth.uid == userId || isAdmin(request.auth.uid) || isTeacher(request.auth.uid);
-      // Users can write to their own profile. Admins can also write to any user's profile.
+      // Users can read/write their own data. Teachers/Admins can read any user's data. Admins can write.
+      allow read: if request.auth.uid == userId || isTeacher(request.auth.uid) || isAdmin(request.auth.uid);
       allow write: if request.auth.uid == userId || isAdmin(request.auth.uid);
-      
-      // Rules for user sub-collections (quizHistory, assignmentAttempts, etc.)
-      match /{subcollection}/{docId} {
-        // Users can read their own sub-collections. Teachers can read students' sub-collections for analysis.
-        allow read: if request.auth.uid == userId || isTeacher(request.auth.uid);
-        // Only the user themselves can write to their sub-collections.
-        allow write: if request.auth.uid == userId;
-      }
+    }
+    
+    // Rule for the quizHistory sub-collection
+    match /users/{studentId}/quizHistory/{historyId} {
+      // Only the student, a teacher, or an admin can read.
+      allow read: if request.auth.uid == studentId || isTeacher(request.auth.uid) || isAdmin(request.auth.uid);
+      // Only the student or an admin can write.
+      allow write: if request.auth.uid == studentId || isAdmin(request.auth.uid);
+    }
+    
+    // Rule for the assignmentAttempts sub-collection
+    match /users/{studentId}/assignmentAttempts/{attemptId} {
+      // Only the student, a teacher, or an admin can read.
+      allow read: if request.auth.uid == studentId || isTeacher(request.auth.uid) || isAdmin(request.auth.uid);
+       // Only the student or an admin can write.
+      allow write: if request.auth.uid == studentId || isAdmin(request.auth.uid);
+    }
+    
+    // Rule for the chats sub-collection (students own their chat history)
+    match /users/{userId}/chats/{chatId}/{document=**} {
+      allow read, write: if request.auth.uid == userId || isAdmin(request.auth.uid);
     }
     
     match /classes/{classId} {
-        // Only teachers can read or write to the classes collection.
-        allow read, create, update, delete: if isTeacher(request.auth.uid);
+      allow read: if isTeacher(request.auth.uid);
+      allow create: if isTeacher(request.auth.uid);
+      allow update, delete: if isTeacher(request.auth.uid) && resource.data.teacherId == request.auth.uid;
     }
     
     match /assignments/{assignmentId} {
-        // Any authenticated user (student or teacher) can read assignments.
-        allow read: if request.auth.uid != null;
-        // Only teachers can create, update, or delete assignments.
-        allow create, update, delete: if isTeacher(request.auth.uid);
+      allow read: if request.auth.uid != null; // Students and teachers can read assignments
+      allow create, update, delete: if isTeacher(request.auth.uid);
     }
     
     match /feedback/{feedbackId} {
-        // The specific student or the teacher who sent it can read the feedback.
-        allow read: if request.auth.uid == resource.data.studentId || request.auth.uid == resource.data.teacherId;
-        // Only teachers can create feedback.
-        allow create: if isTeacher(request.auth.uid);
-        // Students can only update the 'isRead' status of feedback they receive.
-        allow update: if request.auth.uid == resource.data.studentId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
-        // Only the teacher who sent it can delete feedback.
-        allow delete: if request.auth.uid == resource.data.teacherId;
+      allow read: if request.auth.uid == resource.data.studentId || request.auth.uid == resource.data.teacherId || isAdmin(request.auth.uid);
+      allow create: if isTeacher(request.auth.uid);
+      allow update: if request.auth.uid == resource.data.studentId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      allow delete: if request.auth.uid == resource.data.teacherId || isAdmin(request.auth.uid);
     }
   }
 }
