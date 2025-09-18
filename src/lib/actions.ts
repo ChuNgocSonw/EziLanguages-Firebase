@@ -5,10 +5,12 @@ import { generateQuizQuestions as generateQuizQuestionsFlow } from "@/ai/flows/g
 import { chatWithTutor as chatWithTutorFlow } from "@/ai/flows/chatbot-grammar-correction";
 import { analyzePronunciation as analyzePronunciationFlow } from "@/ai/flows/pronunciation-analysis";
 import { generateAudio as generateAudioFlow } from "@/ai/flows/text-to-speech";
+import { generateFeedback as generateFeedbackFlow } from "@/ai/flows/generate-feedback";
 
 import type { GenerateQuizQuestionsInput, GenerateQuizQuestionsOutput } from "@/ai/flows/generate-quiz-questions";
 import type { ChatWithTutorInput, ChatWithTutorOutput } from "@/ai/flows/chatbot-grammar-correction";
 import type { PronunciationAnalysisInput } from "@/ai/flows/pronunciation-analysis";
+import type { GenerateFeedbackInput, GenerateFeedbackOutput } from "@/ai/flows/generate-feedback";
 import type { PronunciationAttempt } from "@/lib/types";
 
 
@@ -31,4 +33,6 @@ export async function generateAudio(text: string) {
     return generateAudioFlow(text);
 }
 
-
+export async function generateFeedback(input: GenerateFeedbackInput): Promise<GenerateFeedbackOutput> {
+    return generateFeedbackFlow(input);
+}
