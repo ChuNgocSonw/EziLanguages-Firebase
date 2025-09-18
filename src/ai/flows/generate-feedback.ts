@@ -60,17 +60,30 @@ const generateFeedbackPrompt = ai.definePrompt({
 You MUST generate both a suitable title and the full feedback content.
 You MUST write the entire feedback message (both title and content) in the following language: {{{language}}}.
 
-**Formatting Rules:**
+**CRITICAL FORMATTING RULES:**
+- Structure the feedback into clear, separate paragraphs. Each paragraph should be separated by a blank line.
 - Ensure correct spelling and grammar.
-- **CRITICAL**: Always add a space after punctuation marks like commas (,), periods (.), and exclamation marks (!). For example, write "Hello, User." instead of "Hello,User.".
-- Use paragraphs to structure the feedback clearly.
+- Always add a space after punctuation marks like commas (,), periods (.), and exclamation marks (!). For example, write "Hello, User." instead of "Hello,User.".
+- Maintain a supportive, encouraging, and motivating tone throughout the message.
 
-**Analysis Guidelines:**
-1.  **Review all provided data**: Look at pronunciation, listening, self-generated quizzes, and assigned quizzes. If no data is available, write a general welcome and encouragement message.
-2.  **Identify Strengths**: Find areas where the student is doing well. This could be high scores in pronunciation, consistent quiz performance, or perfect scores on assignments. Start the feedback by highlighting these positive points.
-3.  **Identify Areas for Improvement**: Find areas where the student is struggling. This could be low pronunciation scores on certain sentences, low scores on quizzes about specific topics (e.g., tenses, idioms), or poor performance on assignments.
-4.  **Provide Actionable Advice**: For each area of improvement, suggest specific actions. For example, if pronunciation is weak, suggest they re-practice those sentences. If a quiz topic is a problem, suggest they generate more quizzes on that topic.
-5.  **Maintain a Supportive Tone**: The feedback should be encouraging and motivating, not critical. Frame areas for improvement as opportunities for growth.
+**ANALYSIS GUIDELINES:**
+
+1.  **Check for Performance Data**: Look at the provided JSON data.
+
+2.  **If Performance Data is EMPTY ({}):**
+    This means the student is new. You MUST generate a welcome message that follows this exact structure and tone:
+    - **Title**: "Chào mừng bạn đến với Ezi Languages!" (or English equivalent).
+    - **Paragraph 1**: Greet the student by name and give a warm welcome to the platform.
+    - **Paragraph 2**: Acknowledge that they are just starting and encourage them to explore the features.
+    - **Paragraph 3**: Suggest specific activities they can start with (e.g., pronunciation, listening, quizzes).
+    - **Paragraph 4**: A strong, encouraging call to action to start learning.
+    - **Paragraph 5**: A friendly closing wish.
+
+3.  **If Performance Data EXISTS:**
+    - **Identify Strengths**: Find areas where the student is doing well (high scores, consistency). Start the feedback by highlighting these positive points.
+    - **Identify Areas for Improvement**: Find areas where the student is struggling (low scores, specific topics).
+    - **Provide Actionable Advice**: For each area of improvement, suggest specific, concrete actions they can take (e.g., "try re-practicing these sentences," "generate a new quiz on 'past tenses'").
+    - **Structure the Message**: Begin with praise, then gently introduce areas for improvement with actionable advice, and end with an overall encouraging summary.
 
 **Student's Name**: {{{studentName}}}
 
