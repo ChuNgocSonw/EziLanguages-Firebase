@@ -1,41 +1,42 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
+
     function getRequestingUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
-    
+
     function isTeacherOfStudent(studentId) {
       let studentDoc = get(/databases/$(database)/documents/users/$(studentId)).data;
       return exists(/databases/$(database)/documents/classes/$(studentDoc.classId)) &&
              get(/databases/$(database)/documents/classes/$(studentDoc.classId)).data.teacherId == request.auth.uid;
     }
-    
+
     // Rules for 'users' collection and its subcollections
     match /users/{userId} {
       allow list: if request.auth != null;
       allow read, write: if request.auth.uid == userId;
       allow read: if getRequestingUserRole() in ['admin', 'superadmin'];
-      allow read: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
+      allow write: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
     }
-    
+
     match /users/{userId}/chats/{chatId} {
-        allow read, write, delete: if request.auth.uid == userId;
+      allow read, write, delete: if request.auth.uid == userId;
     }
-    
-     match /users/{userId}/chats/{chatId}/messages/{messageId} {
-        allow read, write, delete: if request.auth.uid == userId;
+
+    match /users/{userId}/chats/{chatId}/messages/{messageId} {
+      allow read, write, delete: if request.auth.uid == userId;
     }
-    
+
     match /users/{userId}/quizHistory/{attemptId} {
-        allow read, write: if request.auth.uid == userId;
+      allow read, write: if request.auth.uid == userId;
     }
 
     match /users/{userId}/assignmentAttempts/{attemptId} {
-        allow read, write: if request.auth.uid == userId;
-        allow read: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
+      allow read, write: if request.auth.uid == userId;
+      allow read: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
     }
     
     // Rules for 'classes' collection
@@ -44,7 +45,7 @@ service cloud.firestore {
       allow read, write: if get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
     }
-    
+
     // Rules for 'assignments' collection
     match /assignments/{assignmentId} {
       allow read, write, delete: if get(/databases/$(database)/documents/assignments/$(assignmentId)).data.teacherId == request.auth.uid;
@@ -52,9 +53,9 @@ service cloud.firestore {
       
       // Students can read assignments assigned to their class
       allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in resource.data.assignedClasses.map(c, c.classId);
+                  get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in resource.data.assignedClasses.map(c => c.classId);
     }
-    
+
     // Rules for 'feedback' collection
     match /feedback/{feedbackId} {
       // Teachers can list all feedback they have sent
@@ -62,7 +63,7 @@ service cloud.firestore {
 
       // Student can read/update their own feedback
       allow read, update: if request.auth != null && resource.data.studentId == request.auth.uid;
-      
+
       // Teacher can create, read, and delete their own feedback
       allow create, read, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
     }
