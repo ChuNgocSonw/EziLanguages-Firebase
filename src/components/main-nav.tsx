@@ -27,7 +27,6 @@ import type { UserRole } from '@/lib/types';
 
 
 const allNavItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['student', 'admin', 'superadmin'] },
   { href: '/assignments', icon: BookCopy, label: 'Assignments', roles: ['student'] },
   { href: '/chat', icon: MessageSquare, label: 'AI Chat', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/reading', icon: BookOpen, label: 'Reading', roles: ['student', 'teacher', 'admin', 'superadmin'] },
@@ -48,7 +47,16 @@ interface MainNavProps {
 export function MainNav({ isMobile = false, isCollapsed = false, userRole }: MainNavProps) {
   const navClass = isMobile ? "" : "grid items-start px-2 text-sm font-medium lg:px-4";
 
-  const navItems = allNavItems.filter(item => userRole && item.roles.includes(userRole));
+  let navItems = allNavItems.filter(item => userRole && item.roles.includes(userRole));
+  
+  if (userRole === 'teacher') {
+    navItems = navItems.sort((a, b) => {
+        if (a.href === '/teacher') return -1;
+        if (b.href === '/teacher') return 1;
+        return 0;
+    });
+  }
+
 
   if (isCollapsed) {
     return (
