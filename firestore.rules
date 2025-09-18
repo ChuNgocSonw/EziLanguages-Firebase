@@ -9,12 +9,9 @@ service cloud.firestore {
     
     function isTeacherOfStudent(studentId) {
       let studentDoc = get(/databases/$(database)/documents/users/$(studentId)).data;
-      let studentClassId = studentDoc.classId;
-      if (studentClassId == null) {
-        return false;
-      }
-      let classDoc = get(/databases/$(database)/documents/classes/$(studentClassId)).data;
-      return classDoc.teacherId == request.auth.uid;
+      return studentDoc.classId != null &&
+             exists(/databases/$(database)/documents/classes/$(studentDoc.classId)) &&
+             get(/databases/$(database)/documents/classes/$(studentDoc.classId)).data.teacherId == request.auth.uid;
     }
     
     match /users/{userId} {
@@ -24,53 +21,47 @@ service cloud.firestore {
       allow read: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
     }
     
-    match /users/{userId}/chats/{chatId} {
-        allow read, write, delete: if request.auth.uid == userId;
-    }
-    
-     match /users/{userId}/chats/{chatId}/messages/{messageId} {
-        allow read, write, delete: if request.auth.uid == userId;
+    match /users/{userId}/chats/{chatId}/{document=**} {
+      allow read, write, delete: if request.auth.uid == userId;
     }
     
     match /users/{userId}/quizHistory/{attemptId} {
-        allow read, write: if request.auth.uid == userId;
+      allow read, write: if request.auth.uid == userId;
     }
 
     match /users/{userId}/assignmentAttempts/{attemptId} {
-        allow read, write: if request.auth.uid == userId;
-        allow read: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
+      allow read, write: if request.auth.uid == userId;
+      allow read: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
     }
     
     match /classes/{classId} {
-        allow read, write: if get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
-        allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
+      allow read, write, delete: if get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
+      allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
     }
 
     match /assignments/{assignmentId} {
       allow read, write, delete: if get(/databases/$(database)/documents/assignments/$(assignmentId)).data.teacherId == request.auth.uid;
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
-      
-      function isStudentInAssignedClass() {
-        let studentDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-        let studentClassId = studentDoc.classId;
-        if (studentClassId == null) {
-          return false;
-        }
-        let assignedClasses = resource.data.assignedClasses;
-        let matchingClasses = assignedClasses.filter(c -> c.classId == studentClassId);
-        return matchingClasses.size() > 0;
-      }
-      
-      allow read: if isStudentInAssignedClass();
+      // Students can read assignments assigned to their class
+      allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                   resource.data.assignedClasses.filter(c -> c.classId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId).size() > 0;
     }
     
+    // Rules for the feedback collection
     match /feedback/{feedbackId} {
-      // Teacher can list the feedback they have sent.
-      allow list: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
-      // Student can read/update feedback sent to them.
-      allow read, update: if resource.data.studentId == request.auth.uid;
-      // Teacher can read/delete specific feedback they sent.
-      allow read, create, delete: if resource.data.teacherId == request.auth.uid;
+      // Student can read feedback sent to them and mark it as read (update)
+      allow read, update: if request.auth.uid != null && resource.data.studentId == request.auth.uid;
+      
+      // Teacher can read/delete feedback they sent
+      allow read, delete: if request.auth.uid != null && resource.data.teacherId == request.auth.uid;
+      
+      // Teacher can create feedback
+      allow create: if request.auth.uid != null && getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
+    }
+
+    // Teachers need list access to query for their sent feedback history
+    match /feedback/{document=**} {
+        allow list: if request.auth.uid != null && getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
     }
   }
 }
