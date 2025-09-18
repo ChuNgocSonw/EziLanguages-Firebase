@@ -78,8 +78,12 @@ export default function StudentFeedbackPage() {
                                                 {!feedback.isRead && <Badge className="bg-accent text-accent-foreground">New</Badge>}
                                                 <span className="font-semibold group-hover:underline">{feedback.title}</span>
                                             </div>
-                                            <div className="text-sm text-muted-foreground font-normal">
+                                            <div className="text-sm text-muted-foreground font-normal flex items-center gap-4">
                                                 <span className="group-hover:underline">From: {feedback.teacherName}</span>
+                                                <span className="flex items-center gap-1 group-hover:underline">
+                                                    <Calendar className="h-3 w-3" />
+                                                    {format(feedback.createdAt.toDate(), 'PPP')}
+                                                </span>
                                             </div>
                                         </div>
                                     </AccordionTrigger>
@@ -87,9 +91,6 @@ export default function StudentFeedbackPage() {
                                         <div className="prose dark:prose-invert max-w-none p-2 bg-muted/50 rounded-md">
                                             <p>{feedback.content}</p>
                                         </div>
-                                        <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                                            <Calendar className="h-3 w-3" /> Received on: {format(feedback.createdAt.toDate(), 'PPP')}
-                                        </p>
                                     </AccordionContent>
                                 </AccordionItem>
                             ))}
