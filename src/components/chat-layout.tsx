@@ -69,7 +69,7 @@ export default function ChatLayout() {
                   key={chat.id}
                   onClick={() => handleSelectChat(chat.id)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary w-full text-left",
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary text-left",
                     selectedChatId === chat.id && "bg-muted text-primary font-semibold"
                   )}
                 >
