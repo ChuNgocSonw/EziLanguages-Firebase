@@ -48,18 +48,23 @@ service cloud.firestore {
       // Students can read assignments assigned to their class
       allow read: if request.auth != null &&
                      exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in resource.data.assignedClasses.map(c => c.classId);
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId != null &&
+                     { 
+                       'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId, 
+                       'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className
+                     } in resource.data.assignedClasses;
     }
     
     match /feedback/{feedbackId} {
       // Student can read feedback sent to them and mark it as read (update)
       allow read, update: if request.auth != null && resource.data.studentId == request.auth.uid;
       // Teacher can create feedback, and read/delete feedback they sent
-      allow create, read, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.teacherId == request.auth.uid;
+      allow read, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
     }
     
     match /feedback/{document=**} {
-        allow list: if request.auth != null;
+      allow list: if request.auth != null;
     }
   }
 }
