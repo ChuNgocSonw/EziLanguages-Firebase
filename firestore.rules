@@ -2,62 +2,86 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
+
+    // --- Helper Functions ---
+
+    // Checks if the user is authenticated.
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Checks if the current user is the owner of a document.
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isAuth() && request.auth.uid == userId;
     }
     
+    // Retrieves the role of a specified user.
     function getUserRole(userId) {
       return get(/databases/$(database)/documents/users/$(userId)).data.role;
     }
 
-    function isStudent() {
-      return getUserRole(request.auth.uid) == 'student';
+    // Checks if a given user is an admin or superadmin.
+    function isAdmin(userId) {
+      let role = getUserRole(userId);
+      return role == 'admin' || role == 'superadmin';
     }
 
-    function isTeacher() {
-      return getUserRole(request.auth.uid) in ['teacher', 'admin', 'superadmin'];
+    // Checks if a given user is a teacher.
+    function isTeacher(userId) {
+      return getUserRole(userId) == 'teacher';
+    }
+    
+    // Checks if a given user is a student.
+    function isStudent(userId) {
+      return getUserRole(userId) == 'student';
     }
 
-    function isAdmin() {
-      return getUserRole(request.auth.uid) in ['admin', 'superadmin'];
-    }
+    // --- Collection Rules ---
 
     match /users/{userId} {
-      allow read: if isOwner(userId) || isTeacher() || isAdmin();
-      allow write: if isOwner(userId) || isAdmin();
+      allow create: if isAuth();
+      // An authenticated user can read another user's profile if they are a teacher or admin.
+      // A user can always read their own profile.
+      allow read: if isOwner(userId) || (isAuth() && (isAdmin(request.auth.uid) || isTeacher(request.auth.uid)));
+      // Only the owner or an admin can update a profile.
+      allow update: if isOwner(userId) || (isAuth() && isAdmin(request.auth.uid));
+      allow delete: if isAuth() && isAdmin(request.auth.uid);
 
-      match /quizHistory/{docId} {
-        allow read: if isOwner(userId) || isTeacher();
-        allow write: if isOwner(userId);
+      // Sub-collections for user-specific data
+      match /quizHistory/{historyId} {
+        // Owner can read/write. Teachers/Admins can list/get for analysis.
+        allow read, write: if isOwner(userId);
+        allow list, get: if isOwner(userId) || (isAuth() && (isAdmin(request.auth.uid) || isTeacher(request.auth.uid)));
       }
-      match /assignmentAttempts/{docId} {
-        allow read: if isOwner(userId) || isTeacher();
-        allow write: if isOwner(userId);
-      }
-      match /chats/{chatId} {
-        allow read, write, delete: if isOwner(userId);
-        match /messages/{messageId} {
-          allow read, write, delete: if isOwner(userId);
-        }
+
+      match /assignmentAttempts/{attemptId} {
+         // Owner can read/write. Teachers/Admins can list/get for analysis.
+        allow read, write: if isOwner(userId);
+        allow list, get: if isOwner(userId) || (isAuth() && (isAdmin(request.auth.uid) || isTeacher(request.auth.uid)));
       }
     }
 
     match /classes/{classId} {
-      allow read: if isTeacher();
-      allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+      allow read: if isAuth();
+      // Only teachers or admins can manage classes.
+      allow create, update, delete: if isAuth() && (isTeacher(request.auth.uid) || isAdmin(request.auth.uid));
     }
 
     match /assignments/{assignmentId} {
-      allow read: if isTeacher() || (isStudent() && resource.data.assignedClasses[?request.auth.token.classId in @.path.classId].size() > 0);
-      allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+      allow read: if isAuth();
+      // Only teachers or admins can manage assignments.
+      allow create, update, delete: if isAuth() && (isTeacher(request.auth.uid) || isAdmin(request.auth.uid));
     }
-    
+
     match /feedback/{feedbackId} {
-      allow read: if isOwner(resource.data.studentId) || isOwner(resource.data.teacherId);
-      allow create: if isTeacher();
-      allow update: if isOwner(resource.data.studentId) && request.resource.data.isRead == true;
-      allow delete: if isOwner(resource.data.teacherId);
+        // The student recipient or the teacher sender can read feedback.
+        allow read: if isAuth() && (isOwner(resource.data.studentId) || isOwner(resource.data.teacherId));
+        // Only teachers or admins can create feedback.
+        allow create: if isAuth() && (isTeacher(request.auth.uid) || isAdmin(request.auth.uid));
+        // Only the student can update (e.g., mark as read).
+        allow update: if isOwner(resource.data.studentId);
+        // Only the teacher who sent it or an admin can delete it.
+        allow delete: if isAuth() && (isOwner(resource.data.teacherId) || isAdmin(request.auth.uid));
     }
   }
 }
