@@ -39,7 +39,7 @@ const generateQuizQuestionsPrompt = ai.definePrompt({
 Your ONLY task is to create {{{numberOfQuestions}}} questions about the following topic, at the specified difficulty level, and in the specified format.
 
 **Language Rules:**
-{{#if (eq language "Vietnamese")}}
+{{#if (eq language 'Vietnamese')}}
 You MUST generate questions **in Vietnamese** that are designed to teach **English vocabulary, grammar, or concepts** to a Vietnamese speaker. The questions and answers themselves must be written in Vietnamese, but the subject matter must be about learning English. For example, if the topic is "English Idioms", you should create questions in Vietnamese that test the user's knowledge of those English idioms.
 {{else}}
 The questions and answers MUST be in English.
