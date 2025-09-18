@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isStudent() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+    function isTeacher() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+    function isAdmin() {
+      let role = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return role == 'admin' || role == 'superadmin';
+    }
+
+    // Admin/Super Admin has full access to everything
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId;
+      
+      match /quizHistory/{docId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      match /assignmentAttempts/{docId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      match /chats/{chatId} {
+        allow read, write: if request.auth.uid == userId;
+        match /messages/{messageId} {
+          allow read, write: if request.auth.uid == userId;
+        }
+      }
+    }
+
+    // Classes collection
+    match /classes/{classId} {
+      allow read, create, update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
+    }
+
+    // Assignments collection
+    match /assignments/{assignmentId} {
+      allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+
+      allow read: if isTeacher() && resource.data.teacherId == request.auth.uid
+                    || (isStudent() 
+                        && { 
+                            'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId, 
+                            'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className 
+                           } in resource.data.assignedClasses);
+    }
+    
+    // Feedback collection
+    match /feedback/{docId} {
+        allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid)
+                      || (isStudent() && resource.data.studentId == request.auth.uid);
+
+        allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+
+        allow update: if isStudent()
+                        && request.auth.uid == resource.data.studentId
+                        && request.resource.data.isRead == true
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+
+        allow delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
+    }
+  }
+}
