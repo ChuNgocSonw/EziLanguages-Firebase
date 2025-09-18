@@ -329,9 +329,9 @@ export default function TeacherFeedbackPage() {
                         <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                             {sentFeedback.map(fb => (
                                 <div key={fb.id} className="p-3 rounded-md border flex justify-between items-start">
-                                    <div>
+                                    <div className="flex-1 pr-4">
                                         <p className="font-semibold">{fb.title}</p>
-                                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{fb.content}</p>
+                                        <p className="text-sm text-muted-foreground mt-1" style={{ whiteSpace: 'pre-wrap' }}>{fb.content}</p>
                                         <div className="text-xs text-muted-foreground mt-2 flex items-center gap-4">
                                             <span className="flex items-center gap-1"><User className="h-3 w-3" /> To: {fb.studentName}</span>
                                             <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
@@ -368,5 +368,3 @@ export default function TeacherFeedbackPage() {
     </>
   );
 }
-
-    
