@@ -33,13 +33,13 @@ export async function generateQuizQuestions(input: GenerateQuizQuestionsInput): 
 
 const generateQuizQuestionsPrompt = ai.definePrompt({
   name: 'generateQuizQuestionsPrompt',
-  input: {schema: GenerateQuizQuestionsInputSchema},
+  input: {schema: GenerateQuizQuestionsInputSchema.extend({ isVietnamese: z.boolean() }) },
   output: {schema: GenerateQuizQuestionsOutputSchema},
   prompt: `You are a quiz generator for language learners.
 Your ONLY task is to create {{{numberOfQuestions}}} questions about the following topic, at the specified difficulty level, and in the specified format.
 
 **Language Rules:**
-{{#if (eq language 'Vietnamese')}}
+{{#if isVietnamese}}
 You MUST generate questions **in Vietnamese** that are designed to teach **English vocabulary, grammar, or concepts** to a Vietnamese speaker. The questions and answers themselves must be written in Vietnamese, but the subject matter must be about learning English. For example, if the topic is "English Idioms", you should create questions in Vietnamese that test the user's knowledge of those English idioms.
 {{else}}
 The questions and answers MUST be in English.
@@ -65,7 +65,10 @@ const generateQuizQuestionsFlow = ai.defineFlow(
     outputSchema: GenerateQuizQuestionsOutputSchema,
   },
   async input => {
-    const {output} = await generateQuizQuestionsPrompt(input);
+    const {output} = await generateQuizQuestionsPrompt({
+        ...input,
+        isVietnamese: input.language === 'Vietnamese',
+    });
     return output!;
   }
 );
