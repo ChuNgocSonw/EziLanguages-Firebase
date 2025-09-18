@@ -3,71 +3,66 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions to check user roles
     function isSignedIn() {
       return request.auth != null;
-    }
-
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
+    
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
 
     function isStudent() {
-      return isSignedIn() && getUserRole() == 'student';
+      return isSignedIn() && getUserData(request.auth.uid).role == 'student';
     }
 
     function isTeacher() {
-      return isSignedIn() && getUserRole() == 'teacher';
+      return isSignedIn() && getUserData(request.auth.uid).role == 'teacher';
     }
 
     function isAdmin() {
-      return isSignedIn() && (getUserRole() == 'admin' || getUserRole() == 'superadmin');
+      return isSignedIn() && (getUserData(request.auth.uid).role == 'admin' || getUserData(request.auth.uid).role == 'superadmin');
     }
 
-    // Admin/Superadmin have full access to everything. This rule must come first.
+    // Admin and Super Admin have full access to all resources
     match /{document=**} {
       allow read, write: if isAdmin();
     }
-
-    // Users collection rules
+    
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow update: if isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
-    // Classes collection rules
     match /classes/{classId} {
-      allow read: if isTeacher();
-      allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+      allow create: if isTeacher();
+      allow read: if isSignedIn();
+      allow update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
     }
 
-    // Assignments collection rules
     match /assignments/{assignmentId} {
-      allow read: if isTeacher() || 
-        (isStudent() && 
-          { 
-            'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId, 
-            'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className 
-          } in resource.data.assignedClasses
-        );
       allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
-    }
 
-    // Feedback collection rules
-    match /feedback/{feedbackId} {
-      allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid) || (isStudent() && resource.data.studentId == request.auth.uid);
-      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
-      allow delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
-      allow update: if isStudent() && request.resource.data.isRead == true; // Students can only mark as read
+      allow read: if isTeacher() && resource.data.teacherId == request.auth.uid ||
+                     isStudent() && (
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in 
+                       resource.data.assignedClasses.map(c => c.classId)
+                     );
     }
     
-    // Subcollections (quizHistory, assignmentAttempts, chats)
-    match /users/{userId}/{collection}/{docId} {
-      allow read, write: if isOwner(userId);
+    // Rule to allow teachers to LIST feedbacks they have sent
+    match /feedback/{document=**} {
+        allow list: if isTeacher();
+    }
+
+    match /feedback/{docId} {
+      allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid) || 
+                     (isStudent() && resource.data.studentId == request.auth.uid);
+      allow create: if isTeacher();
+      allow update: if isStudent() && resource.data.studentId == request.auth.uid; // Student can mark as read
+      allow delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
     }
   }
 }
