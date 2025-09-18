@@ -171,7 +171,7 @@ export default function StudentAssignmentsPage() {
                                                 </div>
                                                 <div className="shrink-0">
                                                     {isCompleted ? (
-                                                         <Badge variant="secondary" className={cn("hover:bg-none", getScoreBadgeClass(score))}>
+                                                         <Badge variant="secondary" className={cn("hover:bg-none justify-center w-36", getScoreBadgeClass(score))}>
                                                             <Check className="mr-2 h-4 w-4" />
                                                             Completed {score !== undefined && `- ${score}%`}
                                                         </Badge>
