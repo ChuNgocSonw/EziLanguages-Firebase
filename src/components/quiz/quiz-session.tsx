@@ -21,6 +21,7 @@ import { lessonsData } from "@/lib/lessons";
 
 type QuizState = "idle" | "loading" | "active" | "finished";
 type Difficulty = "Easy" | "Medium" | "Hard";
+type Language = "English" | "Vietnamese";
 
 interface QuizSessionProps {
     onQuizFinish: () => void;
@@ -28,7 +29,7 @@ interface QuizSessionProps {
     isRandomQuiz?: boolean;
 }
 
-const randomQuizTopics = [
+const randomEnglishQuizTopics = [
     "Common English Idioms",
     "English Travel Phrases",
     "English Food Vocabulary",
@@ -39,6 +40,19 @@ const randomQuizTopics = [
     "Past, Present, and Future Tenses",
     "False Friends in Spanish and English",
     "Essential English Greetings"
+];
+
+const randomVietnameseQuizTopics = [
+    "Thành ngữ Tiếng Việt thông dụng",
+    "Cụm từ du lịch bằng Tiếng Việt",
+    "Từ vựng về đồ ăn Tiếng Việt",
+    "Trọng âm và phát âm Tiếng Việt",
+    "Tiếng Việt thương mại cho các cuộc họp",
+    "Cụm động từ với 'Đi'",
+    "Đặt món ăn trong nhà hàng Việt Nam",
+    "Thì quá khứ, hiện tại và tương lai",
+    "Những từ dễ nhầm lẫn trong Tiếng Anh và Tiếng Việt",
+    "Lời chào hỏi cần thiết bằng Tiếng Việt"
 ];
 
 
@@ -404,43 +418,69 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
     );
   }
   
-  const handleRandomQuizDifficultySelect = (difficulty: Difficulty) => {
-    const randomTopic = randomQuizTopics[Math.floor(Math.random() * randomQuizTopics.length)];
-    startQuizGeneration({
-      topic: randomTopic,
-      difficulty: difficulty,
-      numberOfQuestions: 5,
-      displayTopic: `Random Topic: ${randomTopic}`,
-    });
-  };
+  const RandomQuizSetup = () => {
+    const [language, setLanguage] = useState<Language>("English");
+
+    const handleRandomQuizDifficultySelect = (difficulty: Difficulty) => {
+        const topics = language === "English" ? randomEnglishQuizTopics : randomVietnameseQuizTopics;
+        const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+        startQuizGeneration({
+            topic: randomTopic,
+            difficulty: difficulty,
+            numberOfQuestions: 5,
+            displayTopic: `Random ${language} Quiz: ${randomTopic}`,
+        });
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <CardTitle className="font-headline">Random Quiz</CardTitle>
+                        <CardDescription>
+                            Choose a language and difficulty to start a random quiz.
+                        </CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={onQuizFinish}>
+                        <ChevronLeft className="mr-2 h-4 w-4" />
+                        Back to Dashboard
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center gap-6 pt-6">
+                <div className="space-y-2 text-center">
+                    <Label className="font-semibold text-lg">1. Select a Language</Label>
+                     <RadioGroup 
+                        value={language}
+                        onValueChange={(value: Language) => setLanguage(value)}
+                        className="flex items-center gap-4"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="English" id="lang-en" />
+                            <Label htmlFor="lang-en">English</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Vietnamese" id="lang-vi" />
+                            <Label htmlFor="lang-vi">Tiếng Việt</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+                 <div className="space-y-2 text-center">
+                    <Label className="font-semibold text-lg">2. Select a Difficulty</Label>
+                    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+                        <Button onClick={() => handleRandomQuizDifficultySelect('Easy')} size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">Easy</Button>
+                        <Button onClick={() => handleRandomQuizDifficultySelect('Medium')} size="lg" className="w-full bg-accent hover:bg-accent/90">Medium</Button>
+                        <Button onClick={() => handleRandomQuizDifficultySelect('Hard')} size="lg" variant="destructive" className="w-full">Hard</Button>
+                    </div>
+                 </div>
+            </CardContent>
+        </Card>
+    );
+  }
 
   if (isRandomQuiz) {
-    return (
-      <Card>
-        <CardHeader>
-            <div className="flex items-start justify-between">
-                <div>
-                    <CardTitle className="font-headline">Random Quiz</CardTitle>
-                    <CardDescription>
-                        Choose a difficulty to start your random quiz.
-                    </CardDescription>
-                </div>
-                 <Button variant="outline" size="sm" onClick={onQuizFinish}>
-                    <ChevronLeft className="mr-2 h-4 w-4" />
-                    Back to Dashboard
-                </Button>
-            </div>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center gap-4 pt-6">
-            <h3 className="font-semibold text-lg">Select a Difficulty</h3>
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-                <Button onClick={() => handleRandomQuizDifficultySelect('Easy')} size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">Easy</Button>
-                <Button onClick={() => handleRandomQuizDifficultySelect('Medium')} size="lg" className="w-full bg-accent hover:bg-accent/90">Medium</Button>
-                <Button onClick={() => handleRandomQuizDifficultySelect('Hard')} size="lg" variant="destructive" className="w-full">Hard</Button>
-            </div>
-        </CardContent>
-      </Card>
-    );
+    return <RandomQuizSetup />;
   }
 
   const GenerationWizard = () => {
