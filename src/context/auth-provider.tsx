@@ -202,11 +202,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logIn = useCallback(async (data: LoginFormData) => {
     const { email, password } = data;
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    setUser(userCredential.user);
-    if (userCredential.user.emailVerified) {
-        router.push('/dashboard');
-    } else {
+    const loggedInUser = userCredential.user;
+
+    if (!loggedInUser.emailVerified) {
         router.push('/verify-email');
+        return;
+    }
+    
+    // Fetch user profile to determine role and redirect accordingly
+    const userDoc = await getDoc(doc(db, "users", loggedInUser.uid));
+    if (userDoc.exists()) {
+        const profile = userDoc.data() as UserProfile;
+        if (profile.role === 'admin' || profile.role === 'superadmin') {
+            router.push('/admin');
+        } else if (profile.role === 'teacher') {
+            router.push('/teacher');
+        } else {
+            router.push('/dashboard');
+        }
+    } else {
+        // Fallback to dashboard if profile doesn't exist for some reason
+        router.push('/dashboard');
     }
   }, [router]);
 
