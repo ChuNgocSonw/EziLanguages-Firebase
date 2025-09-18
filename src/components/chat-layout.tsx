@@ -74,7 +74,7 @@ export default function ChatLayout() {
                   )}
                 >
                   <MessageSquare className="h-5 w-5 shrink-0" />
-                  <span className="truncate flex-1">{chat.title}</span>
+                  <span className="truncate flex-1 min-w-0">{chat.title}</span>
                 </button>
               ))}
             </div>
