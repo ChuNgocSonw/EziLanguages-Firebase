@@ -13,23 +13,32 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/classes/$(studentDoc.classId)) &&
              get(/databases/$(database)/documents/classes/$(studentDoc.classId)).data.teacherId == request.auth.uid;
     }
+    
+    function isStudentInClass(classId, assignedClasses) {
+      let classDoc = get(/databases/$(database)/documents/classes/$(classId)).data;
+      let classRepresentation = {
+        'classId': classId,
+        'className': classDoc.className
+      };
+      return classRepresentation in assignedClasses;
+    }
 
     // Rules for 'users' collection and its subcollections
     match /users/{userId} {
       allow list: if request.auth != null;
       allow read, write: if request.auth.uid == userId;
-      allow read: if getRequestingUserRole() in ['admin', 'superadmin'];
+      allow write: if getRequestingUserRole() in ['admin', 'superadmin'];
       allow write: if getRequestingUserRole() == 'teacher' && isTeacherOfStudent(userId);
     }
-
+    
     match /users/{userId}/chats/{chatId} {
       allow read, write, delete: if request.auth.uid == userId;
     }
-
+    
     match /users/{userId}/chats/{chatId}/messages/{messageId} {
       allow read, write, delete: if request.auth.uid == userId;
     }
-
+    
     match /users/{userId}/quizHistory/{attemptId} {
       allow read, write: if request.auth.uid == userId;
     }
@@ -45,20 +54,20 @@ service cloud.firestore {
       allow read, write: if get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
     }
-
+    
     // Rules for 'assignments' collection
     match /assignments/{assignmentId} {
       allow read, write, delete: if get(/databases/$(database)/documents/assignments/$(assignmentId)).data.teacherId == request.auth.uid;
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
-      
+
       // Students can read assignments assigned to their class
       allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-                  get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in resource.data.assignedClasses.map(c => c.classId);
+                   isStudentInClass(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId, resource.data.assignedClasses);
     }
 
     // Rules for 'feedback' collection
     match /feedback/{feedbackId} {
-      // Teachers can list all feedback they have sent
+      // Teachers can list all feedback they have sent.
       allow list: if getRequestingUserRole() == 'teacher';
 
       // Student can read/update their own feedback
