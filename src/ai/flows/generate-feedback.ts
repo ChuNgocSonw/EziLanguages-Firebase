@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for generating student feedback based on their performance data.
@@ -75,7 +76,7 @@ You MUST generate both a suitable title and the full feedback content.
 
 **Performance Data (JSON format):**
 \`\`\`json
-{{{JSONstringify performanceData}}}
+{{{JSON.stringify performanceData}}}
 \`\`\`
 `,
 });
