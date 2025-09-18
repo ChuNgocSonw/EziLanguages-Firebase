@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,16 +15,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Wand2, Save, ArrowRight, PlusCircle, Trash2, BookCheck } from "lucide-react";
+import { Loader2, ArrowLeft, Wand2, Save, ArrowRight, PlusCircle, Trash2, BookCheck, Mic, Headphones } from "lucide-react";
 import { generateQuizQuestions } from "@/lib/actions";
-import { QuizQuestion, QuizQuestionSchema, QuestionType, Assignment } from "@/lib/types";
+import { QuizQuestion, QuizQuestionSchema, QuestionType, Assignment, AssignmentType, ReadingSentence, ListeningExercise } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 
+
 const detailsSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters."),
   language: z.enum(["EN"]).default("EN"),
+  assignmentType: z.enum(['quiz', 'reading', 'listening']),
 });
 type DetailsFormData = z.infer<typeof detailsSchema>;
 
@@ -33,6 +34,17 @@ const questionsSchema = z.object({
   questions: z.array(QuizQuestionSchema),
 });
 type QuestionsFormData = z.infer<typeof questionsSchema>;
+
+const readingSentencesSchema = z.object({
+    sentences: z.array(z.object({ unit: z.string(), text: z.string() })),
+});
+type ReadingSentencesFormData = z.infer<typeof readingSentencesSchema>;
+
+const listeningExercisesSchema = z.object({
+    exercises: z.array(z.object({ id: z.string(), type: z.enum(['typing', 'mcq']), text: z.string(), options: z.array(z.string()).optional(), answer: z.string().optional() })),
+});
+type ListeningExercisesFormData = z.infer<typeof listeningExercisesSchema>;
+
 
 const generationSchema = z.object({
     topic: z.string().min(3, "Topic must be at least 3 characters."),
@@ -61,149 +73,30 @@ const manualQuestionSchema = z.object({
 });
 type ManualQuestionFormData = z.infer<typeof manualQuestionSchema>;
 
+const manualReadingSchema = z.object({
+    unit: z.string().min(3, "Unit/Topic name is required."),
+    text: z.string().min(10, "Sentence must be at least 10 characters long."),
+});
+type ManualReadingFormData = z.infer<typeof manualReadingSchema>;
 
-function QuestionCard({ q, index, onAction, actionType }: { q: QuizQuestion, index: number, onAction: (index: number) => void, actionType: 'add' | 'remove' }) {
-    return (
-        <div className="p-3 border rounded-md bg-muted/30 relative">
-            <p className="font-medium pr-8">{q.question}</p>
-            <div className="text-sm text-muted-foreground mt-2">
-                {q.type === 'multiple-choice' && (
-                    <ul className="list-disc pl-5">
-                        {q.options?.map((opt, i) => (
-                            <li key={i} className={opt === q.answer ? "font-semibold text-primary" : ""}>{opt}</li>
-                        ))}
-                    </ul>
-                )}
-                {q.type === 'true-false' && <p>Answer: <span className="font-semibold text-primary">{q.answer}</span></p>}
-                {q.type === 'fill-in-the-blank' && <p>Answer: <span className="font-semibold text-primary">{q.answer}</span></p>}
-            </div>
-             <Button 
-                size="icon" 
-                variant="ghost" 
-                className={cn(
-                    "absolute top-2 right-2 h-7 w-7",
-                    actionType === 'add' ? "text-green-600 hover:bg-[#2E7D32] hover:text-white" : "text-destructive hover:bg-[#D32F2F] hover:text-white"
-                )}
-                onClick={() => onAction(index)}
-             >
-                {actionType === 'add' ? <PlusCircle className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-            </Button>
-        </div>
-    );
-}
+const manualListeningSchema = z.object({
+    type: z.enum(['typing', 'mcq']),
+    text: z.string().min(10, "The sentence to be heard is required."),
+    // Fields for MCQ type
+    options: z.array(z.string()).optional(),
+    answer: z.string().optional(),
+}).refine(data => {
+    if (data.type === 'mcq') {
+        return data.options && data.options.length === 3 && data.options.every(opt => opt.trim() !== "") && data.answer && data.options.includes(data.answer);
+    }
+    return true;
+}, {
+    message: "For Multiple Choice, all 3 options are required and the correct answer must be one of them.",
+    path: ['answer'],
+});
+type ManualListeningFormData = z.infer<typeof manualListeningSchema>;
 
 
-function ManualQuestionForm({ onAddQuestion }: { onAddQuestion: (q: QuizQuestion) => void }) {
-    const form = useForm<ManualQuestionFormData>({
-        resolver: zodResolver(manualQuestionSchema),
-        defaultValues: {
-            type: 'multiple-choice',
-            question: "",
-            options: ["", "", "", ""],
-            answer: "",
-        },
-    });
-
-    const questionType = useWatch({ control: form.control, name: 'type' });
-    const options = useWatch({ control: form.control, name: 'options' });
-
-    const handleManualSubmit = (data: ManualQuestionFormData) => {
-        const finalQuestion: QuizQuestion = {
-            id: new Date().getTime().toString(),
-            type: data.type,
-            question: data.question,
-            answer: data.answer,
-            options: data.type === 'multiple-choice' ? data.options : [],
-        };
-        onAddQuestion(finalQuestion);
-        form.reset();
-    };
-
-    return (
-        <Card>
-            <CardHeader><CardTitle>Add Question Manually</CardTitle></CardHeader>
-            <CardContent>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleManualSubmit)} className="space-y-4">
-                        <FormField control={form.control} name="type" render={({ field }) => (
-                            <FormItem><FormLabel>Question Type</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                                        <SelectItem value="true-false">True/False</SelectItem>
-                                        <SelectItem value="fill-in-the-blank">Fill-in-the-Blank</SelectItem>
-                                    </SelectContent>
-                                </Select><FormMessage />
-                            </FormItem>
-                        )}/>
-                        <FormField control={form.control} name="question" render={({ field }) => (
-                            <FormItem><FormLabel>Question Text</FormLabel>
-                                <FormControl><Textarea placeholder="Enter the question here..." {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}/>
-
-                        {questionType === 'multiple-choice' && (
-                            <>
-                                {[0, 1, 2, 3].map(i => (
-                                    <FormField key={i} control={form.control} name={`options.${i}`} render={({ field }) => (
-                                        <FormItem><FormLabel>Option {i + 1}</FormLabel>
-                                            <FormControl><Input {...field} /></FormControl>
-                                        </FormItem>
-                                    )}/>
-                                ))}
-                                <FormField control={form.control} name="answer" render={({ field }) => (
-                                    <FormItem><FormLabel>Correct Answer</FormLabel>
-                                        <FormControl>
-                                            <RadioGroup onValueChange={field.onChange} value={field.value}>
-                                                {options?.map((opt, i) => opt.trim() && (
-                                                    <FormItem key={i} className="flex items-center space-x-2">
-                                                        <FormControl><RadioGroupItem value={opt} /></FormControl>
-                                                        <FormLabel className="font-normal">{opt}</FormLabel>
-                                                    </FormItem>
-                                                ))}
-                                            </RadioGroup>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}/>
-                            </>
-                        )}
-
-                        {questionType === 'true-false' && (
-                           <FormField control={form.control} name="answer" render={({ field }) => (
-                                <FormItem><FormLabel>Correct Answer</FormLabel>
-                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
-                                        <FormItem className="flex items-center space-x-2">
-                                            <FormControl><RadioGroupItem value="True" /></FormControl>
-                                            <FormLabel className="font-normal">True</FormLabel>
-                                        </FormItem>
-                                        <FormItem className="flex items-center space-x-2">
-                                            <FormControl><RadioGroupItem value="False" /></FormControl>
-                                            <FormLabel className="font-normal">False</FormLabel>
-                                        </FormItem>
-                                    </RadioGroup>
-                                    <FormMessage />
-                                </FormItem>
-                            )}/>
-                        )}
-
-                        {questionType === 'fill-in-the-blank' && (
-                            <FormField control={form.control} name="answer" render={({ field }) => (
-                                <FormItem><FormLabel>Correct Answer</FormLabel>
-                                    <FormControl><Input placeholder="Enter the word(s) that fill the blank" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}/>
-                        )}
-                        <Button type="submit" variant="secondary"><PlusCircle className="mr-2 h-4 w-4" /> Add This Question</Button>
-                    </form>
-                </Form>
-            </CardContent>
-        </Card>
-    );
-}
 
 interface AssignmentFormProps {
     existingAssignment?: Assignment;
@@ -216,22 +109,27 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
 
   const isEditMode = !!existingAssignment;
   
-  const [step, setStep] = useState<"details" | "questions">(isEditMode ? "questions" : "details");
+  const [step, setStep] = useState<"details" | "content">("details");
   const [assignmentDetails, setAssignmentDetails] = useState<DetailsFormData | null>(
-      isEditMode ? { title: existingAssignment.title, language: existingAssignment.language } : null
+      isEditMode ? { 
+          title: existingAssignment.title, 
+          language: existingAssignment.language,
+          assignmentType: existingAssignment.assignmentType || 'quiz'
+      } : null
   );
 
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  const [allAiQuestions, setAllAiQuestions] = useState<QuizQuestion[]>([]);
+  // State for Quiz Content
+  const [isGenerating, setIsGenerating] = useState(false);
   const [availableAiQuestions, setAvailableAiQuestions] = useState<QuizQuestion[]>([]);
   
   const detailsForm = useForm<DetailsFormData>({ 
       resolver: zodResolver(detailsSchema), 
       defaultValues: { 
           title: existingAssignment?.title || "", 
-          language: "EN" 
+          language: "EN",
+          assignmentType: existingAssignment?.assignmentType || 'quiz',
       } 
   });
   
@@ -239,36 +137,38 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
       resolver: zodResolver(generationSchema), 
       defaultValues: { topic: "", difficulty: "Medium", numberOfQuestions: 5, questionType: 'multiple-choice' }
   });
-  
-  const selectionForm = useForm<QuestionsFormData>({ 
-      resolver: zodResolver(questionsSchema), 
-      defaultValues: { 
-          questions: existingAssignment?.questions || [] 
-      } 
+
+  const contentForm = useForm({
+      defaultValues: {
+          questions: existingAssignment?.questions || [],
+          readingSentences: existingAssignment?.readingSentences || [],
+          listeningExercises: existingAssignment?.listeningExercises || [],
+      }
   });
 
-  const { fields, append, remove } = useFieldArray({ control: selectionForm.control, name: "questions" });
+  const { fields: quizFields, append: appendQuiz, remove: removeQuiz } = useFieldArray({ control: contentForm.control, name: "questions" });
+  const { fields: readingFields, append: appendReading, remove: removeReading } = useFieldArray({ control: contentForm.control, name: "readingSentences" });
+  const { fields: listeningFields, append: appendListening, remove: removeListening } = useFieldArray({ control: contentForm.control, name: "listeningExercises" });
 
   useEffect(() => {
-    // When all AI questions change, filter out the ones already selected
-    const selectedQuestionTexts = new Set(fields.map(q => q.question));
-    setAvailableAiQuestions(allAiQuestions.filter(q => !selectedQuestionTexts.has(q.question)));
-  }, [allAiQuestions, fields]);
+    if (isEditMode) {
+        setStep("content");
+    }
+  }, [isEditMode]);
 
-
-  const handleDetailsSubmit = (data: DetailsFormData) => { setAssignmentDetails(data); setStep("questions"); };
+  const handleDetailsSubmit = (data: DetailsFormData) => { setAssignmentDetails(data); setStep("content"); };
   const handleBackToDetails = () => { setStep('details'); };
 
   const handleGenerateQuestions = async (data: GenerationFormData) => {
     setIsGenerating(true);
-    setAllAiQuestions([]);
+    setAvailableAiQuestions([]);
     try {
       toast({ title: "Generating Questions...", description: "Please wait while the AI creates the quiz questions." });
       const generated = await generateQuizQuestions(data);
       if (!generated || generated.length === 0) throw new Error("The AI failed to generate questions for this topic.");
       
       const questionsWithIds = generated.map(q => ({ ...q, id: `ai-${new Date().getTime()}-${Math.random()}`}));
-      setAllAiQuestions(questionsWithIds);
+      setAvailableAiQuestions(questionsWithIds);
 
     } catch (error: any) {
       console.error("Failed to generate questions:", error);
@@ -278,38 +178,67 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   
   const handleAddQuestionToSelection = (index: number) => {
     const question = availableAiQuestions[index];
-    append(question);
+    appendQuiz(question);
+    setAvailableAiQuestions(prev => prev.filter((_, i) => i !== index));
   };
   
   const handleRemoveQuestionFromSelection = (index: number) => {
-    const removedQuestion = fields[index] as QuizQuestion;
-    remove(index);
+    const removedQuestion = quizFields[index] as any;
+    removeQuiz(index);
     if(removedQuestion.id?.startsWith('ai-')) {
-        setAllAiQuestions(prev => [...prev, removedQuestion]);
+        setAvailableAiQuestions(prev => [...prev, removedQuestion]);
     }
   };
 
   const handleAddManualQuestion = (question: QuizQuestion) => {
-    if (fields.some(q => q.question === question.question)) {
+    if (quizFields.some(q => q.question === question.question)) {
         toast({ title: "Duplicate Question", description: "This question is already in your selected list.", variant: "destructive" });
         return;
     }
-    append(question);
+    appendQuiz(question);
     toast({ title: "Question Added", description: "Your manual question has been added to the list." });
   };
+  
+  const handleAddManualReading = (sentence: ReadingSentence) => {
+    appendReading(sentence);
+    toast({ title: "Sentence Added" });
+  };
 
-  const handleSaveAssignment = async (data: QuestionsFormData) => {
+  const handleAddManualListening = (exercise: ListeningExercise) => {
+      appendListening({
+        ...exercise,
+        id: `manual-${new Date().getTime()}`, // Assign a temporary unique ID
+        answer: exercise.type === 'typing' ? exercise.text : exercise.answer,
+      });
+      toast({ title: "Exercise Added" });
+  };
+
+
+  const handleSaveAssignment = async (data: any) => {
     if (!assignmentDetails) return;
-    if (data.questions.length === 0) {
-      toast({ title: "No Questions Selected", description: "Please add at least one question to the assignment.", variant: "destructive" });
+    
+    const { questions, readingSentences, listeningExercises } = data;
+    const { assignmentType } = assignmentDetails;
+    
+    let hasContent = false;
+    if (assignmentType === 'quiz' && questions.length > 0) hasContent = true;
+    if (assignmentType === 'reading' && readingSentences.length > 0) hasContent = true;
+    if (assignmentType === 'listening' && listeningExercises.length > 0) hasContent = true;
+
+    if (!hasContent) {
+      toast({ title: "No Content", description: "Please add at least one item to the assignment.", variant: "destructive" });
       return;
     }
+
     setIsSaving(true);
     try {
-        const payload = { 
+        const payload: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'> = { 
             title: assignmentDetails.title, 
-            language: "EN" as const, 
-            questions: data.questions 
+            language: "EN",
+            assignmentType: assignmentType,
+            questions: assignmentType === 'quiz' ? questions : [],
+            readingSentences: assignmentType === 'reading' ? readingSentences : [],
+            listeningExercises: assignmentType === 'listening' ? listeningExercises : [],
         };
 
         if (isEditMode && existingAssignment.id) {
@@ -327,121 +256,266 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
        toast({ title: "Save Failed", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally { setIsSaving(false); }
   };
+  
+  // --- SUB-COMPONENTS FOR CONTENT CREATION ---
+
+  const QuizBuilder = () => (
+    <>
+        <Card>
+            <Form {...generationForm}>
+                <form onSubmit={generationForm.handleSubmit(handleGenerateQuestions)}>
+                    <CardHeader><CardTitle>Generate with AI</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField control={generationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Question Topic</FormLabel><FormControl><Input placeholder="e.g., Common English Idioms" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <FormField control={generationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={generationForm.control} name="questionType" render={({ field }) => (<FormItem><FormLabel>Question Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="multiple-choice">Multiple Choice</SelectItem><SelectItem value="true-false">True/False</SelectItem><SelectItem value="fill-in-the-blank">Fill-in-the-Blank</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
+                            <FormField control={generationForm.control} name="numberOfQuestions" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        </div>
+                    </CardContent>
+                    <CardFooter><Button type="submit" disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Questions"}</Button></CardFooter>
+                </form>
+            </Form>
+        </Card>
+        <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
+            <div className="p-4 border rounded-md min-h-[200px] space-y-3">
+                <h4 className="font-medium text-center mb-2">Available AI-Generated Questions</h4>
+                {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
+                {!isGenerating && availableAiQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
+                {availableAiQuestions.map((q, index) => (<div key={q.id || index} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{q.question}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddQuestionToSelection(index)}><PlusCircle className="h-4 w-4" /></Button></div>))}
+            </div>
+            <ManualQuestionForm onAddQuestion={handleAddManualQuestion} />
+        </div>
+    </>
+  );
+
+  const ReadingBuilder = () => {
+    const form = useForm<ManualReadingFormData>({ resolver: zodResolver(manualReadingSchema), defaultValues: { unit: "", text: "" } });
+    const handleAdd = (data: ManualReadingFormData) => { handleAddManualReading(data); form.reset(); };
+    return (<Card><CardHeader><CardTitle>Add Reading Sentence</CardTitle><CardDescription>Add sentences one by one for the reading assignment.</CardDescription></CardHeader><Form {...form}><form onSubmit={form.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={form.control} name="unit" render={({ field }) => (<FormItem><FormLabel>Unit / Topic</FormLabel><FormControl><Input placeholder="e.g., Unit 1: Greetings" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence</FormLabel><FormControl><Textarea placeholder="Enter the sentence students will read." {...field} /></FormControl><FormMessage /></FormItem>)} /></CardContent><CardFooter><Button type="submit"><PlusCircle className="mr-2 h-4 w-4" /> Add Sentence</Button></CardFooter></form></Form></Card>);
+  };
+
+  const ListeningBuilder = () => {
+    const form = useForm<ManualListeningFormData>({ resolver: zodResolver(manualListeningSchema), defaultValues: { type: 'typing', text: "", options: ["", "", ""], answer: "" } });
+    const type = useWatch({ control: form.control, name: 'type' });
+    const options = useWatch({ control: form.control, name: 'options' });
+    const handleAdd = (data: ManualListeningFormData) => { handleAddManualListening(data as ListeningExercise); form.reset(); };
+    return (<Card><CardHeader><CardTitle>Add Listening Exercise</CardTitle><CardDescription>Add listening tasks one by one.</CardDescription></CardHeader><Form {...form}><form onSubmit={form.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Exercise Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="typing">Type what you hear</SelectItem><SelectItem value="mcq">Multiple Choice</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence to be heard</FormLabel><FormControl><Textarea placeholder="This is the text that will be converted to audio." {...field} /></FormControl><FormMessage /></FormItem>)} />{type === 'mcq' && (<><FormLabel>Options (Provide 3 choices)</FormLabel>{[0, 1, 2].map(i => (<FormField key={i} control={form.control} name={`options.${i}`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`Option ${i + 1}`} {...field} /></FormControl><FormMessage /></FormItem>)} />))}<FormField control={form.control} name="answer" render={({ field }) => (<FormItem><FormLabel>Correct Answer</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value}>{options?.map((opt, i) => opt.trim() && (<FormItem key={i} className="flex items-center space-x-2"><FormControl><RadioGroupItem value={opt} /></FormControl><FormLabel className="font-normal">{opt}</FormLabel></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} /></>)}</CardContent><CardFooter><Button type="submit"><PlusCircle className="mr-2 h-4 w-4" /> Add Exercise</Button></CardFooter></form></Form></Card>);
+  };
+
+  const ManualQuestionForm = ({ onAddQuestion }: { onAddQuestion: (q: QuizQuestion) => void }) => {
+    const form = useForm<ManualQuestionFormData>({ resolver: zodResolver(manualQuestionSchema), defaultValues: { type: 'multiple-choice', question: "", options: ["", "", "", ""], answer: "" } });
+    const questionType = useWatch({ control: form.control, name: 'type' });
+    const options = useWatch({ control: form.control, name: 'options' });
+    const handleManualSubmit = (data: ManualQuestionFormData) => { const finalQuestion: QuizQuestion = { id: new Date().getTime().toString(), type: data.type, question: data.question, answer: data.answer, options: data.type === 'multiple-choice' ? data.options : [], }; onAddQuestion(finalQuestion); form.reset(); };
+    return (
+      <Card>
+        <CardHeader>
+            <CardTitle>Add Question Manually</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleManualSubmit)} className="space-y-4">
+                    <FormField control={form.control} name="type" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Question Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
+                                    <SelectItem value="true-false">True/False</SelectItem>
+                                    <SelectItem value="fill-in-the-blank">Fill-in-the-Blank</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <FormField control={form.control} name="question" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Question Text</FormLabel>
+                            <FormControl><Textarea placeholder="Enter the question here..." {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    {questionType === 'multiple-choice' && (
+                        <>
+                            {[0, 1, 2, 3].map(i => (
+                                <FormField key={i} control={form.control} name={`options.${i}`} render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Option {i + 1}</FormLabel>
+                                        <FormControl><Input {...field} /></FormControl>
+                                    </FormItem>
+                                )}/>
+                            ))}
+                            <FormField control={form.control} name="answer" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Correct Answer</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup onValueChange={field.onChange} value={field.value}>
+                                            {options?.map((opt, i) => opt.trim() && (
+                                                <FormItem key={i} className="flex items-center space-x-2">
+                                                    <FormControl><RadioGroupItem value={opt} /></FormControl>
+                                                    <FormLabel className="font-normal">{opt}</FormLabel>
+                                                </FormItem>
+                                            ))}
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        </>
+                    )}
+                    {questionType === 'true-false' && (
+                        <FormField control={form.control} name="answer" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Correct Answer</FormLabel>
+                                <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
+                                    <FormItem className="flex items-center space-x-2">
+                                        <FormControl><RadioGroupItem value="True" /></FormControl>
+                                        <FormLabel className="font-normal">True</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-2">
+                                        <FormControl><RadioGroupItem value="False" /></FormControl>
+                                        <FormLabel className="font-normal">False</FormLabel>
+                                    </FormItem>
+                                </RadioGroup>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    )}
+                    {questionType === 'fill-in-the-blank' && (
+                        <FormField control={form.control} name="answer" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Correct Answer</FormLabel>
+                                <FormControl><Input placeholder="Enter the word(s) that fill the blank" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    )}
+                    <Button type="submit" variant="secondary"><PlusCircle className="mr-2 h-4 w-4" /> Add This Question</Button>
+                </form>
+            </Form>
+        </CardContent>
+      </Card>
+    );
+  };
+
+
+  const renderContentBuilder = () => {
+      switch (assignmentDetails?.assignmentType) {
+          case 'quiz': return <QuizBuilder />;
+          case 'reading': return <ReadingBuilder />;
+          case 'listening': return <ListeningBuilder />;
+          default: return <p>Please select an assignment type.</p>;
+      }
+  }
+  
+  const renderSelectedContent = () => {
+    switch (assignmentDetails?.assignmentType) {
+        case 'quiz':
+            return quizFields.length > 0 ? quizFields.map((field, index) => (
+                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{(field as any).question}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => handleRemoveQuestionFromSelection(index)}><Trash2 className="h-4 w-4" /></Button></div>
+            )) : <EmptyContentPlaceholder icon={BookCheck} text="Your chosen questions will appear here." />;
+        case 'reading':
+            return readingFields.length > 0 ? readingFields.map((field, index) => (
+                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{(field as any).text}</p><p className="text-sm text-muted-foreground">Unit: {(field as any).unit}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => removeReading(index)}><Trash2 className="h-4 w-4" /></Button></div>
+            )) : <EmptyContentPlaceholder icon={Mic} text="Your chosen reading sentences will appear here." />;
+        case 'listening':
+            return listeningFields.length > 0 ? listeningFields.map((field, index) => (
+                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{(field as any).text}</p><p className="text-sm text-muted-foreground">Type: {(field as any).type}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => removeListening(index)}><Trash2 className="h-4 w-4" /></Button></div>
+            )) : <EmptyContentPlaceholder icon={Headphones} text="Your chosen listening exercises will appear here." />;
+        default: return null;
+    }
+  };
+
+  const EmptyContentPlaceholder = ({icon: Icon, text}: {icon: React.ElementType, text: string}) => (
+      <div className="text-center text-muted-foreground pt-12"><Icon className="mx-auto h-8 w-8 mb-2" /><p>{text}</p></div>
+  );
+
 
   return (
     <>
       <PageHeader 
         title={isEditMode ? "Edit Assignment" : "Create New Assignment"} 
-        description={isEditMode ? "Modify the details and questions for this assignment." : "Follow the steps to create a new quiz for your students."} 
+        description={isEditMode ? "Modify the details and content for this assignment." : "Follow the steps to create a new assignment for your students."} 
       />
       <div className="mb-4"><Button variant="outline" onClick={() => router.push('/teacher/assignments')}><ArrowLeft className="mr-2 h-4 w-4" />Back to All Assignments</Button></div>
       
       {step === 'details' && (
         <Card><Form {...detailsForm}><form onSubmit={detailsForm.handleSubmit(handleDetailsSubmit)}>
-            <CardHeader><CardTitle>Step 1: Assignment Details</CardTitle><CardDescription>Provide a title for your new assignment. The language is set to English.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>Step 1: Assignment Details</CardTitle><CardDescription>Provide a title and select the type for your new assignment.</CardDescription></CardHeader>
             <CardContent className="space-y-6">
                 <FormField control={detailsForm.control} name="title" render={({ field }) => (<FormItem><FormLabel>Assignment Title</FormLabel><FormControl><Input placeholder="e.g., Idioms Quiz 1" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                 <FormField
+                    control={detailsForm.control}
+                    name="assignmentType"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Assignment Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a type" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="quiz">Quiz</SelectItem>
+                            <SelectItem value="reading">Reading</SelectItem>
+                            <SelectItem value="listening">Listening</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </CardContent>
-            <CardFooter><Button type="submit">Continue to Questions <ArrowRight className="ml-2 h-4 w-4" /></Button></CardFooter>
+            <CardFooter><Button type="submit">Continue to Content <ArrowRight className="ml-2 h-4 w-4" /></Button></CardFooter>
         </form></Form></Card>
       )}
 
-      {step === 'questions' && (
+      {step === 'content' && (
          <div className="space-y-6">
              <Card>
-                <Form {...generationForm}>
-                    <form onSubmit={generationForm.handleSubmit(handleGenerateQuestions)}>
-                        <CardHeader><CardTitle>Step 2: Build Your Assignment</CardTitle><CardDescription>Generate questions with AI, add your own, and finalize the assignment: "{assignmentDetails?.title}".</CardDescription></CardHeader>
-                        <CardContent className="space-y-4">
-                            <FormField control={generationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Question Topic</FormLabel><FormControl><Input placeholder="e.g., Common English Idioms" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <FormField control={generationForm.control} name="difficulty" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Difficulty</FormLabel>
-                                    <FormControl>
-                                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4">
-                                            <FormItem className="flex items-center space-x-2 space-y-0">
-                                                <FormControl><RadioGroupItem value="Easy" /></FormControl>
-                                                <FormLabel className="font-normal">Easy</FormLabel>
-                                            </FormItem>
-                                            <FormItem className="flex items-center space-x-2 space-y-0">
-                                                <FormControl><RadioGroupItem value="Medium" /></FormControl>
-                                                <FormLabel className="font-normal">Medium</FormLabel>
-                                            </FormItem>
-                                            <FormItem className="flex items-center space-x-2 space-y-0">
-                                                <FormControl><RadioGroupItem value="Hard" /></FormControl>
-                                                <FormLabel className="font-normal">Hard</FormLabel>
-                                            </FormItem>
-                                        </RadioGroup>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}/>
-                                <FormField control={generationForm.control} name="questionType" render={({ field }) => (<FormItem><FormLabel>Question Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="multiple-choice">Multiple Choice</SelectItem><SelectItem value="true-false">True/False</SelectItem><SelectItem value="fill-in-the-blank">Fill-in-the-Blank</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
-                                <FormField control={generationForm.control} name="numberOfQuestions" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                            </div>
-                        </CardContent>
-                        <CardFooter><Button type="submit" disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Questions"}</Button></CardFooter>
-                    </form>
-                </Form>
+                <CardHeader>
+                    <CardTitle>Step 2: Build Your Assignment</CardTitle>
+                    <CardDescription>
+                        Assignment: "{assignmentDetails?.title}" ({assignmentDetails?.assignmentType})
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {renderContentBuilder()}
+                </CardContent>
             </Card>
             
             <Separator />
 
-            <div className="space-y-6">
-                 <div>
-                    <h3 className="font-semibold mb-2">Available Questions</h3>
-                    <div className="grid md:grid-cols-2 gap-6 items-start">
-                        <div className="p-4 border rounded-md min-h-full space-y-3">
-                            <h4 className="font-medium text-center mb-2">AI-Generated</h4>
-                            {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
-                            {!isGenerating && availableAiQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
-                            {availableAiQuestions.map((q, index) => (<QuestionCard key={q.id || index} q={q} index={index} onAction={handleAddQuestionToSelection} actionType="add" />))}
-                        </div>
-                        <div>
-                           <ManualQuestionForm onAddQuestion={handleAddManualQuestion} />
-                        </div>
-                    </div>
-                </div>
-                 <Form {...selectionForm}>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Selected Questions for Assignment ({fields.length})</CardTitle>
-                        </CardHeader>
-                        <form onSubmit={selectionForm.handleSubmit(handleSaveAssignment)}>
-                            <CardContent className="space-y-3">
-                                {fields.length === 0 ? (
-                                    <div className="text-center text-muted-foreground pt-12">
-                                        <BookCheck className="mx-auto h-8 w-8 mb-2" />
-                                        <p>Your chosen questions will appear here.</p>
-                                    </div>
-                                ) : (
-                                    fields.map((field, index) => (
-                                        <QuestionCard 
-                                            key={field.id} 
-                                            q={field as QuizQuestion} 
-                                            index={index} 
-                                            onAction={handleRemoveQuestionFromSelection} 
-                                            actionType="remove" 
-                                        />
-                                    ))
-                                )}
-                            </CardContent>
-                            <CardFooter className="justify-between">
-                                <Button type="button" variant="outline" onClick={handleBackToDetails} disabled={isSaving || isEditMode}>
-                                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Details
-                                </Button>
-                                <Button type="submit" disabled={isSaving || fields.length === 0}>
-                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                    {isSaving ? "Saving..." : `${isEditMode ? "Update" : "Save"} Assignment (${fields.length} questions)`}
-                                </Button>
-                            </CardFooter>
-                        </form>
-                    </Card>
-                 </Form>
-            </div>
+             <Form {...contentForm}>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Final Assignment Content</CardTitle>
+                    </CardHeader>
+                    <form onSubmit={contentForm.handleSubmit(handleSaveAssignment)}>
+                        <CardContent className="space-y-3 min-h-[200px]">
+                            {renderSelectedContent()}
+                        </CardContent>
+                        <CardFooter className="justify-between">
+                            <Button type="button" variant="outline" onClick={handleBackToDetails} disabled={isSaving || isEditMode}>
+                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Details
+                            </Button>
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                {isSaving ? "Saving..." : `${isEditMode ? "Update" : "Save"} Assignment`}
+                            </Button>
+                        </CardFooter>
+                    </form>
+                </Card>
+            </Form>
          </div>
       )}
     </>
   );
 }
+
+    
+
+    
