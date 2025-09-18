@@ -168,14 +168,14 @@ export default function QuizDashboard() {
             </div>
           )}
         </CardContent>
-        {quizHistory.length > 5 && !showAllHistory && (
+        {quizHistory.length > 5 && (
           <CardFooter>
             <Button
               variant="link"
               className="w-full"
-              onClick={() => setShowAllHistory(true)}
+              onClick={() => setShowAllHistory(prev => !prev)}
             >
-              Show More
+              {showAllHistory ? "Show Less" : "Show More"}
             </Button>
           </CardFooter>
         )}
