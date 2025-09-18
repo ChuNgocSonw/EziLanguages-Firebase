@@ -184,11 +184,15 @@ export default function TeacherFeedbackPage() {
                                 {isLoadingClasses ? (
                                     <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="animate-spin" /> Loading classes...</div>
                                 ) : (
-                                    <Select onValueChange={setSelectedClassId} disabled={classes.length === 0}>
-                                    <SelectTrigger id="class-select"><SelectValue placeholder="Select a class..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.className}</SelectItem>)}
-                                    </SelectContent>
+                                    <Select 
+                                      onValueChange={setSelectedClassId} 
+                                      value={selectedClassId || ""} 
+                                      disabled={classes.length === 0}
+                                    >
+                                      <SelectTrigger id="class-select"><SelectValue placeholder="Select a class..." /></SelectTrigger>
+                                      <SelectContent>
+                                          {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.className}</SelectItem>)}
+                                      </SelectContent>
                                     </Select>
                                 )}
                                 </div>
