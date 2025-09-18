@@ -3,89 +3,61 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
   
-    // Helper Functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
+    
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
     }
 
     function isStudent() {
-      let userData = getUserData(request.auth.uid);
-      return isSignedIn() && userData.role == 'student';
+      return getUserRole(request.auth.uid) == 'student';
     }
 
     function isTeacher() {
-      let userData = getUserData(request.auth.uid);
-      return isSignedIn() && (userData.role == 'teacher' || userData.role == 'admin' || userData.role == 'superadmin');
+      return getUserRole(request.auth.uid) in ['teacher', 'admin', 'superadmin'];
     }
 
     function isAdmin() {
-      let userData = getUserData(request.auth.uid);
-      return isSignedIn() && (userData.role == 'admin' || userData.role == 'superadmin');
+      return getUserRole(request.auth.uid) in ['admin', 'superadmin'];
     }
 
-    // Collection: users
     match /users/{userId} {
-      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && (isOwner(userId) || isTeacher()); // Teacher can update classId
-      allow write: if isAdmin();
+      allow read: if isOwner(userId) || isTeacher() || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
 
-      // Sub-collections for student performance data
       match /quizHistory/{docId} {
         allow read: if isOwner(userId) || isTeacher();
-        allow create: if isOwner(userId);
-        allow write: if isAdmin();
+        allow write: if isOwner(userId);
       }
-
       match /assignmentAttempts/{docId} {
         allow read: if isOwner(userId) || isTeacher();
-        allow create: if isOwner(userId);
-        allow write: if isAdmin();
+        allow write: if isOwner(userId);
       }
-      
-      // Allow teacher to list sub-collections for feedback generation
-      match /quizHistory/{docId=**} {
-        allow list: if isTeacher();
-      }
-      
-      match /assignmentAttempts/{docId=**} {
-        allow list: if isTeacher();
-      }
-
       match /chats/{chatId} {
-        allow read, write: if isOwner(userId);
+        allow read, write, delete: if isOwner(userId);
         match /messages/{messageId} {
-          allow read, write: if isOwner(userId);
+          allow read, write, delete: if isOwner(userId);
         }
       }
     }
 
-    // Collection: classes
     match /classes/{classId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isTeacher();
+      allow read: if isTeacher();
+      allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
     }
 
-    // Collection: assignments
     match /assignments/{assignmentId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isTeacher();
+      allow read: if isTeacher() || (isStudent() && resource.data.assignedClasses[?request.auth.token.classId in @.path.classId].size() > 0);
+      allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
     }
     
-    // Collection: feedback
     match /feedback/{feedbackId} {
-      allow read: if isSignedIn() && (request.auth.uid == resource.data.studentId || request.auth.uid == resource.data.teacherId);
+      allow read: if isOwner(resource.data.studentId) || isOwner(resource.data.teacherId);
       allow create: if isTeacher();
-      allow update: if request.auth.uid == resource.data.studentId; // Student can mark as read
-      allow delete: if isTeacher() && request.auth.uid == resource.data.teacherId;
+      allow update: if isOwner(resource.data.studentId) && request.resource.data.isRead == true;
+      allow delete: if isOwner(resource.data.teacherId);
     }
   }
 }
