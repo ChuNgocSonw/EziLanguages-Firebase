@@ -59,6 +59,7 @@ export interface AuthContextType {
   assignAssignmentToClasses: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => Promise<void>;
   getStudentAssignments: () => Promise<Assignment[]>;
   getAssignmentAttempt: (assignmentId: string) => Promise<QuizAttempt | null>;
+  getStudentAssignmentAttemptsForClass: (studentId: string, classId: string) => Promise<QuizAttempt[]>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -545,12 +546,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .filter(doc => doc.exists())
         .map(doc => {
             const studentData = doc.data() as UserProfile;
-            const completedCount = (studentData.completedAssignments || []).filter(id => classAssignments.includes(id)).length;
+            const completedAssignmentIds = (studentData.completedAssignments || []).filter(id => classAssignments.includes(id));
             return { 
                 uid: doc.id, 
                 ...studentData,
-                assignmentsCompletedCount: completedCount,
-                totalAssignmentsCount: totalAssignments
+                assignmentsCompletedCount: completedAssignmentIds.length,
+                completedAssignmentIds: completedAssignmentIds,
             } as AdminUserView
         });
 
@@ -744,6 +745,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return null;
   }, []);
+  
+  const getStudentAssignmentAttemptsForClass = useCallback(async (studentId: string, classId: string): Promise<QuizAttempt[]> => {
+    if (!auth.currentUser) throw new Error("Not authenticated");
+
+    const classDetails = await getClassDetails(classId);
+    if (!classDetails) return [];
+    
+    const assignmentsRef = collection(db, "assignments");
+    const qAssignments = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: classDetails.id, className: classDetails.className }));
+    const assignmentsSnapshot = await getDocs(qAssignments);
+    const classAssignmentIds = assignmentsSnapshot.docs.map(doc => doc.id);
+
+    if (classAssignmentIds.length === 0) return [];
+    
+    const attemptsRef = collection(db, "users", studentId, "assignmentAttempts");
+    const qAttempts = query(attemptsRef, where("assignmentId", "in", classAssignmentIds), orderBy("completedAt", "desc"));
+    const attemptsSnapshot = await getDocs(qAttempts);
+
+    return attemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+  }, [getClassDetails]);
 
 
   const value: AuthContextType = useMemo(() => ({
@@ -784,6 +805,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     assignAssignmentToClasses,
     getStudentAssignments,
     getAssignmentAttempt,
+    getStudentAssignmentAttemptsForClass,
   }), [
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
@@ -791,7 +813,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement, getStudentsForClass,
       addStudentToClass, removeStudentFromClass, searchStudentsByEmail, createAssignment, updateAssignment,
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
-      getAssignmentAttempt
+      getAssignmentAttempt, getStudentAssignmentAttemptsForClass
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
