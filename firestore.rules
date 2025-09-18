@@ -23,18 +23,19 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && getUserData(request.auth.uid).role in ['admin', 'superadmin'];
     }
-    
-    // Default deny all for safety
+
+    // Default deny all
     match /{document=**} {
       allow read, write: if false;
     }
 
     // Users Collection
     match /users/{userId} {
-      allow read: if isTeacher() || request.auth.uid == userId;
+      allow get: if isTeacher() || request.auth.uid == userId;
       allow create: if isSignedIn();
       allow update: if isTeacher() || request.auth.uid == userId;
       allow list: if isSignedIn(); // For leaderboard
+      allow write: if isAdmin(); // Admins can manage users
     }
 
     // Classes Collection
@@ -44,29 +45,18 @@ service cloud.firestore {
 
     // Assignments Collection
     match /assignments/{assignmentId} {
+      allow get: if isTeacher() || (isStudent() && 
+        get(/databases/$(database)/documents/classes/$(getUserData(request.auth.uid).classId)).data.className 
+        in resource.data.assignedClasses.map(c => c.className));
       allow write: if isTeacher();
-      // Teachers can read. Students can read if the assignment is for their class.
-      allow read: if isTeacher() || 
-                    (isStudent() && {
-                      'classId': getUserData(request.auth.uid).classId, 
-                      'className': get(/databases/$(database)/documents/classes/$(getUserData(request.auth.uid).classId)).data.className
-                    } in resource.data.assignedClasses);
     }
-
+    
     // Feedback Collection
     match /feedback/{feedbackId} {
       allow read, delete: if (isTeacher() && resource.data.teacherId == request.auth.uid) || (isStudent() && resource.data.studentId == request.auth.uid);
       allow create: if isTeacher();
-      // Allow student to update ONLY the isRead field to true
-      allow update: if isStudent() 
-                    && request.auth.uid == resource.data.studentId 
-                    && request.resource.data.isRead == true
-                    && resource.data.diff(request.resource.data).affectedKeys().hasOnly(['isRead']);
-    }
-    
-    // Allow teachers to list their sent feedback
-    match /feedback/{path=**} {
-       allow list: if isTeacher();
+      allow update: if isStudent() && request.auth.uid == resource.data.studentId && request.resource.data.isRead == true && resource.data.diff(request.resource.data).affectedKeys().hasOnly(['isRead']);
+      allow list: if isTeacher();
     }
     
     // Quiz History & Assignment Attempts Subcollections
