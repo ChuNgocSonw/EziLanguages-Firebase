@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -37,22 +38,23 @@ service cloud.firestore {
     }
     
     match /classes/{classId} {
-        allow read, write: if resource.data.teacherId == request.auth.uid;
+        allow read, write, delete: if get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
         allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
     }
 
     match /assignments/{assignmentId} {
-      allow read, write, delete: if resource.data.teacherId == request.auth.uid;
+      allow read, write, delete: if get(/databases/$(database)/documents/assignments/$(assignmentId)).data.teacherId == request.auth.uid;
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
       // Students can read assignments assigned to their class
-      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in resource.data.assignedClasses.map(c => c.classId);
+      allow read: if 'classId' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+                    resource.data.assignedClasses.hasAny([{'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId}]);
     }
     
     match /feedback/{feedbackId} {
       // Student can read feedback sent to them and mark it as read (update)
       allow read, update: if resource.data.studentId == request.auth.uid;
       // Teacher can create feedback, and read/delete feedback they sent
-      allow create, read, delete: if resource.data.teacherId == request.auth.uid;
+      allow create, read, delete: if request.auth.uid != null && request.resource.data.teacherId == request.auth.uid;
     }
   }
 }
