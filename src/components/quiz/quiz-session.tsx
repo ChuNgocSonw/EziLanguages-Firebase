@@ -43,16 +43,16 @@ const randomEnglishQuizTopics = [
 ];
 
 const randomVietnameseQuizTopics = [
-    "Thành ngữ Tiếng Việt thông dụng",
-    "Cụm từ du lịch bằng Tiếng Việt",
-    "Từ vựng về đồ ăn Tiếng Việt",
-    "Trọng âm và phát âm Tiếng Việt",
-    "Tiếng Việt thương mại cho các cuộc họp",
-    "Cụm động từ với 'Đi'",
-    "Đặt món ăn trong nhà hàng Việt Nam",
+    "Thành ngữ Tiếng Anh thông dụng",
+    "Cụm từ du lịch bằng Tiếng Anh",
+    "Từ vựng Tiếng Anh về đồ ăn",
+    "Trọng âm và phát âm Tiếng Anh",
+    "Tiếng Anh thương mại cho các cuộc họp",
+    "Cụm động từ với 'Get'",
+    "Đặt món ăn trong nhà hàng bằng Tiếng Anh",
     "Thì quá khứ, hiện tại và tương lai",
-    "Những từ dễ nhầm lẫn trong Tiếng Anh và Tiếng Việt",
-    "Lời chào hỏi cần thiết bằng Tiếng Việt"
+    "Những từ dễ nhầm lẫn trong Tiếng Việt và Tiếng Anh",
+    "Lời chào hỏi cần thiết bằng Tiếng Anh"
 ];
 
 
@@ -181,23 +181,38 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
       onGenerate: (topic: string, displayTopic: string, language: Language) => void;
   }) => {
     const [topic, setTopic] = useState("");
+    const [language, setLanguage] = useState<Language>("English");
     
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onGenerate(topic, topic, 'English');
+        onGenerate(topic, topic, language);
     };
 
     return (
         <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 pt-6 px-1">
-                <div className="space-y-2">
-                    <Label htmlFor="topic">Topic</Label>
-                    <Input 
-                        id="topic" 
-                        placeholder="e.g., English Past Tense" 
-                        value={topic}
-                        onChange={(e) => setTopic(e.target.value)}
-                    />
+                 <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="topic">Topic</Label>
+                        <Input 
+                            id="topic" 
+                            placeholder="e.g., English Past Tense or Common Vietnamese Phrases" 
+                            value={topic}
+                            onChange={(e) => setTopic(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="language-select">Language</Label>
+                        <Select value={language} onValueChange={(value: Language) => setLanguage(value)}>
+                            <SelectTrigger id="language-select">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="English">English</SelectItem>
+                                <SelectItem value="Vietnamese">Vietnamese</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
                 <SharedGenerationOptions 
                     difficulty={difficulty}
