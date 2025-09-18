@@ -1,88 +1,80 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
+  
     // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-
-    function isStudent() {
-      return getUserRole() == 'student';
-    }
-
-    function isTeacher() {
-      let role = getUserRole();
-      return role == 'teacher' || role == 'admin' || role == 'superadmin';
-    }
-
-    function isAdmin() {
-      let role = getUserRole();
-      return role == 'admin' || role == 'superadmin';
-    }
-
-    // Rules for 'users' collection
-    match /users/{userId} {
-      // Admins/Superadmins can read any user profile
-      allow read: if isOwner(userId) || isAdmin();
-      
-      // Users can read their own profile
-      allow read: if isOwner(userId);
-      // Users can create their own profile upon signup
-      allow create: if request.auth != null;
-      // Users can update their own profile data
-      // Admins/Superadmins can update any user's role
-      allow update: if isOwner(userId) || isAdmin();
-    }
-
-    // Rules for 'classes' collection
-    match /classes/{classId} {
-      // Teachers can read classes they own
-      // Students can read the class they belong to
-      allow read: if isOwner(resource.data.teacherId) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId == classId;
-      // Teachers can create classes
-      allow create: if isTeacher();
-      // Only the teacher who owns the class can update or delete it
-      allow write: if isOwner(resource.data.teacherId);
-    }
-
-    // Rules for 'assignments' collection
-    match /assignments/{assignmentId} {
-      // Teachers can read assignments they created
-      // Students can read assignments assigned to their class
-      allow read: if (isTeacher() && isOwner(resource.data.teacherId)) || 
-                   (isStudent() && 
-                      { 
-                        'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId, 
-                        'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className 
-                      } in resource.data.assignedClasses
-                   );
-
-      // Teachers can create, update, and delete assignments
-      allow write: if isTeacher();
-    }
-
-    // Rules for 'feedback' collection
-    match /feedback/{feedbackId} {
-      // Teachers can manage feedback they have sent
-      allow read, delete: if isTeacher() && isOwner(resource.data.teacherId);
-      // Students can read feedback sent to them
-      allow read: if isStudent() && isOwner(resource.data.studentId);
-      // Teachers can create feedback
-      allow create: if isTeacher();
-      // Students can update the 'isRead' status
-      allow update: if isStudent() && isOwner(resource.data.studentId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
-    // Allow teachers to list feedback they have sent
-    match /feedback/{document=**} {
-        allow list: if isTeacher() && request.query.limit <= 100;
+    function getUserRole() {
+      return getUserData().role;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (getUserRole() == 'admin' || getUserRole() == 'superadmin');
+    }
+    
+    function isTeacher() {
+      return isSignedIn() && getUserRole() == 'teacher';
+    }
+    
+    function isStudent() {
+      return isSignedIn() && getUserRole() == 'student';
+    }
+
+    // Admin/Super Admin have global access
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Users Collection Rules
+    match /users/{userId} {
+      // Users can read/update their own profile.
+      allow read, update: if isSignedIn() && isOwner(userId);
+      // Teachers can read student profiles.
+      allow read: if isTeacher();
+    }
+    
+    // Classes Collection Rules
+    match /classes/{classId} {
+      // Teachers can create, read, update, delete classes they own.
+      allow read, update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
+      allow create: if isTeacher();
+      
+      // Students can read details of the class they are in.
+      allow read: if isStudent() && resource.data.studentIds[0] is string && request.auth.uid in resource.data.studentIds;
+    }
+    
+    // Assignments Collection Rules
+    match /assignments/{assignmentId} {
+      // Teachers can manage assignments they own.
+      allow read, create, update, delete: if isTeacher();
+      
+      // Students can read assignments assigned to their class.
+      allow read: if isStudent() && exists(/databases/$(database)/documents/assignments/$(assignmentId)/students/$(request.auth.uid));
+    }
+
+    // Feedback Collection Rules
+    match /feedback/{feedbackId} {
+      // Teachers can create and delete feedback they sent.
+      allow create: if isTeacher();
+      allow delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
+      
+      // Teachers can read (list) feedback they have sent.
+      allow list: if isTeacher();
+      
+      // Students can read and update (mark as read) feedback they received.
+      allow read, update: if isStudent() && resource.data.studentId == request.auth.uid;
     }
   }
 }
