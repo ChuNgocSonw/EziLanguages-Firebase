@@ -239,6 +239,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
   }) => {
       const [lessonContent, setLessonContent] = useState("");
       const [lessonTitle, setLessonTitle] = useState("");
+      const [language, setLanguage] = useState<Language>("English");
 
       const handleLessonChange = (value: string) => {
           const selectedLesson = lessonsData.find(lesson => lesson.id === value);
@@ -250,25 +251,39 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
       
       const handleSubmit = (e: React.FormEvent) => {
           e.preventDefault();
-          onGenerate(lessonContent, lessonTitle, 'English');
+          onGenerate(lessonContent, lessonTitle, language);
       };
 
       return (
          <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 pt-6 px-1">
-                 <div className="space-y-2">
-                    <Label htmlFor="lesson">Select a Lesson</Label>
-                    <Select onValueChange={handleLessonChange}>
-                        <SelectTrigger><SelectValue placeholder="Choose a lesson to generate a quiz..." /></SelectTrigger>
-                        <SelectContent>
-                            {lessonsData.map(lesson => (
-                                <SelectItem key={lesson.id} value={lesson.id}>
-                                    {lesson.unit}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="lesson">Select a Lesson</Label>
+                        <Select onValueChange={handleLessonChange}>
+                            <SelectTrigger><SelectValue placeholder="Choose a lesson to generate a quiz..." /></SelectTrigger>
+                            <SelectContent>
+                                {lessonsData.map(lesson => (
+                                    <SelectItem key={lesson.id} value={lesson.id}>
+                                        {lesson.unit}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="lesson-language-select">Language</Label>
+                         <Select value={language} onValueChange={(value: Language) => setLanguage(value)}>
+                            <SelectTrigger id="lesson-language-select">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="English">English</SelectItem>
+                                <SelectItem value="Vietnamese">Vietnamese</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                 </div>
                  <SharedGenerationOptions 
                     difficulty={difficulty}
                     setDifficulty={setDifficulty}
@@ -565,4 +580,5 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
 }
 
     
+
 
