@@ -2,57 +2,69 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Quy tắc cho collection 'users'
-    match /users/{userId} {
-      // Bất kỳ ai đã đăng nhập đều có thể đọc thông tin người dùng (cần thiết cho leaderboard và quản lý lớp học)
-      allow get: if request.auth != null;
-      // Người dùng chỉ có thể tự tạo hoặc tự cập nhật thông tin của chính mình
-      allow write: if request.auth != null && request.auth.uid == userId;
-
-      // Giáo viên có thể đọc lịch sử làm bài kiểm tra tự tạo của học sinh
-      match /quizHistory/{quizId} {
-        allow list, get: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
-        // Học sinh có thể tự tạo lịch sử bài làm của mình
-        allow write: if request.auth != null && request.auth.uid == userId;
-      }
-
-      // Giáo viên có thể đọc lịch sử làm bài tập được giao của học sinh
-      match /assignmentAttempts/{attemptId} {
-         allow list, get: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
-         // Học sinh có thể tự tạo lịch sử bài làm của mình
-         allow write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // Người dùng có thể tự quản lý các sub-collection khác của mình
-      match /{subcollection}/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+    
+    function isAuth() {
+      return request.auth != null;
     }
 
-    // Quy tắc cho collection 'classes'
-    match /classes/{classId} {
-      // Bất kỳ ai đã đăng nhập đều có thể đọc thông tin lớp học (cần cho học sinh xem lớp của mình)
-      allow read: if request.auth != null;
-      // Chỉ giáo viên hoặc admin mới có thể tạo, cập nhật, xóa lớp học
-      allow write: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    function requesterRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
     
-    // Quy tắc cho collection 'assignments'
-    match /assignments/{assignmentId} {
-      // Bất kỳ ai đã đăng nhập đều có thể đọc bài tập (để học sinh có thể xem bài được giao)
-      allow read: if request.auth != null;
-      // Chỉ giáo viên hoặc admin mới có thể tạo, cập nhật, xóa bài tập
-      allow write: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+    function isRequesterAdmin() {
+      let role = requesterRole();
+      return isAuth() && (role == 'admin' || role == 'superadmin');
     }
 
-    // Quy tắc cho collection 'feedback'
+    function isRequesterTeacher() {
+      let role = requesterRole();
+      return isAuth() && (role == 'teacher' || isRequesterAdmin());
+    }
+
+    match /users/{userId} {
+      // Allow reading one's own profile, or if requester is an admin/teacher.
+      allow get: if isOwner(userId) || isRequesterTeacher();
+      // Only admins/teachers can list multiple users (e.g., for user management or class lists).
+      // Note: Listing all users can be performance-intensive. Security rules here are permissive;
+      // client-side queries should be specific and limited.
+      allow list: if isRequesterTeacher();
+      // Users can update their own profile. Admins can update any profile.
+      allow write: if isOwner(userId) || isRequesterAdmin();
+
+      match /quizHistory/{docId} {
+        allow read: if isOwner(userId) || isRequesterTeacher();
+        allow write: if isOwner(userId);
+      }
+      
+      match /assignmentAttempts/{docId} {
+         allow read: if isOwner(userId) || isRequesterTeacher();
+         allow write: if isOwner(userId);
+      }
+    }
+
+    match /classes/{classId} {
+      allow read: if isAuth(); 
+      // Only teachers and admins can create/modify/delete classes.
+      // Additional check on write can be: request.resource.data.teacherId == request.auth.uid
+      allow create, update, delete: if isRequesterTeacher();
+    }
+    
+    match /assignments/{assignmentId} {
+        allow read: if isAuth();
+        // Only teachers and admins can manage assignments.
+        // Additional check on write can be: request.resource.data.teacherId == request.auth.uid
+        allow create, update, delete: if isRequesterTeacher();
+    }
+    
     match /feedback/{feedbackId} {
-      // Giáo viên có thể tạo, đọc và xóa feedback họ đã gửi
-      // Học sinh có thể đọc và cập nhật (để đánh dấu đã đọc) feedback họ nhận được
-      allow read, update: if request.auth != null && (request.auth.uid == resource.data.studentId || request.auth.uid == resource.data.teacherId);
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.teacherId;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.teacherId;
+        allow read: if isAuth() && (resource.data.teacherId == request.auth.uid || resource.data.studentId == request.auth.uid || isRequesterAdmin());
+        allow create: if isRequesterTeacher();
+        allow update: if isAuth() && resource.data.studentId == request.auth.uid; // Student can mark as read
+        allow delete: if isAuth() && (resource.data.teacherId == request.auth.uid || isRequesterAdmin());
     }
   }
 }
