@@ -78,8 +78,8 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
   }, [assignment]);
 
 
-  const startQuizGeneration = async (generationParams: { topic: string; difficulty: Difficulty; numberOfQuestions: number; displayTopic: string; }) => {
-    const { topic, difficulty, numberOfQuestions, displayTopic } = generationParams;
+  const startQuizGeneration = async (generationParams: { topic: string; difficulty: Difficulty; numberOfQuestions: number; displayTopic: string; language: Language; }) => {
+    const { topic, difficulty, numberOfQuestions, displayTopic, language } = generationParams;
 
     if (!topic.trim()) return;
 
@@ -87,7 +87,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
     setQuizTopic(displayTopic); // Use the user-friendly name for display
 
     try {
-      const generatedQuestions = await generateQuizQuestions({ topic, difficulty, numberOfQuestions, questionType: 'multiple-choice' });
+      const generatedQuestions = await generateQuizQuestions({ topic, difficulty, numberOfQuestions, questionType: 'multiple-choice', language });
       if (!generatedQuestions || generatedQuestions.length === 0) {
         throw new Error("The AI failed to generate questions for this topic.");
       }
@@ -178,13 +178,13 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
       setDifficulty: (d: Difficulty) => void;
       numberOfQuestions: number;
       setNumberOfQuestions: (n: number) => void;
-      onGenerate: (topic: string, displayTopic: string) => void;
+      onGenerate: (topic: string, displayTopic: string, language: Language) => void;
   }) => {
     const [topic, setTopic] = useState("");
     
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onGenerate(topic, topic);
+        onGenerate(topic, topic, 'English');
     };
 
     return (
@@ -220,7 +220,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
       setDifficulty: (d: Difficulty) => void;
       numberOfQuestions: number;
       setNumberOfQuestions: (n: number) => void;
-      onGenerate: (topic: string, displayTopic: string) => void;
+      onGenerate: (topic: string, displayTopic: string, language: Language) => void;
   }) => {
       const [lessonContent, setLessonContent] = useState("");
       const [lessonTitle, setLessonTitle] = useState("");
@@ -235,7 +235,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
       
       const handleSubmit = (e: React.FormEvent) => {
           e.preventDefault();
-          onGenerate(lessonContent, lessonTitle);
+          onGenerate(lessonContent, lessonTitle, 'English');
       };
 
       return (
@@ -428,7 +428,8 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
             topic: randomTopic,
             difficulty: difficulty,
             numberOfQuestions: 5,
-            displayTopic: `Random ${language} Quiz: ${randomTopic}`,
+            displayTopic: `Random ${language} Quiz`,
+            language: language,
         });
     };
 
@@ -487,8 +488,8 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
     const [difficulty, setDifficulty] = useState<Difficulty>("Medium");
     const [numberOfQuestions, setNumberOfQuestions] = useState(5);
     
-    const handleGenerate = (topic: string, displayTopic: string) => {
-        startQuizGeneration({ topic, difficulty, numberOfQuestions, displayTopic });
+    const handleGenerate = (topic: string, displayTopic: string, language: Language) => {
+        startQuizGeneration({ topic, difficulty, numberOfQuestions, displayTopic, language });
     };
 
     return (
