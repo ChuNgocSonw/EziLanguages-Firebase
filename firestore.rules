@@ -3,82 +3,63 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    function isStudent() {
+      return getUserRole() == 'student';
+    }
 
-    // Helper Functions
+    function isTeacher() {
+      return getUserRole() == 'teacher';
+    }
+
+    function isAdmin() {
+      return getUserRole() == 'admin' || getUserRole() == 'superadmin';
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
-    
-    function getUserRole(userId) {
-        return getUserData(userId).role;
-    }
-
-    function isStudent() {
-      return isSignedIn() && getUserRole(request.auth.uid) == 'student';
-    }
-
-    function isTeacher() {
-      return isSignedIn() && getUserRole(request.auth.uid) in ['teacher', 'admin', 'superadmin'];
-    }
-
-    function isAdmin() {
-      return isSignedIn() && getUserRole(request.auth.uid) in ['admin', 'superadmin'];
-    }
-
-    // Default deny all, unless admin
+    // Admin and Super Admin have all access
     match /{document=**} {
       allow read, write: if isAdmin();
     }
-
-    // Users Collection
+    
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow update: if isOwner(userId);
-      // Allow create for anyone (signup)
-      allow create: if true;
+      allow update: if request.auth.uid == userId;
     }
 
-    // Classes Collection
     match /classes/{classId} {
       allow read: if isSignedIn();
       allow create, update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
     }
-    
-    // Assignments Collection
+
     match /assignments/{assignmentId} {
-      // Teachers can manage their own assignments
-      allow create, update, delete: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
-      
-      // Students can read assignments assigned to their class
-      allow read: if isStudent() && {
-          let studentData = getUserData(request.auth.uid);
-          let studentClassId = studentData.classId;
-          let classData = get(/databases/$(database)/documents/classes/$(studentClassId)).data;
-          let studentClassName = classData.className;
-          return { 'classId': studentClassId, 'className': studentClassName } in resource.data.assignedClasses;
-        };
+      allow read: if isTeacher() || (isStudent() && (
+        {
+          'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId,
+          'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className
+        } in resource.data.assignedClasses
+      ));
+      allow create, update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
     }
-    
-    // Feedback Collection
-    // Allow teachers to query the entire collection for their sent items
-    match /feedback/{document=**} {
-        allow list: if isTeacher();
+
+    // This rule allows teachers to query the entire feedback collection
+    match /feedback/{documents=**} {
+      allow list: if isTeacher();
     }
-    match /feedback/{feedbackId} {
-      // Allow read if you are the sender (teacher) or receiver (student)
+
+    match /feedback/{docId} {
       allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid) || 
-                       (isStudent() && resource.data.studentId == request.auth.uid);
-      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
-      allow update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
+                      (isStudent() && resource.data.studentId == request.auth.uid);
+      allow create: if isTeacher();
+      allow update(markRead): if isStudent() && request.resource.data.isRead == true;
+      allow delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
     }
-    
   }
 }
