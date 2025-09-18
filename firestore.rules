@@ -9,8 +9,12 @@ service cloud.firestore {
     
     function isTeacherOfStudent(studentId) {
       let studentDoc = get(/databases/$(database)/documents/users/$(studentId)).data;
-      return exists(/databases/$(database)/documents/classes/$(studentDoc.classId)) &&
-             get(/databases/$(database)/documents/classes/$(studentDoc.classId)).data.teacherId == request.auth.uid;
+      let studentClassId = studentDoc.classId;
+      if (studentClassId == null) {
+        return false;
+      }
+      let classDoc = get(/databases/$(database)/documents/classes/$(studentClassId)).data;
+      return classDoc.teacherId == request.auth.uid;
     }
     
     match /users/{userId} {
@@ -45,20 +49,28 @@ service cloud.firestore {
     match /assignments/{assignmentId} {
       allow read, write, delete: if get(/databases/$(database)/documents/assignments/$(assignmentId)).data.teacherId == request.auth.uid;
       allow create: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
-      // Students can read assignments assigned to their class
-      allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-                     exists(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)) &&
-                     {
-                       'classId': get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId,
-                       'className': get(/databases/$(database)/documents/classes/$(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId)).data.className
-                     } in resource.data.assignedClasses;
+      
+      function isStudentInAssignedClass() {
+        let studentDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+        let studentClassId = studentDoc.classId;
+        if (studentClassId == null) {
+          return false;
+        }
+        let assignedClasses = resource.data.assignedClasses;
+        let matchingClasses = assignedClasses.filter(c -> c.classId == studentClassId);
+        return matchingClasses.size() > 0;
+      }
+      
+      allow read: if isStudentInAssignedClass();
     }
     
     match /feedback/{feedbackId} {
-      // Student can read feedback sent to them and mark it as read (update)
+      // Teacher can list the feedback they have sent.
+      allow list: if getRequestingUserRole() in ['teacher', 'admin', 'superadmin'];
+      // Student can read/update feedback sent to them.
       allow read, update: if resource.data.studentId == request.auth.uid;
-      // Teacher can create feedback, and read/delete feedback they sent
-      allow create, read, delete: if resource.data.teacherId == request.auth.uid;
+      // Teacher can read/delete specific feedback they sent.
+      allow read, create, delete: if resource.data.teacherId == request.auth.uid;
     }
   }
 }
