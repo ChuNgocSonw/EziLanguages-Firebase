@@ -272,20 +272,22 @@ export default function TeacherFeedbackPage() {
 
                             <div className="space-y-4">
                                 <h3 className="font-semibold text-lg">2. Write Message</h3>
-                                 <div className="flex justify-start items-center gap-2">
-                                    <Select value={aiLanguage} onValueChange={setAiLanguage}>
-                                        <SelectTrigger className="w-[120px]">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="English">English</SelectItem>
-                                            <SelectItem value="Vietnamese">Vietnamese</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Button type="button" variant="outline" size="sm" onClick={handleGenerateFeedback} disabled={isGenerating}>
-                                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                        Generate
-                                    </Button>
+                                 <div className="flex justify-start mt-2">
+                                    <div className="flex items-center gap-2">
+                                        <Select value={aiLanguage} onValueChange={setAiLanguage}>
+                                            <SelectTrigger className="w-[120px]">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="English">English</SelectItem>
+                                                <SelectItem value="Vietnamese">Vietnamese</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Button type="button" variant="outline" size="sm" onClick={handleGenerateFeedback} disabled={isGenerating}>
+                                            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                                            Generate with AI
+                                        </Button>
+                                    </div>
                                 </div>
                                 <FormField control={form.control} name="title" render={({ field }) => (
                                 <FormItem>
