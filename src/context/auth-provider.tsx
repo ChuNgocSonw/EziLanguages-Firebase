@@ -463,7 +463,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getLeaderboard = useCallback(async (category: 'badgeCount' | 'streak' | 'weeklyXP'): Promise<LeaderboardEntry[]> => {
     const usersRef = collection(db, "users");
-    const q = query(usersRef, orderBy(category, "desc"), limit(100));
+    const q = query(
+        usersRef, 
+        where("role", "==", "student"),
+        orderBy(category, "desc"), 
+        limit(100)
+    );
     const querySnapshot = await getDocs(q);
     
     return querySnapshot.docs.map((doc, index) => {
