@@ -44,6 +44,7 @@ export default function TeacherFeedbackPage() {
   const [students, setStudents] = useState<AdminUserView[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [aiLanguage, setAiLanguage] = useState("English");
   
   const [isLoadingClasses, setIsLoadingClasses] = useState(true);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
@@ -162,7 +163,10 @@ export default function TeacherFeedbackPage() {
         const performanceData = await getStudentPerformanceDataForFeedback(studentId);
         
         // Send the fetched data to the server action for AI processing
-        const result = await generateFeedback(performanceData);
+        const result = await generateFeedback({
+            ...performanceData,
+            language: aiLanguage,
+        });
         
         form.setValue("title", result.title);
         form.setValue("content", result.feedbackText);
@@ -267,12 +271,23 @@ export default function TeacherFeedbackPage() {
                             </div>
 
                             <div className="space-y-4">
-                                <div className="flex justify-between items-center">
+                                <div className="flex justify-between items-center gap-2">
                                     <h3 className="font-semibold text-lg">2. Write Message</h3>
-                                    <Button type="button" variant="outline" size="sm" onClick={handleGenerateFeedback} disabled={isGenerating}>
-                                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                        Generate with AI
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Select value={aiLanguage} onValueChange={setAiLanguage}>
+                                            <SelectTrigger className="w-[120px]">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="English">English</SelectItem>
+                                                <SelectItem value="Vietnamese">Vietnamese</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Button type="button" variant="outline" size="sm" onClick={handleGenerateFeedback} disabled={isGenerating}>
+                                            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                                            Generate
+                                        </Button>
+                                    </div>
                                 </div>
                                 <FormField control={form.control} name="title" render={({ field }) => (
                                 <FormItem>
