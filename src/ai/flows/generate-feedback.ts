@@ -60,8 +60,13 @@ const generateFeedbackPrompt = ai.definePrompt({
 You MUST generate both a suitable title and the full feedback content.
 You MUST write the entire feedback message (both title and content) in the following language: {{{language}}}.
 
+**Formatting Rules:**
+- Ensure correct spelling and grammar.
+- **CRITICAL**: Always add a space after punctuation marks like commas (,), periods (.), and exclamation marks (!). For example, write "Hello, User." instead of "Hello,User.".
+- Use paragraphs to structure the feedback clearly.
+
 **Analysis Guidelines:**
-1.  **Review all provided data**: Look at pronunciation, listening, self-generated quizzes, and assigned quizzes.
+1.  **Review all provided data**: Look at pronunciation, listening, self-generated quizzes, and assigned quizzes. If no data is available, write a general welcome and encouragement message.
 2.  **Identify Strengths**: Find areas where the student is doing well. This could be high scores in pronunciation, consistent quiz performance, or perfect scores on assignments. Start the feedback by highlighting these positive points.
 3.  **Identify Areas for Improvement**: Find areas where the student is struggling. This could be low pronunciation scores on certain sentences, low scores on quizzes about specific topics (e.g., tenses, idioms), or poor performance on assignments.
 4.  **Provide Actionable Advice**: For each area of improvement, suggest specific actions. For example, if pronunciation is weak, suggest they re-practice those sentences. If a quiz topic is a problem, suggest they generate more quizzes on that topic.
