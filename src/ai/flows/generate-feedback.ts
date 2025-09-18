@@ -52,7 +52,7 @@ export async function generateFeedback(input: GenerateFeedbackInput): Promise<Ge
 
 const generateFeedbackPrompt = ai.definePrompt({
   name: 'generateFeedbackPrompt',
-  input: { schema: GenerateFeedbackInputSchema },
+  input: { schema: z.object({ studentName: z.string(), performanceDataJson: z.string() }) },
   output: { schema: GenerateFeedbackOutputSchema },
   prompt: `You are an expert AI assistant for a language teacher. Your task is to analyze a student's performance data and compose a constructive, encouraging, and personalized feedback message.
 
@@ -69,7 +69,7 @@ You MUST generate both a suitable title and the full feedback content.
 
 **Performance Data (JSON format):**
 \`\`\`json
-{{{JSON.stringify performanceData}}}
+{{{performanceDataJson}}}
 \`\`\`
 `,
 });
@@ -81,7 +81,12 @@ const generateFeedbackFlow = ai.defineFlow(
     outputSchema: GenerateFeedbackOutputSchema,
   },
   async (input) => {
-    const { output } = await generateFeedbackPrompt(input);
+    const performanceDataJson = JSON.stringify(input.performanceData, null, 2);
+    
+    const { output } = await generateFeedbackPrompt({
+        studentName: input.studentName,
+        performanceDataJson: performanceDataJson,
+    });
     return output!;
   }
 );
