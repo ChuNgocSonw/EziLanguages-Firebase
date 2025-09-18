@@ -448,30 +448,30 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                     </Button>
                 </div>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-6 pt-6">
-                <div className="space-y-2 text-center">
-                    <Label className="font-semibold text-lg">1. Select a Language</Label>
+            <CardContent className="flex flex-col items-center gap-8 pt-6">
+                <div className="space-y-4 text-center">
+                    <Label className="font-semibold text-xl">1. Select a Language</Label>
                      <RadioGroup 
                         value={language}
                         onValueChange={(value: Language) => setLanguage(value)}
-                        className="flex items-center gap-4"
+                        className="flex items-center gap-6"
                     >
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="English" id="lang-en" />
-                            <Label htmlFor="lang-en">English</Label>
+                        <div className="flex items-center space-x-3">
+                            <RadioGroupItem value="English" id="lang-en" className="h-5 w-5" />
+                            <Label htmlFor="lang-en" className="text-lg">English</Label>
                         </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Vietnamese" id="lang-vi" />
-                            <Label htmlFor="lang-vi">Tiếng Việt</Label>
+                        <div className="flex items-center space-x-3">
+                            <RadioGroupItem value="Vietnamese" id="lang-vi" className="h-5 w-5" />
+                            <Label htmlFor="lang-vi" className="text-lg">Tiếng Việt</Label>
                         </div>
                     </RadioGroup>
                 </div>
-                 <div className="space-y-2 text-center">
-                    <Label className="font-semibold text-lg">2. Select a Difficulty</Label>
-                    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-                        <Button onClick={() => handleRandomQuizDifficultySelect('Easy')} size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">Easy</Button>
-                        <Button onClick={() => handleRandomQuizDifficultySelect('Medium')} size="lg" className="w-full bg-accent hover:bg-accent/90">Medium</Button>
-                        <Button onClick={() => handleRandomQuizDifficultySelect('Hard')} size="lg" variant="destructive" className="w-full">Hard</Button>
+                 <div className="space-y-4 text-center">
+                    <Label className="font-semibold text-xl">2. Select a Difficulty</Label>
+                    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                        <Button onClick={() => handleRandomQuizDifficultySelect('Easy')} size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white text-base py-6">Easy</Button>
+                        <Button onClick={() => handleRandomQuizDifficultySelect('Medium')} size="lg" className="w-full bg-accent hover:bg-accent/90 text-base py-6">Medium</Button>
+                        <Button onClick={() => handleRandomQuizDifficultySelect('Hard')} size="lg" variant="destructive" className="w-full text-base py-6">Hard</Button>
                     </div>
                  </div>
             </CardContent>
@@ -547,3 +547,5 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
     </Card>
   );
 }
+
+    
