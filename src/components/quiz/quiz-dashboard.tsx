@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { QuizAttempt } from "@/lib/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Loader2, PlusCircle, ChevronLeft, Check, X, BookOpen, Wand2 } from "lucide-react";
 import { format } from 'date-fns';
@@ -18,6 +18,7 @@ export default function QuizDashboard() {
   const [quizHistory, setQuizHistory] = useState<QuizAttempt[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizAttempt | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const { getQuizHistory } = useAuth();
 
   const fetchDashboardData = useCallback(async () => {
@@ -110,6 +111,8 @@ export default function QuizDashboard() {
       </Card>
     )
   }
+  
+  const displayedHistory = showAllHistory ? quizHistory : quizHistory.slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -140,7 +143,7 @@ export default function QuizDashboard() {
         <CardContent>
           {quizHistory.length > 0 ? (
             <div className="space-y-3">
-              {quizHistory.map((quiz) => (
+              {displayedHistory.map((quiz) => (
                 <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted">
                   <div>
                     <h4 className="font-semibold">{quiz.topic}</h4>
@@ -165,6 +168,17 @@ export default function QuizDashboard() {
             </div>
           )}
         </CardContent>
+        {quizHistory.length > 5 && !showAllHistory && (
+          <CardFooter>
+            <Button
+              variant="link"
+              className="w-full"
+              onClick={() => setShowAllHistory(true)}
+            >
+              Show More
+            </Button>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );
