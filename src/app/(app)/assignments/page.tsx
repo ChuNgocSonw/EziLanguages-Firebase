@@ -255,9 +255,9 @@ export default function StudentAssignmentsPage() {
             <div className="space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Assigned Quizzes</CardTitle>
+                        <CardTitle>Current Assignments</CardTitle>
                         <CardDescription>
-                            Complete these quizzes to practice and show your progress.
+                            Complete these tasks to practice and show your progress.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -306,7 +306,7 @@ export default function StudentAssignmentsPage() {
                 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Assigned Quizzes History</CardTitle>
+                        <CardTitle>Assignment History</CardTitle>
                         <CardDescription>
                             Review your performance on completed assignments.
                         </CardDescription>
