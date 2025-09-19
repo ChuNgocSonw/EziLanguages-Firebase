@@ -8,8 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, BookCopy, Languages, ListChecks, Trash2, Pencil, Send } from "lucide-react";
-import type { Assignment, Class } from "@/lib/types";
+import { Loader2, PlusCircle, BookCopy, Languages, ListChecks, Trash2, Pencil, Send, Mic, Headphones } from "lucide-react";
+import type { Assignment, Class, AssignmentType } from "@/lib/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -183,6 +183,24 @@ export default function TeacherAssignmentsPage() {
       a.id === assignmentId ? { ...a, assignedClasses: newAssignedClasses } : a
     ));
   }, []);
+  
+  const getAssignmentIcon = (type: AssignmentType) => {
+    switch (type) {
+        case 'reading': return Mic;
+        case 'listening': return Headphones;
+        case 'quiz':
+        default: return BookCopy;
+    }
+  };
+
+  const getAssignmentContentCount = (assignment: Assignment) => {
+    switch (assignment.assignmentType) {
+        case 'reading': return `${assignment.readingSentences?.length || 0} sentence(s)`;
+        case 'listening': return `${assignment.listeningExercises?.length || 0} exercise(s)`;
+        case 'quiz':
+        default: return `${assignment.questions?.length || 0} questions`;
+    }
+  };
 
 
   return (
@@ -211,68 +229,71 @@ export default function TeacherAssignmentsPage() {
             </div>
           ) : assignments.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {assignments.map((assignment) => (
-                <Card key={assignment.id} className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <BookCopy className="h-5 w-5 text-primary" />
-                        {assignment.title}
-                    </CardTitle>
-                     {assignment.assignedClasses && assignment.assignedClasses.length > 0 && (
-                        <div className="pt-2">
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Assigned to:</p>
-                            <div className="flex flex-wrap gap-1">
-                                {assignment.assignedClasses.map(c => (
-                                    <Badge key={c.classId} variant="secondary">{c.className}</Badge>
-                                ))}
+              {assignments.map((assignment) => {
+                const Icon = getAssignmentIcon(assignment.assignmentType);
+                return (
+                    <Card key={assignment.id} className="flex flex-col">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Icon className="h-5 w-5 text-primary" />
+                            {assignment.title}
+                        </CardTitle>
+                        {assignment.assignedClasses && assignment.assignedClasses.length > 0 && (
+                            <div className="pt-2">
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Assigned to:</p>
+                                <div className="flex flex-wrap gap-1">
+                                    {assignment.assignedClasses.map(c => (
+                                        <Badge key={c.classId} variant="secondary">{c.className}</Badge>
+                                    ))}
+                                </div>
                             </div>
+                        )}
+                    </CardHeader>
+                    <CardContent className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Languages className="h-4 w-4" />
+                            <span>Language: {assignment.language}</span>
                         </div>
-                    )}
-                  </CardHeader>
-                  <CardContent className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Languages className="h-4 w-4" />
-                        <span>Language: {assignment.language}</span>
-                    </div>
-                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <ListChecks className="h-4 w-4" />
-                        <span>{assignment.questions.length} questions</span>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex gap-2">
-                    <AssignDialog assignment={assignment} onAssignmentAssigned={handleAssignmentUpdated} />
-                    <Button variant="secondary" className="w-full" asChild>
-                        <Link href={`/teacher/assignments/${assignment.id}/edit`}>
-                           <Pencil className="mr-2 h-4 w-4" /> Edit
-                        </Link>
-                    </Button>
-                     <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="ghost" size="icon" disabled={isDeleting === assignment.id} className="shrink-0 hover:bg-destructive/10">
-                           {isDeleting === assignment.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive hover:text-destructive" />}
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <ListChecks className="h-4 w-4" />
+                            <span>{getAssignmentContentCount(assignment)}</span>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex gap-2">
+                        <AssignDialog assignment={assignment} onAssignmentAssigned={handleAssignmentUpdated} />
+                        <Button variant="secondary" className="w-full" asChild>
+                            <Link href={`/teacher/assignments/${assignment.id}/edit`}>
+                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </Link>
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete the assignment "{assignment.title}". This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteAssignment(assignment.id)}
-                            className="bg-destructive hover:bg-destructive/90"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </CardFooter>
-                </Card>
-              ))}
+                        <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" disabled={isDeleting === assignment.id} className="shrink-0 hover:bg-destructive/10">
+                            {isDeleting === assignment.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive hover:text-destructive" />}
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete the assignment "{assignment.title}". This action cannot be undone.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={() => handleDeleteAssignment(assignment.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                            >
+                                Delete
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                        </AlertDialog>
+                    </CardFooter>
+                    </Card>
+                )
+              })}
             </div>
           ) : (
             <div className="text-center py-12">

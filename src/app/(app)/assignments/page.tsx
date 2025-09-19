@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import type { Assignment, QuizAttempt } from "@/lib/types";
 import { Loader2, BookOpen, ChevronLeft, Check, X } from "lucide-react";
-import QuizSession from "@/components/quiz/quiz-session";
+import AssignmentSession from "@/components/assignment-session";
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -95,7 +95,7 @@ export default function StudentAssignmentsPage() {
         }
     }, [fetchAssignments, selectedAssignment, reviewAttempt]);
 
-    const handleStartQuiz = (assignment: Assignment) => {
+    const handleStartAssignment = (assignment: Assignment) => {
         setSelectedAssignment(assignment);
     };
     
@@ -129,9 +129,18 @@ export default function StudentAssignmentsPage() {
         return "bg-red-100 text-red-800 border-red-300";
     }
 
+    const getContentCountText = (assignment: Assignment) => {
+        switch (assignment.assignmentType) {
+            case 'quiz': return `${assignment.questions?.length || 0} questions`;
+            case 'reading': return `${assignment.readingSentences?.length || 0} sentences`;
+            case 'listening': return `${assignment.listeningExercises?.length || 0} exercises`;
+            default: return '';
+        }
+    };
+
 
     if (selectedAssignment) {
-        return <QuizSession assignment={selectedAssignment} onQuizFinish={handleBack} />;
+        return <AssignmentSession assignment={selectedAssignment} onFinish={handleBack} />;
     }
 
     return (
@@ -158,15 +167,15 @@ export default function StudentAssignmentsPage() {
                                 </div>
                             ) : assignments.length > 0 ? (
                                 <div className="space-y-3">
-                                    {assignments.map((quiz) => {
-                                        const isCompleted = userProfile?.completedAssignments?.includes(quiz.id);
-                                        const score = completedScores[quiz.id];
+                                    {assignments.map((assignment) => {
+                                        const isCompleted = userProfile?.completedAssignments?.includes(assignment.id);
+                                        const score = completedScores[assignment.id];
                                         return (
-                                            <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
+                                            <div key={assignment.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
                                                 <div>
-                                                    <h4 className="font-semibold">{quiz.title}</h4>
-                                                    <p className="text-sm text-muted-foreground mt-1">
-                                                        {quiz.questions.length} questions &bull; Language: {quiz.language}
+                                                    <h4 className="font-semibold">{assignment.title}</h4>
+                                                    <p className="text-sm text-muted-foreground mt-1 capitalize">
+                                                        {assignment.assignmentType} &bull; {getContentCountText(assignment)}
                                                     </p>
                                                 </div>
                                                 <div className="shrink-0">
@@ -176,9 +185,9 @@ export default function StudentAssignmentsPage() {
                                                             Completed {score !== undefined && `- ${score}%`}
                                                         </Badge>
                                                     ) : (
-                                                        <Button variant="outline" size="sm" onClick={() => handleStartQuiz(quiz)}>
+                                                        <Button variant="outline" size="sm" onClick={() => handleStartAssignment(assignment)}>
                                                             <BookOpen className="mr-2 h-4 w-4" />
-                                                            Start Quiz
+                                                            Start
                                                         </Button>
                                                     )}
                                                 </div>
@@ -209,22 +218,22 @@ export default function StudentAssignmentsPage() {
                                 </div>
                             ) : completedAssignments.length > 0 ? (
                                 <div className="space-y-3">
-                                    {completedAssignments.map((quiz) => (
-                                        <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
+                                    {completedAssignments.map((assignment) => (
+                                        <div key={assignment.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
                                             <div>
-                                                <h4 className="font-semibold">{quiz.title}</h4>
-                                                <p className="text-sm text-muted-foreground mt-1">
-                                                    {quiz.questions.length} questions &bull; Language: {quiz.language}
+                                                <h4 className="font-semibold">{assignment.title}</h4>
+                                                <p className="text-sm text-muted-foreground mt-1 capitalize">
+                                                    {assignment.assignmentType} &bull; {getContentCountText(assignment)}
                                                 </p>
                                             </div>
                                             <div className="shrink-0">
                                                  <Button 
                                                     variant="outline" 
                                                     size="sm" 
-                                                    onClick={() => handleReviewAssignment(quiz.id)}
-                                                    disabled={isReviewLoading === quiz.id}
+                                                    onClick={() => handleReviewAssignment(assignment.id)}
+                                                    disabled={isReviewLoading === assignment.id}
                                                  >
-                                                    {isReviewLoading === quiz.id ? (
+                                                    {isReviewLoading === assignment.id ? (
                                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                                     ) : (
                                                         <BookOpen className="mr-2 h-4 w-4" />
