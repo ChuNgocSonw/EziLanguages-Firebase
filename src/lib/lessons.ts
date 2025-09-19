@@ -58,6 +58,42 @@ const readingUnit3: ReadingSentence[] = [
     { unit: "Unit 3: Complex Sounds", text: "Peter Piper picked a peck of pickled peppers." },
 ];
 
+const readingUnit4: ReadingSentence[] = [
+    { unit: "Unit 4: At the Restaurant", text: "Could I see the menu, please?" },
+    { unit: "Unit 4: At the Restaurant", text: "I would like to order the grilled chicken salad." },
+    { unit: "Unit 4: At the Restaurant", text: "Can we have the check, please?" },
+];
+
+const listeningUnit4: ListeningExercise[] = [
+    { id: "u4e1", type: "typing", text: "Are you ready to order?" },
+    { id: "u4e2", type: "mcq", text: "The soup of the day is tomato basil.", options: ["The soup of the day is tomato basil.", "The special of the day is fish.", "The soup is very cold today."], answer: "The soup of the day is tomato basil." },
+    { id: "u4e3", type: "typing", text: "Everything was delicious, thank you." },
+];
+
+const readingUnit5: ReadingSentence[] = [
+    { unit: "Unit 5: Hobbies and Interests", text: "In my free time, I enjoy reading books and listening to music." },
+    { unit: "Unit 5: Hobbies and Interests", text: "He plays soccer with his friends every weekend." },
+    { unit: "Unit 5: Hobbies and Interests", text: "Her favorite hobby is painting landscapes." },
+];
+
+const listeningUnit5: ListeningExercise[] = [
+    { id: "u5e1", type: "typing", text: "What do you like to do for fun?" },
+    { id: "u5e2", type: "mcq", text: "I'm going to the cinema on Saturday.", options: ["I'm going to the museum on Saturday.", "I'm going to the cinema on Saturday.", "I'm going to the park on Sunday."], answer: "I'm going to the cinema on Saturday." },
+    { id: "u5e3", type: "typing", text: "They often go hiking in the mountains." },
+];
+
+const readingUnit6: ReadingSentence[] = [
+    { unit: "Unit 6: Travel and Directions", text: "Excuse me, how do I get to the train station?" },
+    { unit: "Unit 6: Travel and Directions", text: "Our flight is scheduled to depart at ten o'clock." },
+    { unit: "Unit 6: Travel and Directions", text: "You should take the second left and then go straight ahead." },
+];
+
+const listeningUnit6: ListeningExercise[] = [
+    { id: "u6e1", type: "mcq", text: "Turn right at the next corner.", options: ["Turn left at the next corner.", "Go straight at the next corner.", "Turn right at the next corner."], answer: "Turn right at the next corner." },
+    { id: "u6e2", type: "typing", text: "The museum is opposite the park." },
+    { id: "u6e3", type: "typing", text: "We need to book a hotel for our vacation." },
+];
+
 
 export const lessonsData: Lesson[] = [
     {
@@ -101,6 +137,54 @@ export const lessonsData: Lesson[] = [
         activities: {
             reading: readingUnit3,
             // No listening exercises for this unit yet
+        }
+    },
+    {
+        id: "unit4",
+        unit: "Unit 4: At the Restaurant",
+        content: `
+            - Could I see the menu, please?
+            - I would like to order the grilled chicken salad.
+            - Can we have the check, please?
+            - Are you ready to order?
+            - The soup of the day is tomato basil.
+            - Everything was delicious, thank you.
+        `,
+        activities: {
+            reading: readingUnit4,
+            listening: listeningUnit4,
+        }
+    },
+    {
+        id: "unit5",
+        unit: "Unit 5: Hobbies and Interests",
+        content: `
+            - In my free time, I enjoy reading books and listening to music.
+            - He plays soccer with his friends every weekend.
+            - Her favorite hobby is painting landscapes.
+            - What do you like to do for fun?
+            - I'm going to the cinema on Saturday.
+            - They often go hiking in the mountains.
+        `,
+        activities: {
+            reading: readingUnit5,
+            listening: listeningUnit5,
+        }
+    },
+    {
+        id: "unit6",
+        unit: "Unit 6: Travel and Directions",
+        content: `
+            - Excuse me, how do I get to the train station?
+            - Our flight is scheduled to depart at ten o'clock.
+            - You should take the second left and then go straight ahead.
+            - Turn right at the next corner.
+            - The museum is opposite the park.
+            - We need to book a hotel for our vacation.
+        `,
+        activities: {
+            reading: readingUnit6,
+            listening: listeningUnit6,
         }
     }
 ];
