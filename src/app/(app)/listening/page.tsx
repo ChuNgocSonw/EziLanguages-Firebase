@@ -5,11 +5,11 @@ import * as React from "react"
 import { useState } from "react";
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Volume2, CheckCircle, XCircle, Loader2, ChevronLeft, BookCheck, Star } from "lucide-react";
+import { Volume2, CheckCircle, XCircle, Loader2, ChevronLeft, BookCheck, Star, ArrowLeft } from "lucide-react";
 import { generateAudio } from "@/lib/actions";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
@@ -18,83 +18,176 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { lessonsData } from "@/lib/lessons";
 import type { ListeningExercise } from "@/lib/lessons";
+import type { Assignment } from "@/lib/types";
 
-export default function ListeningPage() {
-    const [activeExercise, setActiveExercise] = useState<ListeningExercise | null>(null);
+// Reusable component for a single listening exercise
+function ExerciseInterface({ exercise, onCorrect, onIncorrect }: {
+    exercise: ListeningExercise;
+    onCorrect: () => void;
+    onIncorrect: (correctAnswer: string) => void;
+}) {
     const [answer, setAnswer] = useState("");
-    const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
     const { toast } = useToast();
-    const { userProfile, saveListeningScore } = useAuth();
 
     const handlePlayAudio = async () => {
-        if (!activeExercise) return;
         if (audioUrl) {
-            const audio = new Audio(audioUrl);
-            audio.play();
+            new Audio(audioUrl).play();
             return;
         }
-
         setIsGeneratingAudio(true);
         try {
-            const response = await generateAudio(activeExercise.text);
+            const response = await generateAudio(exercise.text);
             if (response.media) {
                 setAudioUrl(response.media);
-                const audio = new Audio(response.media);
-                audio.play();
+                new Audio(response.media).play();
             }
-        } catch (error: any) {
-            console.error("Audio generation failed:", error);
-             if (error.message && error.message.includes('overloaded')) {
-                toast({
-                    title: "AI is busy",
-                    description: "The AI is currently overloaded. Please try again in a moment.",
-                    variant: "destructive",
-                });
-            } else {
-                toast({
-                    title: "Audio Generation Failed",
-                    description: "Could not generate audio for this sentence. Please try again.",
-                    variant: "destructive",
-                });
-            }
+        } catch (error) {
+            toast({ title: "Audio Generation Failed", variant: "destructive" });
         } finally {
             setIsGeneratingAudio(false);
         }
     };
+
+    const checkAnswer = () => {
+        const correctAnswer = exercise.type === 'typing' ? exercise.text : exercise.answer!;
+        if (answer.trim().toLowerCase() === correctAnswer.toLowerCase()) {
+            onCorrect();
+        } else {
+            onIncorrect(correctAnswer);
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <p>Click the button to listen, then complete the task below.</p>
+            <Button variant="outline" onClick={handlePlayAudio} disabled={isGeneratingAudio}>
+                {isGeneratingAudio ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Volume2 className="mr-2 h-5 w-5" />}
+                {audioUrl ? "Play Again" : "Play Audio"}
+            </Button>
+            {exercise.type === 'typing' && (
+                <Input placeholder="Type what you hear..." value={answer} onChange={(e) => setAnswer(e.target.value)} />
+            )}
+            {exercise.type === 'mcq' && (
+                <RadioGroup value={answer} onValueChange={setAnswer}>
+                    {exercise.options.map((option, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                            <RadioGroupItem value={option} id={`option-${index}`} />
+                            <Label htmlFor={`option-${index}`}>{option}</Label>
+                        </div>
+                    ))}
+                </RadioGroup>
+            )}
+            <div className="pt-2">
+               <Button onClick={checkAnswer} disabled={!answer} className="bg-accent hover:bg-accent/90">Check Answer</Button>
+            </div>
+        </div>
+    );
+}
+
+// Component for assignment mode
+export function ListeningAssignmentSession({ assignment, onFinish }: { assignment: Assignment; onFinish: () => void; }) {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [completedExercises, setCompletedExercises] = useState<string[]>([]);
+    const [result, setResult] = useState<{ status: 'correct' | 'incorrect'; message: string } | null>(null);
+    const { saveListeningScore } = useAuth();
+    const { toast } = useToast();
+
+    const currentExercise = assignment.listeningExercises?.[currentIndex];
+
+    const handleNext = async () => {
+        if (currentExercise && !completedExercises.includes(currentExercise.id)) {
+            // Save score but don't award XP in assignment mode.
+            await saveListeningScore(currentExercise.id, result?.status === 'correct', false);
+            setCompletedExercises(prev => [...prev, currentExercise.id]);
+        }
+        setResult(null);
+        if (currentIndex < (assignment.listeningExercises?.length || 0) - 1) {
+            setCurrentIndex(prev => prev + 1);
+        } else {
+            toast({ title: "Assignment Section Complete!", description: "You've finished all listening exercises." });
+            onFinish();
+        }
+    };
+
+    const handleCorrect = () => {
+        setResult({ status: 'correct', message: 'Correct! Well done.' });
+    };
+
+    const handleIncorrect = (correctAnswer: string) => {
+        setResult({ status: 'incorrect', message: `Not quite. The correct answer was: "${correctAnswer}"` });
+    };
     
-    const checkAnswer = async () => {
+    if (!currentExercise) {
+        return (
+            <Card>
+                <CardHeader><CardTitle>Assignment Complete</CardTitle></CardHeader>
+                <CardContent><p>You have completed all the listening exercises for this assignment.</p></CardContent>
+                <CardFooter><Button onClick={onFinish}>Return to Assignments</Button></CardFooter>
+            </Card>
+        )
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex items-center justify-between">
+                    <CardTitle>Listening Assignment: {assignment.title}</CardTitle>
+                     <Button variant="outline" onClick={onFinish}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Assignments</Button>
+                </div>
+                <CardDescription>Exercise {currentIndex + 1} of {assignment.listeningExercises?.length}</CardDescription>
+                <Progress value={((currentIndex + 1) / (assignment.listeningExercises?.length || 1)) * 100} />
+            </CardHeader>
+            <CardContent>
+                {!result ? (
+                    <ExerciseInterface exercise={currentExercise} onCorrect={handleCorrect} onIncorrect={handleIncorrect} />
+                ) : (
+                    <div className="space-y-4">
+                        <div className={`flex items-center ${result.status === 'correct' ? 'text-green-600' : 'text-destructive'}`}>
+                            {result.status === 'correct' ? <CheckCircle className="mr-2 h-5 w-5" /> : <XCircle className="mr-2 h-5 w-5" />}
+                            {result.message}
+                        </div>
+                        <Button onClick={handleNext}>
+                            {currentIndex < (assignment.listeningExercises?.length || 0) - 1 ? "Next Exercise" : "Finish"}
+                        </Button>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+
+// Main page component (Practice Mode)
+export default function ListeningPage() {
+    const [activeExercise, setActiveExercise] = useState<ListeningExercise | null>(null);
+    const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
+    const { toast } = useToast();
+    const { userProfile, saveListeningScore } = useAuth();
+
+    const handleCorrect = async () => {
         if (!activeExercise) return;
-        let isCorrect = false;
-        if (activeExercise.type === 'typing') {
-            isCorrect = answer.trim().toLowerCase() === activeExercise.text.toLowerCase();
-        } else if (activeExercise.type === 'mcq') {
-            isCorrect = answer === activeExercise.answer;
+        setResult("correct");
+        const xpGained = await saveListeningScore(activeExercise.id, true);
+        if (xpGained > 0) {
+            toast({ title: "Correct!", description: `You've earned ${xpGained} XP.` });
         }
-        setResult(isCorrect ? "correct" : "incorrect");
-        if (isCorrect) {
-            const xpGained = await saveListeningScore(activeExercise.id, true);
-            if (xpGained > 0) {
-                 toast({
-                    title: "Correct!",
-                    description: `You've earned ${xpGained} XP.`,
-                });
-            }
-        }
+    };
+
+    const handleIncorrect = () => {
+        setResult("incorrect");
     };
 
     const handleSelectExercise = (exercise: ListeningExercise) => {
         setActiveExercise(exercise);
-        setAnswer("");
         setResult(null);
-        setAudioUrl(null);
     };
     
     const handleBackToList = () => {
         setActiveExercise(null);
     }
-
+    
     const getUnitProgress = (unitExercises: ListeningExercise[]) => {
         if (!userProfile?.listeningScores) return 0;
         const completedCount = unitExercises.filter(exercise => 
@@ -103,11 +196,9 @@ export default function ListeningPage() {
         return (completedCount / unitExercises.length) * 100;
     }
 
-    const renderExercise = () => {
-        if (!activeExercise) return null;
-
+    if (activeExercise) {
         return (
-            <Card>
+             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" onClick={handleBackToList}>
@@ -116,32 +207,10 @@ export default function ListeningPage() {
                         <CardTitle>Listening Exercise</CardTitle>
                     </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                     <p>Click the button to listen, then complete the task below.</p>
-                     <Button variant="outline" onClick={handlePlayAudio} disabled={isGeneratingAudio}>
-                        {isGeneratingAudio ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Volume2 className="mr-2 h-5 w-5" />}
-                        {audioUrl ? "Play Again" : "Play Audio"}
-                     </Button>
-                    {activeExercise.type === 'typing' && (
-                        <Input
-                            placeholder="Type what you hear..."
-                            value={answer}
-                            onChange={(e) => { setAnswer(e.target.value); setResult(null); }}
-                        />
-                    )}
-                    {activeExercise.type === 'mcq' && (
-                        <RadioGroup value={answer} onValueChange={(value) => { setAnswer(value); setResult(null); }}>
-                            {(activeExercise).options.map((option, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                    <RadioGroupItem value={option} id={`option-${index}`} />
-                                    <Label htmlFor={`option-${index}`}>{option}</Label>
-                                </div>
-                            ))}
-                        </RadioGroup>
-                    )}
+                <CardContent>
+                    <ExerciseInterface exercise={activeExercise} onCorrect={handleCorrect} onIncorrect={handleIncorrect} />
                 </CardContent>
-                <CardFooter className="flex-col items-start gap-4">
-                    <Button onClick={checkAnswer} disabled={!answer} className="bg-accent hover:bg-accent/90">Check Answer</Button>
+                 <CardFooter className="flex-col items-start gap-4">
                     {result === 'correct' && <div className="flex items-center text-green-600"><CheckCircle className="mr-2 h-5 w-5" /> Correct! Well done.</div>}
                     {result === 'incorrect' && (
                          <div className="flex items-center text-destructive">
@@ -151,11 +220,15 @@ export default function ListeningPage() {
                     )}
                 </CardFooter>
             </Card>
-        );
+        )
     }
 
-    const renderLessonList = () => {
-        return (
+    return (
+        <>
+            <PageHeader
+                title="Listening Practice"
+                description="Listen to the audio and complete the exercises to test your comprehension."
+            />
             <Card>
                 <CardHeader>
                     <CardTitle>Choose a Lesson</CardTitle>
@@ -206,16 +279,6 @@ export default function ListeningPage() {
                     </Accordion>
                 </CardContent>
             </Card>
-        );
-    }
-
-    return (
-        <>
-            <PageHeader
-                title="Listening Practice"
-                description="Listen to the audio and complete the exercises to test your comprehension."
-            />
-            {activeExercise ? renderExercise() : renderLessonList()}
         </>
     );
 }
