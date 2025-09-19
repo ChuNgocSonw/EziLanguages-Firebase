@@ -58,14 +58,14 @@ For each exercise, you MUST generate a unique ID.
 
 **Instructions for each exercise type:**
 - **'typing'**:
-  - `type`: Must be "typing".
-  - `text`: The full English sentence the student will hear and be asked to type.
+  - \`type\`: Must be "typing".
+  - \`text\`: The full English sentence the student will hear and be asked to type.
 
 - **'mcq'**:
-  - `type`: Must be "mcq".
-  - `text`: The primary English sentence the student will hear.
-  - `options`: An array of exactly 3 string options. One option must be the correct answer (or a very close paraphrase of the `text`). The other two options should be plausible but incorrect distractors.
-  - `answer`: The correct option from the `options` array.
+  - \`type\`: Must be "mcq".
+  - \`text\`: The primary English sentence the student will hear.
+  - \`options\`: An array of exactly 3 string options. One option must be the correct answer (or a very close paraphrase of the \`text\`). The other two options should be plausible but incorrect distractors.
+  - \`answer\`: The correct option from the \`options\` array.
 
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
