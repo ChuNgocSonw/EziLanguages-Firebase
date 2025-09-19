@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 import type { Timestamp } from "firebase/firestore";
 import type { ReadingSentence, ListeningExercise } from "./lessons";
@@ -194,5 +193,3 @@ export const GenerateFeedbackInputSchema = z.object({
   }).describe("A collection of the student's performance data across different activities."),
 });
 export type GenerateFeedbackInput = z.infer<typeof GenerateFeedbackInputSchema>;
-
-    
