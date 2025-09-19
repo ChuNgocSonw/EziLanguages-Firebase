@@ -286,13 +286,13 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                     <div key={q.id || index} className="p-3 border rounded-md bg-muted/30 relative">
                         <p className="font-medium pr-8">{q.question}</p>
                         {q.options && q.options.length > 0 && (
-                            <ul className="mt-2 space-y-1 text-sm">
+                            <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
                                 {q.options.map((opt, i) => (
                                     <li key={i} className={cn(
-                                        "pl-4",
+                                        "pl-2",
                                         opt === q.answer ? "font-semibold text-green-700" : ""
                                     )}>
-                                        - {opt}
+                                        {opt}
                                     </li>
                                 ))}
                             </ul>
@@ -537,3 +537,4 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     
 
     
+
