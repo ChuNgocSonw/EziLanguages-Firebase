@@ -94,6 +94,54 @@ const listeningUnit6: ListeningExercise[] = [
     { id: "u6e3", type: "typing", text: "We need to book a hotel for our vacation." },
 ];
 
+const readingUnit7: ReadingSentence[] = [
+    { unit: "Unit 7: Health and Wellness", text: "Eating a balanced diet is essential for good health." },
+    { unit: "Unit 7: Health and Wellness", text: "Regular exercise can help reduce stress and improve your mood." },
+    { unit: "Unit 7: Health and Wellness", text: "It is important to get at least eight hours of sleep every night." },
+];
+
+const listeningUnit7: ListeningExercise[] = [
+    { id: "u7e1", type: "typing", text: "You should drink plenty of water throughout the day." },
+    { id: "u7e2", type: "mcq", text: "The doctor recommended taking the medicine twice a day.", options: ["The doctor recommended taking the medicine twice a day.", "The nurse suggested taking a short walk.", "The medicine should be taken once a day."], answer: "The doctor recommended taking the medicine twice a day." },
+    { id: "u7e3", type: "typing", text: "He has an appointment with the dentist tomorrow." },
+];
+
+const readingUnit8: ReadingSentence[] = [
+    { unit: "Unit 8: Technology in Daily Life", text: "Smartphones have completely changed the way we communicate." },
+    { unit: "Unit 8: Technology in Daily Life", text: "The internet provides access to a vast amount of information." },
+    { unit: "Unit 8: Technology in Daily Life", text: "Artificial intelligence is becoming more integrated into our daily routines." },
+];
+
+const listeningUnit8: ListeningExercise[] = [
+    { id: "u8e1", type: "typing", text: "Please charge your laptop before the meeting." },
+    { id: "u8e2", type: "mcq", text: "She uses her tablet to read e-books and watch videos.", options: ["He uses his computer for gaming.", "She uses her tablet to read e-books and watch videos.", "They watch videos on the television."], answer: "She uses her tablet to read e-books and watch videos." },
+    { id: "u8e3", type: "typing", text: "Could you please send me the file via email?" },
+];
+
+const readingUnit9: ReadingSentence[] = [
+    { unit: "Unit 9: Nature and Environment", text: "Protecting our planet's natural resources is a global responsibility." },
+    { unit: "Unit 9: Nature and Environment", text: "Recycling helps to reduce waste and conserve energy." },
+    { unit: "Unit 9: Nature and Environment", text: "Many species are endangered due to habitat loss and climate change." },
+];
+
+const listeningUnit9: ListeningExercise[] = [
+    { id: "u9e1", type: "typing", text: "We went for a long hike in the forest on Saturday." },
+    { id: "u9e2", type: "mcq", text: "The government announced a new policy to combat pollution.", options: ["The government announced a new policy to combat pollution.", "The company started a new recycling program.", "The school organized a tree-planting event."], answer: "The government announced a new policy to combat pollution." },
+    { id: "u9e3", type: "typing", text: "Planting more trees can help improve air quality." },
+];
+
+const readingUnit10: ReadingSentence[] = [
+    { unit: "Unit 10: Shopping and Fashion", text: "I'm looking for a new pair of shoes for the party." },
+    { unit: "Unit 10: Shopping and Fashion", text: "This shirt is on sale for twenty percent off." },
+    { unit: "Unit 10: Shopping and Fashion", text: "Do you have this dress in a smaller size?" },
+];
+
+const listeningUnit10: ListeningExercise[] = [
+    { id: "u10e1", type: "typing", text: "I would like to return this item, please." },
+    { id: "u10e2", type: "mcq", text: "The fitting rooms are on the left.", options: ["The cashier is on the right.", "The fitting rooms are on the left.", "The exit is straight ahead."], answer: "The fitting rooms are on the left." },
+    { id: "u10e3", type: "typing", text: "You can pay with a credit card or cash." },
+];
+
 
 export const lessonsData: Lesson[] = [
     {
@@ -185,6 +233,66 @@ export const lessonsData: Lesson[] = [
         activities: {
             reading: readingUnit6,
             listening: listeningUnit6,
+        }
+    },
+    {
+        id: "unit7",
+        unit: "Unit 7: Health and Wellness",
+        content: `
+            - Eating a balanced diet is essential for good health.
+            - Regular exercise can help reduce stress and improve your mood.
+            - It is important to get at least eight hours of sleep every night.
+            - You should drink plenty of water throughout the day.
+            - He has an appointment with the dentist tomorrow.
+        `,
+        activities: {
+            reading: readingUnit7,
+            listening: listeningUnit7,
+        }
+    },
+    {
+        id: "unit8",
+        unit: "Unit 8: Technology in Daily Life",
+        content: `
+            - Smartphones have completely changed the way we communicate.
+            - The internet provides access to a vast amount of information.
+            - Artificial intelligence is becoming more integrated into our daily routines.
+            - Please charge your laptop before the meeting.
+            - Could you please send me the file via email?
+        `,
+        activities: {
+            reading: readingUnit8,
+            listening: listeningUnit8,
+        }
+    },
+    {
+        id: "unit9",
+        unit: "Unit 9: Nature and Environment",
+        content: `
+            - Protecting our planet's natural resources is a global responsibility.
+            - Recycling helps to reduce waste and conserve energy.
+            - Many species are endangered due to habitat loss and climate change.
+            - We went for a long hike in the forest on Saturday.
+            - Planting more trees can help improve air quality.
+        `,
+        activities: {
+            reading: readingUnit9,
+            listening: listeningUnit9,
+        }
+    },
+    {
+        id: "unit10",
+        unit: "Unit 10: Shopping and Fashion",
+        content: `
+            - I'm looking for a new pair of shoes for the party.
+            - This shirt is on sale for twenty percent off.
+            - Do you have this dress in a smaller size?
+            - I would like to return this item, please.
+            - You can pay with a credit card or cash.
+        `,
+        activities: {
+            reading: readingUnit10,
+            listening: listeningUnit10,
         }
     }
 ];
