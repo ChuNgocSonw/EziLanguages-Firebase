@@ -282,7 +282,25 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                 <h4 className="font-medium text-center mb-2">Available AI-Generated Questions</h4>
                 {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
                 {!isGenerating && availableAiQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
-                {availableAiQuestions.map((q, index) => (<div key={q.id || index} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{q.question}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddQuestionToSelection(index)}><PlusCircle className="h-4 w-4" /></Button></div>))}
+                {availableAiQuestions.map((q, index) => (
+                    <div key={q.id || index} className="p-3 border rounded-md bg-muted/30 relative">
+                        <p className="font-medium pr-8">{q.question}</p>
+                        {q.options && q.options.length > 0 && (
+                            <ul className="mt-2 space-y-1 text-sm">
+                                {q.options.map((opt, i) => (
+                                    <li key={i} className={cn(
+                                        "pl-4",
+                                        opt === q.answer ? "font-semibold text-green-700" : ""
+                                    )}>
+                                        - {opt}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                         {q.type !== 'multiple-choice' && <p className="text-sm font-semibold text-green-700 mt-1">Answer: {q.answer}</p>}
+                        <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddQuestionToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
+                    </div>
+                ))}
             </div>
             <ManualQuestionForm onAddQuestion={handleAddManualQuestion} />
         </div>
