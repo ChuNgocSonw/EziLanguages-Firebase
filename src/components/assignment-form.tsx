@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, Wand2, Save, ArrowRight, PlusCircle, Trash2, BookCheck, Mic, Headphones } from "lucide-react";
-import { generateQuizQuestions } from "@/lib/actions";
+import { generateQuizQuestions, generateReadingSentences } from "@/lib/actions";
 import { QuizQuestion, QuizQuestionSchema, QuestionType, Assignment, AssignmentType, ReadingSentence, ListeningExercise } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,14 @@ const generationSchema = z.object({
     questionType: z.enum(['multiple-choice', 'true-false', 'fill-in-the-blank']),
 });
 type GenerationFormData = z.infer<typeof generationSchema>;
+
+const readingGenerationSchema = z.object({
+    topic: z.string().min(3, "Topic must be at least 3 characters."),
+    difficulty: z.enum(["Easy", "Medium", "Hard"]),
+    numberOfSentences: z.coerce.number().min(1, "Must be at least 1 sentence.").max(10, "Cannot exceed 10 sentences."),
+});
+type ReadingGenerationFormData = z.infer<typeof readingGenerationSchema>;
+
 
 const manualQuestionSchema = z.object({
     type: z.enum(['multiple-choice', 'true-false', 'fill-in-the-blank']),
@@ -120,9 +128,10 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
 
   const [isSaving, setIsSaving] = useState(false);
   
-  // State for Quiz Content
+  // Content States
   const [isGenerating, setIsGenerating] = useState(false);
   const [availableAiQuestions, setAvailableAiQuestions] = useState<QuizQuestion[]>([]);
+  const [availableAiSentences, setAvailableAiSentences] = useState<ReadingSentence[]>([]);
   
   const detailsForm = useForm<DetailsFormData>({ 
       resolver: zodResolver(detailsSchema), 
@@ -136,6 +145,11 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const generationForm = useForm<GenerationFormData>({ 
       resolver: zodResolver(generationSchema), 
       defaultValues: { topic: "", difficulty: "Medium", numberOfQuestions: 5, questionType: 'multiple-choice' }
+  });
+
+  const readingGenerationForm = useForm<ReadingGenerationFormData>({ 
+      resolver: zodResolver(readingGenerationSchema), 
+      defaultValues: { topic: "", difficulty: "Medium", numberOfSentences: 5 }
   });
 
   const contentForm = useForm({
@@ -175,6 +189,20 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
       toast({ title: "Generation Failed", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally { setIsGenerating(false); }
   };
+
+  const handleGenerateSentences = async (data: ReadingGenerationFormData) => {
+    setIsGenerating(true);
+    setAvailableAiSentences([]);
+    try {
+      toast({ title: "Generating Sentences...", description: "Please wait while the AI creates the reading sentences." });
+      const generated = await generateReadingSentences(data);
+      if (!generated || generated.length === 0) throw new Error("The AI failed to generate sentences for this topic.");
+      setAvailableAiSentences(generated);
+    } catch (error: any) {
+      console.error("Failed to generate sentences:", error);
+      toast({ title: "Generation Failed", description: error.message || "An unexpected error occurred.", variant: "destructive" });
+    } finally { setIsGenerating(false); }
+  };
   
   const handleAddQuestionToSelection = (index: number) => {
     const question = availableAiQuestions[index];
@@ -189,6 +217,22 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
         setAvailableAiQuestions(prev => [...prev, removedQuestion]);
     }
   };
+
+  const handleAddSentenceToSelection = (index: number) => {
+    const sentence = availableAiSentences[index];
+    appendReading(sentence);
+    setAvailableAiSentences(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleRemoveSentenceFromSelection = (index: number) => {
+    const removedSentence = readingFields[index] as any;
+    removeReading(index);
+    // If it was an AI sentence, add it back to the available list
+    if (availableAiSentences.every(s => s.text !== removedSentence.text)) {
+      setAvailableAiSentences(prev => [...prev, removedSentence]);
+    }
+  };
+
 
   const handleAddManualQuestion = (question: QuizQuestion) => {
     if (quizFields.some(q => q.question === question.question)) {
@@ -310,7 +354,37 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const ReadingBuilder = () => {
     const form = useForm<ManualReadingFormData>({ resolver: zodResolver(manualReadingSchema), defaultValues: { unit: "", text: "" } });
     const handleAdd = (data: ManualReadingFormData) => { handleAddManualReading(data); form.reset(); };
-    return (<Card><CardHeader><CardTitle>Add Reading Sentence</CardTitle><CardDescription>Add sentences one by one for the reading assignment.</CardDescription></CardHeader><Form {...form}><form onSubmit={form.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={form.control} name="unit" render={({ field }) => (<FormItem><FormLabel>Unit / Topic</FormLabel><FormControl><Input placeholder="e.g., Unit 1: Greetings" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence</FormLabel><FormControl><Textarea placeholder="Enter the sentence students will read." {...field} /></FormControl><FormMessage /></FormItem>)} /></CardContent><CardFooter><Button type="submit"><PlusCircle className="mr-2 h-4 w-4" /> Add Sentence</Button></CardFooter></form></Form></Card>);
+    return (<>
+        <Card>
+            <Form {...readingGenerationForm}>
+                <form onSubmit={readingGenerationForm.handleSubmit(handleGenerateSentences)}>
+                    <CardHeader><CardTitle>Generate with AI</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField control={readingGenerationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Sentence Topic</FormLabel><FormControl><Input placeholder="e.g., Ordering food at a restaurant" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField control={readingGenerationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={readingGenerationForm.control} name="numberOfSentences" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        </div>
+                    </CardContent>
+                    <CardFooter><Button type="submit" disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Sentences"}</Button></CardFooter>
+                </form>
+            </Form>
+        </Card>
+        <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
+             <div className="p-4 border rounded-md min-h-[200px] space-y-3">
+                <h4 className="font-medium text-center mb-2">Available AI-Generated Sentences</h4>
+                {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
+                {!isGenerating && availableAiSentences.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated sentences will appear here.</p></div>)}
+                {availableAiSentences.map((s, index) => (
+                    <div key={index} className="p-3 border rounded-md bg-muted/30 relative">
+                        <p className="font-medium pr-8">{`• ${s.text}`}</p>
+                        <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddSentenceToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
+                    </div>
+                ))}
+            </div>
+            <Card><CardHeader><CardTitle>Add Reading Sentence Manually</CardTitle><CardDescription>Add sentences one by one for the reading assignment.</CardDescription></CardHeader><Form {...form}><form onSubmit={form.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={form.control} name="unit" render={({ field }) => (<FormItem><FormLabel>Unit / Topic</FormLabel><FormControl><Input placeholder="e.g., Unit 1: Greetings" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence</FormLabel><FormControl><Textarea placeholder="Enter the sentence students will read." {...field} /></FormControl><FormMessage /></FormItem>)} /></CardContent><CardFooter><Button type="submit"><PlusCircle className="mr-2 h-4 w-4" /> Add Sentence</Button></CardFooter></form></Form></Card>
+        </div>
+    </>);
   };
 
   const ListeningBuilder = () => {
@@ -429,7 +503,6 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   }
   
   const renderSelectedContent = () => {
-    const field = quizFields[0] as any; // Helper for type inference
     switch (assignmentDetails?.assignmentType) {
         case 'quiz':
             return quizFields.length > 0 ? quizFields.map((field, index) => (
@@ -455,11 +528,11 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
             )) : <EmptyContentPlaceholder icon={BookCheck} text="Your chosen questions will appear here." />;
         case 'reading':
             return readingFields.length > 0 ? readingFields.map((field, index) => (
-                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{(field as any).text}</p><p className="text-sm text-muted-foreground">Unit: {(field as any).unit}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => removeReading(index)}><Trash2 className="h-4 w-4" /></Button></div>
+                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{`• ${(field as any).text}`}</p><p className="text-sm text-muted-foreground">Unit: {(field as any).unit}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => handleRemoveSentenceFromSelection(index)}><Trash2 className="h-4 w-4" /></Button></div>
             )) : <EmptyContentPlaceholder icon={Mic} text="Your chosen reading sentences will appear here." />;
         case 'listening':
             return listeningFields.length > 0 ? listeningFields.map((field, index) => (
-                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{(field as any).text}</p><p className="text-sm text-muted-foreground">Type: {(field as any).type}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => removeListening(index)}><Trash2 className="h-4 w-4" /></Button></div>
+                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{`• ${(field as any).text}`}</p><p className="text-sm text-muted-foreground">Type: {(field as any).type}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => removeListening(index)}><Trash2 className="h-4 w-4" /></Button></div>
             )) : <EmptyContentPlaceholder icon={Headphones} text="Your chosen listening exercises will appear here." />;
         default: return null;
     }
@@ -552,11 +625,3 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     </>
   );
 }
-
-    
-
-    
-
-
-
-    

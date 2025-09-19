@@ -6,3 +6,4 @@ import '@/ai/flows/chatbot-grammar-correction.ts';
 import '@/ai/flows/pronunciation-analysis.ts';
 import '@/ai/flows/text-to-speech.ts';
 import '@/ai/flows/generate-feedback.ts';
+import '@/ai/flows/generate-reading-sentences.ts';

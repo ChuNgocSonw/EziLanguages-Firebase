@@ -6,12 +6,15 @@ import { chatWithTutor as chatWithTutorFlow } from "@/ai/flows/chatbot-grammar-c
 import { analyzePronunciation as analyzePronunciationFlow } from "@/ai/flows/pronunciation-analysis";
 import { generateAudio as generateAudioFlow } from "@/ai/flows/text-to-speech";
 import { generateFeedback as generateFeedbackFlow } from "@/ai/flows/generate-feedback";
+import { generateReadingSentences as generateReadingSentencesFlow } from "@/ai/flows/generate-reading-sentences";
+
 
 import type { GenerateQuizQuestionsInput, GenerateQuizQuestionsOutput } from "@/ai/flows/generate-quiz-questions";
 import type { ChatWithTutorInput, ChatWithTutorOutput } from "@/ai/flows/chatbot-grammar-correction";
 import type { PronunciationAnalysisInput } from "@/ai/flows/pronunciation-analysis";
 import type { GenerateFeedbackInput, GenerateFeedbackOutput } from "@/ai/flows/generate-feedback";
 import type { PronunciationAttempt } from "@/lib/types";
+import type { GenerateReadingSentencesInput, GenerateReadingSentencesOutput } from "@/ai/flows/generate-reading-sentences";
 
 
 export async function generateQuizQuestions(input: GenerateQuizQuestionsInput): Promise<GenerateQuizQuestionsOutput> {
@@ -37,4 +40,8 @@ export async function generateFeedback(input: GenerateFeedbackInput): Promise<Ge
     // This server action now receives the complete performance data from the client
     // and passes it directly to the Genkit flow for analysis.
     return generateFeedbackFlow(input);
+}
+
+export async function generateReadingSentences(input: GenerateReadingSentencesInput): Promise<GenerateReadingSentencesOutput> {
+  return generateReadingSentencesFlow(input);
 }
