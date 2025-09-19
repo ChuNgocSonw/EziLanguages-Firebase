@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, Wand2, Save, ArrowRight, PlusCircle, Trash2, BookCheck, Mic, Headphones } from "lucide-react";
-import { generateQuizQuestions, generateReadingSentences } from "@/lib/actions";
+import { generateQuizQuestions, generateReadingSentences, generateListeningExercises } from "@/lib/actions";
 import { QuizQuestion, QuizQuestionSchema, QuestionType, Assignment, AssignmentType, ReadingSentence, ListeningExercise } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -60,6 +60,13 @@ const readingGenerationSchema = z.object({
     numberOfSentences: z.coerce.number().min(1, "Must be at least 1 sentence.").max(10, "Cannot exceed 10 sentences."),
 });
 type ReadingGenerationFormData = z.infer<typeof readingGenerationSchema>;
+
+const listeningGenerationSchema = z.object({
+    topic: z.string().min(3, "Topic must be at least 3 characters."),
+    difficulty: z.enum(["Easy", "Medium", "Hard"]),
+    numberOfExercises: z.coerce.number().min(1, "Must be at least 1 exercise.").max(10, "Cannot exceed 10 exercises."),
+});
+type ListeningGenerationFormData = z.infer<typeof listeningGenerationSchema>;
 
 
 const manualQuestionSchema = z.object({
@@ -132,6 +139,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const [isGenerating, setIsGenerating] = useState(false);
   const [availableAiQuestions, setAvailableAiQuestions] = useState<QuizQuestion[]>([]);
   const [availableAiSentences, setAvailableAiSentences] = useState<ReadingSentence[]>([]);
+  const [availableAiExercises, setAvailableAiExercises] = useState<ListeningExercise[]>([]);
   
   const detailsForm = useForm<DetailsFormData>({ 
       resolver: zodResolver(detailsSchema), 
@@ -150,6 +158,11 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const readingGenerationForm = useForm<ReadingGenerationFormData>({ 
       resolver: zodResolver(readingGenerationSchema), 
       defaultValues: { topic: "", difficulty: "Medium", numberOfSentences: 5 }
+  });
+
+   const listeningGenerationForm = useForm<ListeningGenerationFormData>({ 
+      resolver: zodResolver(listeningGenerationSchema), 
+      defaultValues: { topic: "", difficulty: "Medium", numberOfExercises: 5 }
   });
 
   const contentForm = useForm({
@@ -203,6 +216,20 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
       toast({ title: "Generation Failed", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally { setIsGenerating(false); }
   };
+
+  const handleGenerateExercises = async (data: ListeningGenerationFormData) => {
+    setIsGenerating(true);
+    setAvailableAiExercises([]);
+    try {
+      toast({ title: "Generating Exercises...", description: "Please wait while the AI creates the listening exercises." });
+      const generated = await generateListeningExercises(data);
+      if (!generated || generated.length === 0) throw new Error("The AI failed to generate exercises for this topic.");
+      setAvailableAiExercises(generated);
+    } catch (error: any) {
+      console.error("Failed to generate exercises:", error);
+      toast({ title: "Generation Failed", description: error.message || "An unexpected error occurred.", variant: "destructive" });
+    } finally { setIsGenerating(false); }
+  };
   
   const handleAddQuestionToSelection = (index: number) => {
     const question = availableAiQuestions[index];
@@ -231,6 +258,18 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     if (availableAiSentences.every(s => s.text !== removedSentence.text)) {
       setAvailableAiSentences(prev => [...prev, removedSentence]);
     }
+  };
+
+  const handleAddExerciseToSelection = (index: number) => {
+    const exercise = availableAiExercises[index];
+    appendListening(exercise);
+    setAvailableAiExercises(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveExerciseFromSelection = (index: number) => {
+    const removedExercise = listeningFields[index] as any;
+    removeListening(index);
+    setAvailableAiExercises(prev => [...prev, removedExercise]);
   };
 
 
@@ -388,11 +427,43 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   };
 
   const ListeningBuilder = () => {
-    const form = useForm<ManualListeningFormData>({ resolver: zodResolver(manualListeningSchema), defaultValues: { type: 'typing', text: "", options: ["", "", ""], answer: "" } });
-    const type = useWatch({ control: form.control, name: 'type' });
-    const options = useWatch({ control: form.control, name: 'options' });
-    const handleAdd = (data: ManualListeningFormData) => { handleAddManualListening(data as ListeningExercise); form.reset(); };
-    return (<Card><CardHeader><CardTitle>Add Listening Exercise</CardTitle><CardDescription>Add listening tasks one by one.</CardDescription></CardHeader><Form {...form}><form onSubmit={form.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Exercise Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="typing">Type what you hear</SelectItem><SelectItem value="mcq">Multiple Choice</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence to be heard</FormLabel><FormControl><Textarea placeholder="This is the text that will be converted to audio." {...field} /></FormControl><FormMessage /></FormItem>)} />{type === 'mcq' && (<><FormLabel>Options (Provide 3 choices)</FormLabel>{[0, 1, 2].map(i => (<FormField key={i} control={form.control} name={`options.${i}`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`Option ${i + 1}`} {...field} /></FormControl><FormMessage /></FormItem>)} />))}<FormField control={form.control} name="answer" render={({ field }) => (<FormItem><FormLabel>Correct Answer</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value}>{options?.map((opt, i) => opt.trim() && (<FormItem key={i} className="flex items-center space-x-2"><FormControl><RadioGroupItem value={opt} /></FormControl><FormLabel className="font-normal">{opt}</FormLabel></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} /></>)}</CardContent><CardFooter><Button type="submit"><PlusCircle className="mr-2 h-4 w-4" /> Add Exercise</Button></CardFooter></form></Form></Card>);
+    const manualForm = useForm<ManualListeningFormData>({ resolver: zodResolver(manualListeningSchema), defaultValues: { type: 'typing', text: "", options: ["", "", ""], answer: "" } });
+    const type = useWatch({ control: manualForm.control, name: 'type' });
+    const options = useWatch({ control: manualForm.control, name: 'options' });
+    const handleAdd = (data: ManualListeningFormData) => { handleAddManualListening(data as ListeningExercise); manualForm.reset(); };
+    
+    return (<>
+        <Card>
+            <Form {...listeningGenerationForm}>
+                <form onSubmit={listeningGenerationForm.handleSubmit(handleGenerateExercises)}>
+                    <CardHeader><CardTitle>Generate with AI</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField control={listeningGenerationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Exercise Topic</FormLabel><FormControl><Input placeholder="e.g., Talking about the weather" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField control={listeningGenerationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
+                            <FormField control={listeningGenerationForm.control} name="numberOfExercises" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                        </div>
+                    </CardContent>
+                    <CardFooter><Button type="submit" disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Exercises"}</Button></CardFooter>
+                </form>
+            </Form>
+        </Card>
+        <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
+            <div className="p-4 border rounded-md min-h-[200px] space-y-3">
+                <h4 className="font-medium text-center mb-2">Available AI-Generated Exercises</h4>
+                {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
+                {!isGenerating && availableAiExercises.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated exercises will appear here.</p></div>)}
+                {availableAiExercises.map((ex, index) => (
+                    <div key={ex.id || index} className="p-3 border rounded-md bg-muted/30 relative">
+                        <p className="font-medium pr-8">{`• ${ex.text}`}</p>
+                        <p className="text-sm text-muted-foreground">Type: {ex.type}</p>
+                        <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddExerciseToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
+                    </div>
+                ))}
+            </div>
+            <Card><CardHeader><CardTitle>Add Listening Exercise Manually</CardTitle></CardHeader><Form {...manualForm}><form onSubmit={manualForm.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={manualForm.control} name="type" render={({ field }) => (<FormItem><FormLabel>Exercise Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="typing">Type what you hear</SelectItem><SelectItem value="mcq">Multiple Choice</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={manualForm.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence to be heard</FormLabel><FormControl><Textarea placeholder="This is the text that will be converted to audio." {...field} /></FormControl><FormMessage /></FormItem>)} />{type === 'mcq' && (<><FormLabel>Options (Provide 3 choices)</FormLabel>{[0, 1, 2].map(i => (<FormField key={i} control={manualForm.control} name={`options.${i}`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`Option ${i + 1}`} {...field} /></FormControl><FormMessage /></FormItem>)} />))}<FormField control={manualForm.control} name="answer" render={({ field }) => (<FormItem><FormLabel>Correct Answer</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value}>{options?.map((opt, i) => opt.trim() && (<FormItem key={i} className="flex items-center space-x-2"><FormControl><RadioGroupItem value={opt} /></FormControl><FormLabel className="font-normal">{opt}</FormLabel></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} /></>)}</CardContent><CardFooter><Button type="submit"><PlusCircle className="mr-2 h-4 w-4" /> Add Exercise</Button></CardFooter></form></Form></Card>
+        </div>
+    </>);
   };
 
   const ManualQuestionForm = ({ onAddQuestion }: { onAddQuestion: (q: QuizQuestion) => void }) => {
@@ -532,7 +603,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
             )) : <EmptyContentPlaceholder icon={Mic} text="Your chosen reading sentences will appear here." />;
         case 'listening':
             return listeningFields.length > 0 ? listeningFields.map((field, index) => (
-                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{`• ${(field as any).text}`}</p><p className="text-sm text-muted-foreground">Type: {(field as any).type}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => removeListening(index)}><Trash2 className="h-4 w-4" /></Button></div>
+                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{`• ${(field as any).text}`}</p><p className="text-sm text-muted-foreground">Type: {(field as any).type}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => handleRemoveExerciseFromSelection(index)}><Trash2 className="h-4 w-4" /></Button></div>
             )) : <EmptyContentPlaceholder icon={Headphones} text="Your chosen listening exercises will appear here." />;
         default: return null;
     }
