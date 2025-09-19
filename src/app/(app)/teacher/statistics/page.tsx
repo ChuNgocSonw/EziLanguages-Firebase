@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
-import type { Class, AdminUserView, QuizAttempt } from "@/lib/types";
-import { Loader2, Award, Flame, Star, CheckCircle2, BookOpen, Check, X } from "lucide-react";
+import type { Class, AdminUserView, QuizAttempt, Assignment, PronunciationAttempt } from "@/lib/types";
+import { Loader2, Award, Flame, Star, CheckCircle2, BookOpen, Check, X, Mic, Headphones } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,19 +23,33 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
+// Helper to create a Firestore-safe key from a sentence
+const createSafeKey = (sentence: string) => sentence.replace(/[.#$[\]/]/g, '_');
+
+
 function ReviewStudentAssignmentsDialog({ student, classId }: { student: AdminUserView; classId: string }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
-    const { getStudentAssignmentAttemptsForClass } = useAuth();
+    const [assignments, setAssignments] = useState<Assignment[]>([]);
+    const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
+    const { getStudentAssignmentAttemptsForClass, getStudentAssignments } = useAuth();
     
     useEffect(() => {
-        if (isOpen && student.completedAssignmentIds && student.completedAssignmentIds.length > 0) {
+        if (isOpen && student.completedAssignmentDetails && student.completedAssignmentDetails.length > 0) {
             const fetchAttempts = async () => {
                 setIsLoading(true);
                 try {
-                    const studentAttempts = await getStudentAssignmentAttemptsForClass(student.uid, classId);
-                    setAttempts(studentAttempts);
+                    const allAssignments = await getStudentAssignments(student);
+                    const completedAssignments = allAssignments.filter(a => 
+                        student.completedAssignmentDetails.some(completed => completed.assignmentId === a.id)
+                    );
+                    setAssignments(completedAssignments);
+                    
+                    const quizAssignments = completedAssignments.filter(a => a.assignmentType === 'quiz');
+                    if (quizAssignments.length > 0) {
+                        const studentAttempts = await getStudentAssignmentAttemptsForClass(student.uid, classId);
+                        setQuizAttempts(studentAttempts);
+                    }
                 } catch (error) {
                     console.error("Failed to fetch student attempts", error);
                 } finally {
@@ -44,66 +58,116 @@ function ReviewStudentAssignmentsDialog({ student, classId }: { student: AdminUs
             };
             fetchAttempts();
         }
-    }, [isOpen, student.uid, classId, student.completedAssignmentIds, getStudentAssignmentAttemptsForClass]);
+    }, [isOpen, student, classId, getStudentAssignmentAttemptsForClass, getStudentAssignments]);
+    
+    const getQuizAttemptForAssignment = (assignmentId: string) => {
+        return quizAttempts.find(attempt => attempt.assignmentId === assignmentId);
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                 <Button variant="outline" size="sm" disabled={!student.completedAssignmentIds || student.completedAssignmentIds.length === 0}>
+                 <Button variant="outline" size="sm" disabled={!student.completedAssignmentDetails || student.completedAssignmentDetails.length === 0}>
                     <BookOpen className="mr-2 h-4 w-4" /> Review
                  </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>Review Assignments for {student.name}</DialogTitle>
                     <DialogDescription>
                         Here are the completed assignments for this student in the selected class.
                     </DialogDescription>
                 </DialogHeader>
-                 <div className="py-4 max-h-[60vh] overflow-y-auto">
+                 <div className="py-4 max-h-[70vh] overflow-y-auto pr-4">
                     {isLoading ? (
                         <div className="flex justify-center items-center h-48">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
-                    ) : attempts.length > 0 ? (
+                    ) : assignments.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full">
-                            {attempts.map(attempt => (
-                                <AccordionItem value={attempt.id!} key={attempt.id}>
+                            {assignments.map(assignment => {
+                                const completedDetail = student.completedAssignmentDetails.find(d => d.assignmentId === assignment.id);
+                                const quizAttempt = assignment.assignmentType === 'quiz' ? getQuizAttemptForAssignment(assignment.id) : undefined;
+                                
+                                return (
+                                <AccordionItem value={assignment.id} key={assignment.id}>
                                     <AccordionTrigger className="hover:no-underline">
-                                        <div className="flex justify-between w-full pr-4">
-                                            <div>
-                                                <p className="font-semibold text-left">{attempt.topic}</p>
-                                                <p className="text-sm text-muted-foreground font-normal text-left">
-                                                    Completed on {format(attempt.completedAt.toDate(), 'PPP')}
+                                        <div className="flex justify-between w-full pr-4 items-center">
+                                            <div className="text-left">
+                                                <p className="font-semibold">{assignment.title}</p>
+                                                <p className="text-sm text-muted-foreground font-normal capitalize">
+                                                    {assignment.assignmentType} &bull; Completed on {completedDetail ? format(completedDetail.completedAt.toDate(), 'PPP') : 'N/A'}
                                                 </p>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="font-semibold text-primary">{attempt.percentage}%</p>
-                                                <p className="text-sm text-muted-foreground font-normal">
-                                                    ({attempt.score}/{attempt.questions.length})
-                                                </p>
-                                            </div>
+                                            {quizAttempt && (
+                                                <div className="text-right">
+                                                    <p className="font-semibold text-primary">{quizAttempt.percentage}%</p>
+                                                    <p className="text-sm text-muted-foreground font-normal">
+                                                        ({quizAttempt.score}/{quizAttempt.questions.length})
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent>
-                                         <div className="space-y-4 pt-2">
-                                            {attempt.questions.map((q, i) => (
-                                                <div key={i} className="p-3 border rounded-md bg-muted/50">
-                                                    <p className="font-medium">{i + 1}. {q.question}</p>
-                                                    <p className={cn("text-sm flex items-center gap-2 mt-2", attempt.selectedAnswers[i] === q.answer ? "text-green-600" : "text-destructive")}>
-                                                    {attempt.selectedAnswers[i] === q.answer ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                                                    Student's answer: {attempt.selectedAnswers[i]}
-                                                    </p>
-                                                    {attempt.selectedAnswers[i] !== q.answer && <p className="text-sm text-green-700 ml-6">Correct answer: {q.answer}</p>}
-                                                </div>
-                                            ))}
-                                        </div>
+                                        {assignment.assignmentType === 'quiz' && quizAttempt && (
+                                             <div className="space-y-4 pt-2">
+                                                {quizAttempt.questions.map((q, i) => (
+                                                    <div key={i} className="p-3 border rounded-md bg-muted/50">
+                                                        <p className="font-medium">{i + 1}. {q.question}</p>
+                                                        <p className={cn("text-sm flex items-center gap-2 mt-2", quizAttempt.selectedAnswers[i] === q.answer ? "text-green-600" : "text-destructive")}>
+                                                        {quizAttempt.selectedAnswers[i] === q.answer ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                                        Student's answer: {quizAttempt.selectedAnswers[i]}
+                                                        </p>
+                                                        {quizAttempt.selectedAnswers[i] !== q.answer && <p className="text-sm text-green-700 ml-6">Correct answer: {q.answer}</p>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {assignment.assignmentType === 'reading' && (
+                                            <div className="space-y-3 pt-2">
+                                                {assignment.readingSentences?.map((sentence, i) => {
+                                                    const score = student.pronunciationScores?.[createSafeKey(sentence.text)];
+                                                    return (
+                                                        <div key={i} className="p-3 border rounded-md bg-muted/50">
+                                                            <p className="font-medium mb-2">{i + 1}. {sentence.text}</p>
+                                                            {score ? (
+                                                                <div className="flex items-center gap-2 text-sm">
+                                                                    <Mic className="h-4 w-4 text-primary" />
+                                                                    <span>Student's Best Score:</span>
+                                                                    <span className="font-bold text-primary">{score.score}%</span>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-sm text-muted-foreground">No score recorded for this sentence.</p>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        {assignment.assignmentType === 'listening' && (
+                                            <div className="space-y-3 pt-2">
+                                                {assignment.listeningExercises?.map((exercise, i) => {
+                                                    const wasCorrect = student.listeningScores?.[exercise.id];
+                                                    return (
+                                                        <div key={i} className="p-3 border rounded-md bg-muted/50">
+                                                            <p className="font-medium mb-2">{i + 1}. {exercise.text}</p>
+                                                            <div className={cn("text-sm flex items-center gap-2", wasCorrect ? "text-green-600" : "text-destructive")}>
+                                                                {wasCorrect ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                                                Student answered this exercise {wasCorrect ? "correctly" : "incorrectly"}.
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </AccordionContent>
                                 </AccordionItem>
-                            ))}
+                                )
+                            })}
                         </Accordion>
                     ) : (
-                        <p className="text-center text-muted-foreground py-8">No assignment attempts found for this student.</p>
+                        <p className="text-center text-muted-foreground py-8">No completed assignments found for this student.</p>
                     )}
                 </div>
             </DialogContent>
@@ -123,7 +187,7 @@ function StudentStatisticsTable({ students, totalAssignments, classId }: { stude
     return (
         <>
             <p className="text-sm text-muted-foreground mb-4">
-                This class has <span className="font-semibold text-primary">{totalAssignments}</span> assigned {totalAssignments === 1 ? 'quiz' : 'quizzes'}.
+                This class has <span className="font-semibold text-primary">{totalAssignments}</span> assigned {totalAssignments === 1 ? 'assignment' : 'assignments'}.
             </p>
             <Table>
                 <TableHeader>
@@ -282,3 +346,5 @@ export default function TeacherStatisticsPage() {
         </>
     );
 }
+
+    

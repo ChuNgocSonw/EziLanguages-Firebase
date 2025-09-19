@@ -111,6 +111,11 @@ export interface LastActivity {
   title: string;
 }
 
+export interface CompletedAssignmentDetail {
+    assignmentId: string;
+    completedAt: Timestamp;
+}
+
 export interface UserProfile {
   name: string;
   email: string;
@@ -129,12 +134,13 @@ export interface UserProfile {
   lastActivity?: LastActivity;
   classId?: string;
   completedAssignments?: string[];
+  completedAssignmentDetails?: CompletedAssignmentDetail[];
 }
 
 export interface AdminUserView extends UserProfile {
   uid: string;
   assignmentsCompletedCount?: number;
-  completedAssignmentIds?: string[];
+  completedAssignmentDetails: CompletedAssignmentDetail[];
 }
 
 export interface LeaderboardEntry {

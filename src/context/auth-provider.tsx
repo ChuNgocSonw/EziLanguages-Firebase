@@ -58,7 +58,7 @@ export interface AuthContextType {
   getAssignmentDetails: (assignmentId: string) => Promise<Assignment | null>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
   assignAssignmentToClasses: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => Promise<void>;
-  getStudentAssignments: () => Promise<Assignment[]>;
+  getStudentAssignments: (userProfile?: UserProfile | null) => Promise<Assignment[]>;
   getAssignmentAttempt: (assignmentId: string) => Promise<QuizAttempt | null>;
   getStudentCompletedAttempts: () => Promise<QuizAttempt[]>;
   getStudentAssignmentAttemptsForClass: (studentId: string, classId: string) => Promise<QuizAttempt[]>;
@@ -191,6 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pronunciationScores: {},
       listeningScores: {},
       completedAssignments: [],
+      completedAssignmentDetails: [],
     };
 
     await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
@@ -421,7 +422,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const updatedProfile = updatedProfileDoc.data() as UserProfile;
         setUserProfile(updatedProfile);
         await checkAndAwardBadges(auth.currentUser.uid, updatedProfile);
+    } else if (isCorrect) { // If it's correct but not awarding XP (assignment mode)
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        const fieldPath = `listeningScores.${exerciseId}`;
+        // Still save a score to mark it as completed correctly
+        await updateDoc(userDocRef, { [fieldPath]: 10 });
     }
+
     return xpGained;
   }, [userProfile, setLastActivity, updateWeeklyXP, checkAndAwardBadges]);
 
@@ -445,10 +452,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Determine the correct collection and data payload
     const collectionName = isAssignment ? "assignmentAttempts" : "quizHistory";
     const ref = collection(db, "users", auth.currentUser.uid, collectionName);
+    
+    const completedAtTimestamp = serverTimestamp();
 
     const dataToSave: any = {
         ...attempt,
-        completedAt: serverTimestamp(),
+        completedAt: completedAtTimestamp,
     };
 
     // Explicitly remove assignmentId for self-generated quizzes to avoid Firestore errors.
@@ -463,6 +472,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (isAssignment) {
         updates.completedAssignments = arrayUnion(attempt.assignmentId);
+        updates.completedAssignmentDetails = arrayUnion({
+            assignmentId: attempt.assignmentId,
+            completedAt: Timestamp.now()
+        });
     }
 
     await updateWeeklyXP(xpGained);
@@ -491,6 +504,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const updates: any = { 
         xp: increment(xpGained),
         completedAssignments: arrayUnion(assignmentId),
+        completedAssignmentDetails: arrayUnion({
+            assignmentId: assignmentId,
+            completedAt: Timestamp.now()
+        })
     };
 
     await updateWeeklyXP(xpGained);
@@ -591,8 +608,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const assignmentsRef = collection(db, "assignments");
       const qAssignments = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: classDetails.id, className: classDetails.className }));
       const assignmentsSnapshot = await getDocs(qAssignments);
-      const classAssignments = assignmentsSnapshot.docs.map(doc => doc.id);
-      const totalAssignments = classAssignments.length;
+      const totalAssignments = assignmentsSnapshot.size;
 
       if (classDetails.studentIds.length === 0) {
         return { students: [], totalAssignments };
@@ -605,12 +621,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .filter(doc => doc.exists())
         .map(doc => {
             const studentData = doc.data() as UserProfile;
-            const completedAssignmentIds = (studentData.completedAssignments || []).filter(id => classAssignments.includes(id));
+            const completedAssignmentDetails = studentData.completedAssignmentDetails || [];
             return { 
                 uid: doc.id, 
                 ...studentData,
-                assignmentsCompletedCount: completedAssignmentIds.length,
-                completedAssignmentIds: completedAssignmentIds,
+                assignmentsCompletedCount: completedAssignmentDetails.length,
+                completedAssignmentDetails: completedAssignmentDetails,
             } as AdminUserView
         });
 
