@@ -35,9 +35,10 @@ export interface AuthContextType {
   getChatMessages: (chatId: string) => Promise<ChatMessage[]>;
   saveChatMessage: (chatId: string | null, message: Omit<ChatMessage, 'id' | 'timestamp'>) => Promise<{ chatId: string }>;
   deleteChatSession: (chatId: string) => Promise<void>;
-  savePronunciationAttempt: (sentence: string, attempt: PronunciationAttempt) => Promise<number>;
-  saveListeningScore: (exerciseId: string, isCorrect: boolean) => Promise<number>;
+  savePronunciationAttempt: (sentence: string, attempt: PronunciationAttempt, awardXp?: boolean) => Promise<number>;
+  saveListeningScore: (exerciseId: string, isCorrect: boolean, awardXp?: boolean) => Promise<number>;
   saveQuizAttempt: (attempt: Omit<QuizAttempt, 'id' | 'completedAt'>) => Promise<number>;
+  completeAssignment: (assignmentId: string) => Promise<number>;
   getQuizHistory: () => Promise<QuizAttempt[]>;
   getLeaderboard: (category: 'badgeCount' | 'streak' | 'weeklyXP') => Promise<LeaderboardEntry[]>;
   createClass: (className: string) => Promise<void>;
@@ -204,7 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const loggedInUser = userCredential.user;
 
-    if (!loggedInUser.emailVerified) {
+    if (!loggedInUser.emailVerified && !loggedInUser.email?.endsWith('@ezilanguages.com')) {
         router.push('/verify-email');
         return;
     }
@@ -351,19 +352,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
-  const savePronunciationAttempt = useCallback(async (sentence: string, attempt: PronunciationAttempt): Promise<number> => {
+  const savePronunciationAttempt = useCallback(async (sentence: string, attempt: PronunciationAttempt, awardXp: boolean = true): Promise<number> => {
     if (!auth.currentUser || !userProfile) {
         return 0;
     }
 
-    await setLastActivity({ type: 'reading', title: `Reading: "${sentence.substring(0, 30)}..."` });
+    if (awardXp) {
+        await setLastActivity({ type: 'reading', title: `Reading: "${sentence.substring(0, 30)}..."` });
+    }
 
     const safeKey = createSafeKey(sentence);
     const currentBestAttempt = userProfile.pronunciationScores?.[safeKey];
     let xpGained = 0;
 
-    // Award XP only for the first time achieving 100%
-    if (attempt.score === 100 && currentBestAttempt?.score !== 100) {
+    // Award XP only for the first time achieving 100% in practice mode
+    if (awardXp && attempt.score === 100 && currentBestAttempt?.score !== 100) {
         xpGained = 15;
     }
 
@@ -392,18 +395,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return xpGained;
   }, [userProfile, setLastActivity, updateWeeklyXP, checkAndAwardBadges]);
 
-  const saveListeningScore = useCallback(async (exerciseId: string, isCorrect: boolean): Promise<number> => {
+  const saveListeningScore = useCallback(async (exerciseId: string, isCorrect: boolean, awardXp: boolean = true): Promise<number> => {
     if (!auth.currentUser || !userProfile) {
       return 0;
     }
     
-    await setLastActivity({ type: 'listening', title: `Listening Exercise ${exerciseId}` });
-
+    if (awardXp) {
+        await setLastActivity({ type: 'listening', title: `Listening Exercise ${exerciseId}` });
+    }
 
     const xpEarned = userProfile.listeningScores?.[exerciseId];
     let xpGained = 0;
 
-    if (isCorrect && !xpEarned) {
+    if (isCorrect && !xpEarned && awardXp) {
         xpGained = 10;
         const userDocRef = doc(db, "users", auth.currentUser.uid);
         const fieldPath = `listeningScores.${exerciseId}`;
@@ -476,6 +480,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return xpGained;
   }, [setLastActivity, updateWeeklyXP, getQuizHistory, checkAndAwardBadges]);
+  
+  const completeAssignment = useCallback(async (assignmentId: string): Promise<number> => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+
+    // Award a flat 50 XP for completing a non-quiz assignment
+    const xpGained = 50;
+
+    const userDocRef = doc(db, "users", auth.currentUser.uid);
+    const updates: any = { 
+        xp: increment(xpGained),
+        completedAssignments: arrayUnion(assignmentId),
+    };
+
+    await updateWeeklyXP(xpGained);
+    await updateDoc(userDocRef, updates);
+
+    const updatedProfileDoc = await getDoc(userDocRef);
+     if (updatedProfileDoc.exists()) {
+        const updatedProfile = updatedProfileDoc.data() as UserProfile;
+        setUserProfile(updatedProfile);
+        const selfGeneratedQuizHistory = await getQuizHistory();
+        await checkAndAwardBadges(auth.currentUser.uid, updatedProfile, selfGeneratedQuizHistory);
+    }
+    
+    return xpGained;
+  }, [updateWeeklyXP, getQuizHistory, checkAndAwardBadges]);
+
 
   const getLeaderboard = useCallback(async (category: 'badgeCount' | 'streak' | 'weeklyXP'): Promise<LeaderboardEntry[]> => {
     const usersRef = collection(db, "users");
@@ -910,6 +941,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     savePronunciationAttempt,
     saveListeningScore,
     saveQuizAttempt,
+    completeAssignment,
     getQuizHistory,
     getLeaderboard,
     createClass,
@@ -942,7 +974,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }), [
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
-      saveListeningScore, saveQuizAttempt, getQuizHistory, getLeaderboard, createClass, getTeacherClasses,
+      saveListeningScore, saveQuizAttempt, completeAssignment, getQuizHistory, getLeaderboard, createClass, getTeacherClasses,
       deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement, getStudentsForClass,
       addStudentToClass, removeStudentFromClass, searchStudentsByEmail, createAssignment, updateAssignment,
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
@@ -952,3 +984,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+    

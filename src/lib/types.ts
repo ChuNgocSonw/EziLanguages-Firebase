@@ -47,9 +47,9 @@ export interface Assignment {
   title: string;
   language: "EN";
   assignmentType: AssignmentType;
-  questions?: QuizQuestion[];
-  readingSentences?: ReadingSentence[];
-  listeningExercises?: ListeningExercise[];
+  questions: QuizQuestion[];
+  readingSentences: ReadingSentence[];
+  listeningExercises: ListeningExercise[];
   teacherId: string;
   createdAt: Timestamp;
   assignedClasses?: { classId: string; className: string }[];
@@ -188,3 +188,5 @@ export const GenerateFeedbackInputSchema = z.object({
   }).describe("A collection of the student's performance data across different activities."),
 });
 export type GenerateFeedbackInput = z.infer<typeof GenerateFeedbackInputSchema>;
+
+    
