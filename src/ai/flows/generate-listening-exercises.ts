@@ -24,13 +24,13 @@ export type GenerateListeningExercisesInput = z.infer<typeof GenerateListeningEx
 
 const TypingExerciseSchema = z.object({
     id: z.string().describe("A unique ID for the exercise."),
-    type: z.literal('typing').describe("The type of the exercise."),
+    type: z.enum(['typing']).describe("The type of the exercise."),
     text: z.string().describe("The sentence for the student to hear and type."),
 });
 
 const McqExerciseSchema = z.object({
     id: z.string().describe("A unique ID for the exercise."),
-    type: z.literal('mcq').describe("The type of the exercise."),
+    type: z.enum(['mcq']).describe("The type of the exercise."),
     text: z.string().describe("The primary sentence the student will hear."),
     options: z.array(z.string()).length(3).describe("An array of three string options for the multiple-choice question."),
     answer: z.string().describe("The correct answer, which must be one of the provided options."),
