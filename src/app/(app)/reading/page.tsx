@@ -116,7 +116,7 @@ function PracticeInterface({ activeSentence, onSaveAttempt, onBack }: {
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>Practice Sentence</CardTitle>
-            <p className="text-sm text-muted-foreground">{activeSentence.unit}</p>
+            <CardDescription className="text-sm text-muted-foreground">{activeSentence.unit}</CardDescription>
           </div>
           <Button variant="ghost" size="icon" onClick={onBack}>
             <X className="h-5 w-5" />
@@ -163,7 +163,9 @@ function PracticeInterface({ activeSentence, onSaveAttempt, onBack }: {
 export function ReadingAssignmentSession({ assignment, onFinish }: { assignment: Assignment; onFinish: () => void; }) {
     const [activeSentence, setActiveSentence] = useState<ReadingSentence | null>(null);
     const [completedSentences, setCompletedSentences] = useState<string[]>([]);
-    const { savePronunciationAttempt } = useAuth(); // We'll save but not award XP in assignment mode.
+    const { savePronunciationAttempt, completeAssignment } = useAuth();
+    const { toast } = useToast();
+    const [isFinishing, setIsFinishing] = useState(false);
 
     const handleSelectSentence = (sentence: ReadingSentence) => {
         setActiveSentence(sentence);
@@ -175,9 +177,31 @@ export function ReadingAssignmentSession({ assignment, onFinish }: { assignment:
         }
         setActiveSentence(null);
     };
+    
+    const handleFinishAssignment = async () => {
+        setIsFinishing(true);
+        try {
+            const xpGained = await completeAssignment(assignment.id);
+            toast({
+                title: "Assignment Complete!",
+                description: `Your work has been submitted. You earned ${xpGained} XP!`,
+            });
+            onFinish();
+        } catch (error) {
+            console.error("Failed to complete assignment:", error);
+            toast({
+                title: "Error",
+                description: "Could not submit your assignment. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsFinishing(false);
+        }
+    };
+
 
     if (activeSentence) {
-        return <PracticeInterface activeSentence={activeSentence} onSaveAttempt={savePronunciationAttempt} onBack={handleBackToList} />;
+        return <PracticeInterface activeSentence={activeSentence} onSaveAttempt={(sentence, attempt) => savePronunciationAttempt(sentence, attempt, false)} onBack={handleBackToList} />;
     }
 
     return (
@@ -208,7 +232,10 @@ export function ReadingAssignmentSession({ assignment, onFinish }: { assignment:
                 </ul>
             </CardContent>
             <CardFooter>
-                <Button onClick={onFinish} className="w-full bg-accent hover:bg-accent/90">Mark as Complete & Finish</Button>
+                <Button onClick={handleFinishAssignment} className="w-full bg-accent hover:bg-accent/90" disabled={isFinishing}>
+                    {isFinishing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Mark as Complete & Finish
+                </Button>
             </CardFooter>
         </Card>
     );
@@ -237,7 +264,7 @@ export default function ReadingPage() {
   }
 
   if (activeSentence) {
-      return <PracticeInterface activeSentence={activeSentence} onSaveAttempt={savePronunciationAttempt} onBack={handleClosePractice} />;
+      return <PracticeInterface activeSentence={activeSentence} onSaveAttempt={(sentence, attempt) => savePronunciationAttempt(sentence, attempt, true)} onBack={handleClosePractice} />;
   }
 
   return (
@@ -306,3 +333,5 @@ export default function ReadingPage() {
     </>
   );
 }
+
+    

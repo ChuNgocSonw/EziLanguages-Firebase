@@ -91,8 +91,9 @@ export function ListeningAssignmentSession({ assignment, onFinish }: { assignmen
     const [currentIndex, setCurrentIndex] = useState(0);
     const [completedExercises, setCompletedExercises] = useState<string[]>([]);
     const [result, setResult] = useState<{ status: 'correct' | 'incorrect'; message: string } | null>(null);
-    const { saveListeningScore } = useAuth();
+    const { saveListeningScore, completeAssignment } = useAuth();
     const { toast } = useToast();
+    const [isFinishing, setIsFinishing] = useState(false);
 
     const currentExercise = assignment.listeningExercises?.[currentIndex];
 
@@ -106,8 +107,24 @@ export function ListeningAssignmentSession({ assignment, onFinish }: { assignmen
         if (currentIndex < (assignment.listeningExercises?.length || 0) - 1) {
             setCurrentIndex(prev => prev + 1);
         } else {
-            toast({ title: "Assignment Section Complete!", description: "You've finished all listening exercises." });
-            onFinish();
+            // Last question answered, now finish the assignment
+            setIsFinishing(true);
+            try {
+                const xpGained = await completeAssignment(assignment.id);
+                toast({
+                    title: "Assignment Complete!",
+                    description: `Your work has been submitted. You earned ${xpGained} XP!`,
+                });
+                onFinish();
+            } catch (error) {
+                 console.error("Failed to complete assignment:", error);
+                 toast({
+                    title: "Error",
+                    description: "Could not submit your assignment. Please try again.",
+                    variant: "destructive",
+                });
+                setIsFinishing(false);
+            }
         }
     };
 
@@ -148,8 +165,9 @@ export function ListeningAssignmentSession({ assignment, onFinish }: { assignmen
                             {result.status === 'correct' ? <CheckCircle className="mr-2 h-5 w-5" /> : <XCircle className="mr-2 h-5 w-5" />}
                             {result.message}
                         </div>
-                        <Button onClick={handleNext}>
-                            {currentIndex < (assignment.listeningExercises?.length || 0) - 1 ? "Next Exercise" : "Finish"}
+                        <Button onClick={handleNext} disabled={isFinishing}>
+                            {isFinishing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {currentIndex < (assignment.listeningExercises?.length || 0) - 1 ? "Next Exercise" : "Finish Assignment"}
                         </Button>
                     </div>
                 )}
@@ -169,7 +187,7 @@ export default function ListeningPage() {
     const handleCorrect = async () => {
         if (!activeExercise) return;
         setResult("correct");
-        const xpGained = await saveListeningScore(activeExercise.id, true);
+        const xpGained = await saveListeningScore(activeExercise.id, true, true);
         if (xpGained > 0) {
             toast({ title: "Correct!", description: `You've earned ${xpGained} XP.` });
         }
@@ -282,3 +300,5 @@ export default function ListeningPage() {
         </>
     );
 }
+
+    
