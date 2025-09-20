@@ -1,6 +1,4 @@
-// This file was renamed from src/app/(app/reading/page.tsx to prevent a Next.js startup error.
-// The original file had an invalid name which caused a regex error in the Next.js router.
-// This file can be reviewed and deleted.
+
 "use client";
 
 import PageHeader from "@/components/page-header";
