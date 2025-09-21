@@ -375,7 +375,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                                         "pl-2",
                                         opt === q.answer ? "font-semibold text-green-700" : ""
                                     )}>
-                                        {String.fromCharCode(97 + i)}. {opt}
+                                        {opt}
                                     </li>
                                 ))}
                             </ul>
@@ -416,7 +416,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                 {!isGenerating && availableAiSentences.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated sentences will appear here.</p></div>)}
                 {availableAiSentences.map((s, index) => (
                     <div key={index} className="p-3 border rounded-md bg-muted/30 relative">
-                        <p className="font-medium pr-8">{`• ${s.text}`}</p>
+                        <p className="font-medium pr-8">{s.text}</p>
                         <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddSentenceToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
                     </div>
                 ))}
@@ -455,7 +455,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                 {!isGenerating && availableAiExercises.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated exercises will appear here.</p></div>)}
                 {availableAiExercises.map((ex, index) => (
                     <div key={ex.id || index} className="p-3 border rounded-md bg-muted/30 relative">
-                        <p className="font-medium pr-8">{`• ${ex.text}`}</p>
+                        <p className="font-medium pr-8">{ex.text}</p>
                         <p className="text-sm text-muted-foreground">Type: {ex.type}</p>
                         <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddExerciseToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
                     </div>
@@ -586,7 +586,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                                     "pl-2",
                                     opt === (field as any).answer ? "font-semibold text-green-700" : ""
                                 )}>
-                                    {String.fromCharCode(97 + i)}. {opt}
+                                    {opt}
                                 </li>
                             ))}
                         </ul>

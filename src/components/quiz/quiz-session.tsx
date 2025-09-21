@@ -378,7 +378,6 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                 <div key={index} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
                   <RadioGroupItem value={option} id={`option-${index}`} />
                   <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                    <span className="font-bold mr-2">{String.fromCharCode(97 + index)}.</span>
                     {option}
                   </Label>
                 </div>
