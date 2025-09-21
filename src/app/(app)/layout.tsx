@@ -179,10 +179,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
               {(userProfile?.role === 'admin' || userProfile?.role === 'teacher' || userProfile?.role === 'superadmin') && (
                   <>
                     <DropdownMenuSeparator />
