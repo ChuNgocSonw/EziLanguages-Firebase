@@ -1,3 +1,4 @@
+
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,8 +60,8 @@ export default function TeacherDashboardPage() {
             </p>
           </CardContent>
            <CardFooter>
-             <Button className="w-full" variant="outline" disabled>
-                View Statistics
+             <Button className="w-full" asChild>
+                <Link href="/teacher/statistics">View Statistics</Link>
              </Button>
           </CardFooter>
         </Card>
@@ -75,20 +76,12 @@ export default function TeacherDashboardPage() {
             </p>
           </CardContent>
           <CardFooter>
-             <Button className="w-full" variant="outline" disabled>
-                Send Feedback
+             <Button className="w-full" asChild>
+                <Link href="/teacher/feedback">Send Feedback</Link>
              </Button>
           </CardFooter>
         </Card>
       </div>
-       <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-          <CardDescription>
-            The "Student Statistics" and "Send Feedback" features are currently under development. Stay tuned for updates!
-          </CardDescription>
-        </CardHeader>
-      </Card>
     </>
   );
 }
