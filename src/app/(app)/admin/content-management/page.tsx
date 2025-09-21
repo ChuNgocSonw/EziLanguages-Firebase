@@ -1,13 +1,26 @@
 
 "use client";
 
+import { useState } from "react";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { lessonsData } from "@/lib/lessons";
-import { Mic, Headphones, BookOpen } from "lucide-react";
+import { Mic, Headphones, BookOpen, PlusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import CreateLessonForm from "@/components/create-lesson-form";
 
 export default function ContentManagementPage() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   return (
     <>
       <PageHeader
@@ -15,11 +28,31 @@ export default function ContentManagementPage() {
         description="View all static lesson content currently available in the application."
       />
       <Card>
-        <CardHeader>
-          <CardTitle>Lesson Library</CardTitle>
-          <CardDescription>
-            This content is currently stored in the codebase. Future updates will allow for management via this interface.
-          </CardDescription>
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+            <CardTitle>Lesson Library</CardTitle>
+            <CardDescription>
+              This content is currently stored in the codebase.
+            </CardDescription>
+          </div>
+           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+               <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New Lesson
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Create a New Lesson</DialogTitle>
+                <DialogDescription>
+                  Fill out the form to add a new lesson with reading and listening activities. 
+                  (Note: In this demo, this will modify a placeholder lesson.)
+                </DialogDescription>
+              </DialogHeader>
+              <CreateLessonForm onFinished={() => setIsDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible className="w-full">

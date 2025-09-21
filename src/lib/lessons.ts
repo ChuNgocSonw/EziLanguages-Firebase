@@ -302,5 +302,14 @@ export const lessonsData: Lesson[] = [
             reading: readingUnit10,
             listening: listeningUnit10,
         }
+    },
+    {
+        id: "unit11",
+        unit: "Unit 11: User-Created Lesson",
+        content: ``,
+        activities: {
+            reading: [],
+            listening: [],
+        }
     }
 ];
