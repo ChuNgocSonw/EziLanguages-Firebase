@@ -259,8 +259,9 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const handleRemoveQuestionFromSelection = withScrollPreservation((index: number) => {
     const removedQuestion = quizFields[index] as any;
     removeQuiz(index);
-    if(removedQuestion.id?.startsWith('ai-')) {
-        setAvailableAiQuestions(prev => [...prev, removedQuestion]);
+    // If it was an AI-generated question, add it back to the available list.
+    if (removedQuestion.id?.startsWith('ai-')) {
+        setAvailableAiQuestions(prev => [...prev, removedQuestion].sort(() => Math.random() - 0.5)); // Re-add and shuffle a bit
     }
   });
 
