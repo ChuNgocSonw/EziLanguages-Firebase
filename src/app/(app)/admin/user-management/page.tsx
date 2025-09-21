@@ -59,8 +59,18 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
                 <SelectContent>
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="teacher">Teacher</SelectItem>
-                  {userProfile?.role === 'superadmin' && <SelectItem value="admin">Admin</SelectItem>}
-                  {userProfile?.role === 'superadmin' && <SelectItem value="superadmin">Super Admin</SelectItem>}
+                  {userProfile?.role === 'admin' && (
+                    <>
+                      <SelectItem value="admin" disabled>Admin</SelectItem>
+                      <SelectItem value="superadmin" disabled>Super Admin</SelectItem>
+                    </>
+                  )}
+                   {userProfile?.role === 'superadmin' && (
+                    <>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="superadmin">Super Admin</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </TableCell>
