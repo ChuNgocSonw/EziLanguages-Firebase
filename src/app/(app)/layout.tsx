@@ -76,14 +76,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   if (loading || !user) {
     return (
        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-muted/50">
-          <div className="p-4 rounded-lg flex flex-col items-center gap-6 text-center">
-            <Logo width={80} height={80} className="animate-in zoom-in-75 fade-in duration-1000" />
-             <div className="flex items-end gap-1">
-                <p className="text-lg font-medium text-muted-foreground animate-pulse">Loading Your Learning Journey</p>
-                <span className="w-1 h-1 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                <span className="w-1 h-1 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                <span className="w-1 h-1 bg-primary rounded-full animate-bounce"></span>
-            </div>
+          <div className="p-4 rounded-lg flex flex-col items-center gap-4 text-center">
+            <Logo width={80} height={80} className="animate-pulse" />
+            <p className="text-lg font-medium text-muted-foreground">Loading your journey...</p>
           </div>
       </div>
     );
