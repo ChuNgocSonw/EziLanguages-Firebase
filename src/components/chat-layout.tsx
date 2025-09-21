@@ -57,48 +57,50 @@ export default function ChatLayout() {
 
   return (
     <div className="relative h-full">
-       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="absolute top-2 left-2 z-10">
-            <History className="h-5 w-5" />
-            <span className="sr-only">Toggle Chat History</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-[280px] p-4 flex flex-col">
-            <SheetHeader>
-               <SheetTitle className="sr-only">Chat History</SheetTitle>
-            </SheetHeader>
-           <h3 className="text-lg font-semibold mb-4">Chat History</h3>
+       <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                    <History className="h-5 w-5" />
+                    <span className="sr-only">Toggle Chat History</span>
+                </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[280px] p-4 flex flex-col">
+                    <SheetHeader>
+                        <SheetTitle className="sr-only">Chat History</SheetTitle>
+                    </SheetHeader>
+                    <h3 className="text-lg font-semibold mb-4">Chat History</h3>
+                    <ScrollArea className="flex-1 -mx-4 min-h-0">
+                        <div className="px-4">
+                            {isLoading ? (
+                                <div className="flex justify-center items-center h-full">
+                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-2">
+                                {chats.map((chat) => (
+                                    <button
+                                    key={chat.id}
+                                    onClick={() => handleSelectChat(chat.id)}
+                                    className={cn(
+                                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary text-left w-full",
+                                        selectedChatId === chat.id && "bg-muted text-primary font-semibold"
+                                    )}
+                                    >
+                                    <MessageSquare className="h-5 w-5 shrink-0" />
+                                    <span className="truncate flex-1 min-w-0">{chat.title}</span>
+                                    </button>
+                                ))}
+                                </div>
+                            )}
+                        </div>
+                    </ScrollArea>
+                </SheetContent>
+            </Sheet>
             <Button onClick={handleNewChat} className="bg-accent hover:bg-accent/90">
                 <PlusCircle className="mr-2 h-5 w-5" /> New Chat
             </Button>
-            <ScrollArea className="flex-1 mt-4 -mx-4">
-                <div className="px-4">
-                    {isLoading ? (
-                        <div className="flex justify-center items-center h-full">
-                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-2">
-                        {chats.map((chat) => (
-                            <button
-                            key={chat.id}
-                            onClick={() => handleSelectChat(chat.id)}
-                            className={cn(
-                                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-primary text-left w-full",
-                                selectedChatId === chat.id && "bg-muted text-primary font-semibold"
-                            )}
-                            >
-                            <MessageSquare className="h-5 w-5 shrink-0" />
-                            <span className="truncate flex-1 min-w-0">{chat.title}</span>
-                            </button>
-                        ))}
-                        </div>
-                    )}
-                </div>
-            </ScrollArea>
-        </SheetContent>
-      </Sheet>
+       </div>
 
       <div className="flex flex-col h-full min-h-0">
         <ChatInterface 
