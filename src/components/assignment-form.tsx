@@ -367,15 +367,15 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                 {!isGenerating && availableAiQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
                 {availableAiQuestions.map((q, index) => (
                     <div key={q.id || index} className="p-3 border rounded-md bg-muted/30 relative">
-                        <p className="font-medium pr-8">{`• ${q.question}`}</p>
+                        <p className="font-medium pr-8">{q.question}</p>
                         {q.options && q.options.length > 0 && (
-                            <ul className="mt-2 space-y-1 text-sm list-disc list-inside ml-4">
+                            <ul className="mt-2 space-y-1 text-sm list-none ml-4">
                                 {q.options.map((opt, i) => (
                                     <li key={i} className={cn(
                                         "pl-2",
                                         opt === q.answer ? "font-semibold text-green-700" : ""
                                     )}>
-                                        {opt}
+                                        {String.fromCharCode(97 + i)}. {opt}
                                     </li>
                                 ))}
                             </ul>
@@ -578,15 +578,15 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
         case 'quiz':
             return quizFields.length > 0 ? quizFields.map((field, index) => (
                 <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative">
-                    <p className="font-medium pr-8">{`• ${(field as any).question}`}</p>
+                    <p className="font-medium pr-8">{`${index + 1}. ${(field as any).question}`}</p>
                     {(field as any).options && (field as any).options.length > 0 && (
-                        <ul className="mt-2 space-y-1 text-sm list-disc list-inside ml-4">
+                        <ul className="mt-2 space-y-1 text-sm list-none ml-4">
                             {(field as any).options.map((opt: string, i: number) => (
                                 <li key={i} className={cn(
                                     "pl-2",
                                     opt === (field as any).answer ? "font-semibold text-green-700" : ""
                                 )}>
-                                    {opt}
+                                    {String.fromCharCode(97 + i)}. {opt}
                                 </li>
                             ))}
                         </ul>
