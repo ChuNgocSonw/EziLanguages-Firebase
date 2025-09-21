@@ -211,7 +211,12 @@ export default function ChatInterface({
   return (
     <Card className="flex-1 flex flex-col h-full overflow-hidden">
         
-          <div className="flex items-center justify-end p-2 border-b shrink-0 gap-2">
+          <div className="flex items-center justify-between p-2 border-b shrink-0 gap-2">
+            <div>
+                 <Button onClick={onNewChatClick} className="bg-accent hover:bg-accent/90">
+                    <PlusCircle className="mr-2 h-5 w-5" /> New Chat
+                </Button>
+            </div>
             <div className="flex items-center gap-2">
                 <Sheet open={historySheetOpen} onOpenChange={onHistorySheetOpenChange}>
                     <SheetTrigger asChild>
@@ -227,9 +232,6 @@ export default function ChatInterface({
                         {children}
                     </SheetContent>
                 </Sheet>
-                <Button onClick={onNewChatClick} className="bg-accent hover:bg-accent/90">
-                    <PlusCircle className="mr-2 h-5 w-5" /> New Chat
-                </Button>
                 {currentChatId && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -332,7 +334,7 @@ export default function ChatInterface({
         </ScrollArea>
         <div className="border-t bg-card p-2 md:p-3 shrink-0">
            <div className="flex items-center gap-2 mb-2">
-              <Label htmlFor="language-select" className="text-sm font-medium">Explanation Language:</Label>
+              <Label htmlFor="language-select" className="text-sm font-medium">Explain in:</Label>
               <Select value={explanationLanguage} onValueChange={setExplanationLanguage}>
                   <SelectTrigger id="language-select" className="w-[140px]">
                       <SelectValue placeholder="Select language" />
