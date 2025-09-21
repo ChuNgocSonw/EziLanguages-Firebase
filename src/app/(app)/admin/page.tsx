@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -89,12 +90,12 @@ export default function AdminDashboardPage() {
 
       <h2 className="text-xl font-bold tracking-tight mb-2">Management Tools</h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">User Management</CardTitle>
             <Users className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
             <p className="text-xs text-muted-foreground">
               View, edit, and assign roles to all users in the system.
             </p>
@@ -107,12 +108,12 @@ export default function AdminDashboardPage() {
              </Button>
           </CardFooter>
         </Card>
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Content Management</CardTitle>
             <BookOpen className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
             <p className="text-xs text-muted-foreground">
               View and manage all learning content like lessons and exercises.
             </p>
