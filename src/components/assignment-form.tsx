@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -373,9 +374,9 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                                 {q.options.map((opt, i) => (
                                     <li key={i} className={cn(
                                         "pl-2",
-                                        opt.includes(q.answer) ? "font-semibold text-green-700" : ""
+                                        opt === q.answer ? "font-semibold text-green-700" : ""
                                     )}>
-                                        {opt}
+                                       {String.fromCharCode(65 + i)}) {opt}
                                     </li>
                                 ))}
                             </ul>
@@ -584,9 +585,9 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                             {(field as any).options.map((opt: string, i: number) => (
                                 <li key={i} className={cn(
                                     "pl-2",
-                                    opt.includes((field as any).answer) ? "font-semibold text-green-700" : ""
+                                    opt === (field as any).answer ? "font-semibold text-green-700" : ""
                                 )}>
-                                    {opt}
+                                    {String.fromCharCode(65 + i)}) {opt}
                                 </li>
                             ))}
                         </ul>
