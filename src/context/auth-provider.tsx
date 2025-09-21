@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment, Feedback, GenerateFeedbackInput } from '@/lib/types';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment, Feedback, GenerateFeedbackInput, Lesson } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
@@ -68,6 +68,9 @@ export interface AuthContextType {
   markFeedbackAsRead: (feedbackId: string) => Promise<void>;
   deleteFeedback: (feedbackId: string) => Promise<void>;
   getStudentPerformanceDataForFeedback: (studentId: string) => Promise<GenerateFeedbackInput>;
+  createLesson: (lessonData: Omit<Lesson, 'id' | 'createdAt' | 'teacherId'>) => Promise<void>;
+  getLessons: () => Promise<Lesson[]>;
+  deleteLesson: (lessonId: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -945,6 +948,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
       };
   }, []);
+  
+  const createLesson = useCallback(async (lessonData: Omit<Lesson, 'id' | 'createdAt' | 'teacherId'>) => {
+    if (!auth.currentUser || !userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
+      throw new Error("You do not have permission to create lessons.");
+    }
+    const lessonsRef = collection(db, "lessons");
+    await addDoc(lessonsRef, {
+      ...lessonData,
+      teacherId: auth.currentUser.uid,
+      createdAt: serverTimestamp(),
+    });
+  }, [userProfile]);
+
+  const getLessons = useCallback(async (): Promise<Lesson[]> => {
+    const lessonsRef = collection(db, "lessons");
+    const q = query(lessonsRef, orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Lesson));
+  }, []);
+  
+  const deleteLesson = useCallback(async (lessonId: string) => {
+      if (!auth.currentUser || !userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
+          throw new Error("You do not have permission to delete lessons.");
+      }
+      const lessonRef = doc(db, "lessons", lessonId);
+      await deleteDoc(lessonRef);
+  }, [userProfile]);
 
 
   const value: AuthContextType = useMemo(() => ({
@@ -994,6 +1024,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     markFeedbackAsRead,
     deleteFeedback,
     getStudentPerformanceDataForFeedback,
+    createLesson,
+    getLessons,
+    deleteLesson,
   }), [
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
@@ -1002,7 +1035,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       addStudentToClass, removeStudentFromClass, searchStudentsByEmail, createAssignment, updateAssignment,
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
       getAssignmentAttempt, getStudentCompletedAttempts, getStudentAssignmentAttemptsForClass, sendFeedback,
-      getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback, getStudentPerformanceDataForFeedback
+      getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback, getStudentPerformanceDataForFeedback,
+      createLesson, getLessons, deleteLesson
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
