@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -210,20 +211,7 @@ export default function ChatInterface({
   return (
     <Card className="flex-1 flex flex-col h-full overflow-hidden">
         
-          <div className="flex items-center justify-between p-2 border-b shrink-0 gap-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="language-select" className="text-sm font-medium">Explanation Language:</Label>
-              <Select value={explanationLanguage} onValueChange={setExplanationLanguage}>
-                  <SelectTrigger id="language-select" className="w-[140px]">
-                      <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="English">English</SelectItem>
-                      <SelectItem value="Vietnamese">Vietnamese</SelectItem>
-                  </SelectContent>
-              </Select>
-            </div>
-
+          <div className="flex items-center justify-end p-2 border-b shrink-0 gap-2">
             <div className="flex items-center gap-2">
                 <Sheet open={historySheetOpen} onOpenChange={onHistorySheetOpenChange}>
                     <SheetTrigger asChild>
@@ -343,6 +331,18 @@ export default function ChatInterface({
           </div>
         </ScrollArea>
         <div className="border-t bg-card p-2 md:p-3 shrink-0">
+           <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="language-select" className="text-sm font-medium">Explanation Language:</Label>
+              <Select value={explanationLanguage} onValueChange={setExplanationLanguage}>
+                  <SelectTrigger id="language-select" className="w-[140px]">
+                      <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="English">English</SelectItem>
+                      <SelectItem value="Vietnamese">Vietnamese</SelectItem>
+                  </SelectContent>
+              </Select>
+            </div>
           <form onSubmit={handleSendMessage} className="relative">
             <Textarea
               value={inputValue}
