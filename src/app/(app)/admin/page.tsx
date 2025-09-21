@@ -8,8 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Users, ArrowRight, School, BookCopy, BookOpen, Loader2, Users2 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
-import { Pie, PieChart, ResponsiveContainer } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Pie, PieChart, ResponsiveContainer, Legend, Cell } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import type { AdminUserView } from "@/lib/types";
 
 
@@ -46,7 +46,8 @@ export default function AdminDashboardPage() {
       const assignments = await getTeacherAssignments(); 
 
       const roles = users.reduce((acc, user) => {
-        acc[user.role] = (acc[user.role] || 0) + 1;
+        const roleKey = user.role.toLowerCase();
+        acc[roleKey] = (acc[roleKey] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
@@ -87,7 +88,7 @@ export default function AdminDashboardPage() {
         description="Access tools to manage users, content, and application settings."
       />
       
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
@@ -112,29 +113,40 @@ export default function AdminDashboardPage() {
               </Card>
             ))
           )}
-          <Card className="col-span-1 md:col-span-2 lg:col-span-1">
-             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">User Roles</CardTitle>
-              <Users2 className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="pb-0">
-               {isLoading ? (
-                 <div className="flex justify-center items-center h-[100px]">
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+                <Users2 className="h-5 w-5 text-muted-foreground" />
+                User Role Distribution
+            </CardTitle>
+        </CardHeader>
+        <CardContent>
+            {isLoading ? (
+                 <div className="flex justify-center items-center h-[250px]">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                  </div>
                ) : (
-                <ChartContainer config={chartConfig} className="h-[100px] w-full">
-                    <ResponsiveContainer width="100%" height={100}>
-                        <PieChart>
-                            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                            <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={30} strokeWidth={2} />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
+                <div className="h-[250px]">
+                    <ChartContainer config={chartConfig} className="h-full w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={5}>
+                                    {stats?.roleDistribution.map((entry) => (
+                                        <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                    ))}
+                                </Pie>
+                                <ChartLegend content={<ChartLegendContent />} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                </div>
                )}
-            </CardContent>
-          </Card>
-      </div>
+        </CardContent>
+      </Card>
+
 
       <h2 className="text-xl font-bold tracking-tight mb-2">Management Tools</h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -176,3 +188,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    
