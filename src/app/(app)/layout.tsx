@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, createContext, useContext } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,11 +25,16 @@ import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+// Create a context to hold the scroll area ref
+const ScrollContext = createContext<React.RefObject<HTMLDivElement> | null>(null);
+export const useScroll = () => useContext(ScrollContext);
+
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading, logOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Wait until the initial authentication check is complete
@@ -85,6 +90,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
+    <ScrollContext.Provider value={scrollAreaRef}>
     <div className={cn(
         "grid min-h-screen w-full",
         isSidebarCollapsed ? "md:grid-cols-[80px_1fr]" : "md:grid-cols-[280px_1fr]",
@@ -207,7 +213,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           </DropdownMenu>
         </header>
         <main className="flex-1 flex flex-col bg-background overflow-hidden">
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1" viewportRef={scrollAreaRef}>
             <div className="p-4 lg:p-6">
               {!user.emailVerified && !user.email?.endsWith('@ezilanguages.com') && (
                   <Alert variant="default" className="bg-yellow-100 border-yellow-500 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300 mb-4">
@@ -223,6 +229,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         </main>
       </div>
     </div>
+    </ScrollContext.Provider>
   );
 }
 

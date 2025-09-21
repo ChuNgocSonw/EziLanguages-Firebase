@@ -22,6 +22,7 @@ import { QuizQuestion, QuizQuestionSchema, QuestionType, Assignment, AssignmentT
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
+import { useScroll } from "@/app/(app)/layout";
 
 
 const detailsSchema = z.object({
@@ -122,6 +123,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const router = useRouter();
   const { createAssignment, updateAssignment } = useAuth();
   const { toast } = useToast();
+  const scrollAreaRef = useScroll();
 
   const isEditMode = !!existingAssignment;
   
@@ -187,6 +189,22 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const handleDetailsSubmit = (data: DetailsFormData) => { setAssignmentDetails(data); setStep("content"); };
   const handleBackToDetails = () => { setStep('details'); };
 
+  const withScrollPreservation = (fn: (...args: any[]) => void) => {
+    return (...args: any[]) => {
+      if (!scrollAreaRef?.current) {
+        fn(...args);
+        return;
+      }
+      const scrollPosition = scrollAreaRef.current.scrollTop;
+      fn(...args);
+      requestAnimationFrame(() => {
+        if (scrollAreaRef.current) {
+          scrollAreaRef.current.scrollTop = scrollPosition;
+        }
+      });
+    };
+  };
+
   const handleGenerateQuestions = async (data: GenerationFormData) => {
     setIsGenerating(true);
     setAvailableAiQuestions([]);
@@ -232,70 +250,70 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     } finally { setIsGenerating(false); }
   };
   
-  const handleAddQuestionToSelection = (index: number) => {
+  const handleAddQuestionToSelection = withScrollPreservation((index: number) => {
     const question = availableAiQuestions[index];
     appendQuiz(question);
     setAvailableAiQuestions(prev => prev.filter((_, i) => i !== index));
-  };
+  });
   
-  const handleRemoveQuestionFromSelection = (index: number) => {
+  const handleRemoveQuestionFromSelection = withScrollPreservation((index: number) => {
     const removedQuestion = quizFields[index] as any;
     removeQuiz(index);
     if(removedQuestion.id?.startsWith('ai-')) {
         setAvailableAiQuestions(prev => [...prev, removedQuestion]);
     }
-  };
+  });
 
-  const handleAddSentenceToSelection = (index: number) => {
+  const handleAddSentenceToSelection = withScrollPreservation((index: number) => {
     const sentence = availableAiSentences[index];
     appendReading(sentence);
     setAvailableAiSentences(prev => prev.filter((_, i) => i !== index));
-  };
+  });
   
-  const handleRemoveSentenceFromSelection = (index: number) => {
+  const handleRemoveSentenceFromSelection = withScrollPreservation((index: number) => {
     const removedSentence = readingFields[index] as any;
     removeReading(index);
     // If it was an AI sentence, add it back to the available list
     if (availableAiSentences.every(s => s.text !== removedSentence.text)) {
       setAvailableAiSentences(prev => [...prev, removedSentence]);
     }
-  };
+  });
 
-  const handleAddExerciseToSelection = (index: number) => {
+  const handleAddExerciseToSelection = withScrollPreservation((index: number) => {
     const exercise = availableAiExercises[index];
     appendListening(exercise);
     setAvailableAiExercises(prev => prev.filter((_, i) => i !== index));
-  };
+  });
 
-  const handleRemoveExerciseFromSelection = (index: number) => {
+  const handleRemoveExerciseFromSelection = withScrollPreservation((index: number) => {
     const removedExercise = listeningFields[index] as any;
     removeListening(index);
     setAvailableAiExercises(prev => [...prev, removedExercise]);
-  };
+  });
 
 
-  const handleAddManualQuestion = (question: QuizQuestion) => {
+  const handleAddManualQuestion = withScrollPreservation((question: QuizQuestion) => {
     if (quizFields.some(q => q.question === question.question)) {
         toast({ title: "Duplicate Question", description: "This question is already in your selected list.", variant: "destructive" });
         return;
     }
     appendQuiz(question);
     toast({ title: "Question Added", description: "Your manual question has been added to the list." });
-  };
+  });
   
-  const handleAddManualReading = (sentence: ReadingSentence) => {
+  const handleAddManualReading = withScrollPreservation((sentence: ReadingSentence) => {
     appendReading(sentence);
     toast({ title: "Sentence Added" });
-  };
+  });
 
-  const handleAddManualListening = (exercise: ListeningExercise) => {
+  const handleAddManualListening = withScrollPreservation((exercise: ListeningExercise) => {
       appendListening({
         ...exercise,
         id: `manual-${new Date().getTime()}`, // Assign a temporary unique ID
         answer: exercise.type === 'typing' ? exercise.text : exercise.answer,
       });
       toast({ title: "Exercise Added" });
-  };
+  });
 
 
   const handleSaveAssignment = async (data: any) => {
