@@ -71,8 +71,8 @@ export default function CreateLessonForm({ onFinished, existingLesson = null }: 
         if (isEditMode && existingLesson) {
             form.reset({
                 unit: existingLesson.unit,
-                reading: existingLesson.activities.reading || [],
-                listening: existingLesson.activities.listening || [],
+                reading: existingLesson.activities?.reading || [],
+                listening: existingLesson.activities?.listening || [],
             });
         }
     }, [isEditMode, existingLesson, form]);
