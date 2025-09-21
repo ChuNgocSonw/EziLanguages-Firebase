@@ -579,20 +579,20 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
         case 'quiz':
             return quizFields.length > 0 ? quizFields.map((field, index) => (
                 <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative">
-                    <p className="font-medium pr-8">{(field as any).question}</p>
-                    {(field as any).options && (field as any).options.length > 0 && (
+                    <p className="font-medium pr-8">{field.question}</p>
+                    {field.options && field.options.length > 0 && (
                         <ul className="mt-2 space-y-1 text-sm list-none ml-4">
-                            {(field as any).options.map((opt: string, i: number) => (
+                            {field.options.map((opt, i) => (
                                 <li key={i} className={cn(
                                     "pl-2",
-                                    opt.includes((field as any).answer) ? "font-semibold text-green-700" : ""
+                                    opt.includes(field.answer) ? "font-semibold text-green-700" : ""
                                 )}>
                                     {String.fromCharCode(65 + i)}) {opt}
                                 </li>
                             ))}
                         </ul>
                     )}
-                    {(field as any).type !== 'multiple-choice' && <p className="text-sm font-semibold text-green-700 mt-1">Answer: {(field as any).answer}</p>}
+                    {field.type !== 'multiple-choice' && <p className="text-sm font-semibold text-green-700 mt-1">Answer: {field.answer}</p>}
                     <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => handleRemoveQuestionFromSelection(index)}>
                         <Trash2 className="h-4 w-4" />
                     </Button>
@@ -600,11 +600,11 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
             )) : <EmptyContentPlaceholder icon={BookCheck} text="Your chosen questions will appear here." />;
         case 'reading':
             return readingFields.length > 0 ? readingFields.map((field, index) => (
-                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{`• ${(field as any).text}`}</p><p className="text-sm text-muted-foreground">Unit: {(field as any).unit}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => handleRemoveSentenceFromSelection(index)}><Trash2 className="h-4 w-4" /></Button></div>
+                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{`• ${field.text}`}</p><p className="text-sm text-muted-foreground">Unit: {field.unit}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => handleRemoveSentenceFromSelection(index)}><Trash2 className="h-4 w-4" /></Button></div>
             )) : <EmptyContentPlaceholder icon={Mic} text="Your chosen reading sentences will appear here." />;
         case 'listening':
             return listeningFields.length > 0 ? listeningFields.map((field, index) => (
-                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{`• ${(field as any).text}`}</p><p className="text-sm text-muted-foreground">Type: {(field as any).type}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => handleRemoveExerciseFromSelection(index)}><Trash2 className="h-4 w-4" /></Button></div>
+                <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative"><p className="font-medium pr-8">{`• ${field.text}`}</p><p className="text-sm text-muted-foreground">Type: {field.type}</p><Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-destructive hover:bg-[#D32F2F] hover:text-white" onClick={() => handleRemoveExerciseFromSelection(index)}><Trash2 className="h-4 w-4" /></Button></div>
             )) : <EmptyContentPlaceholder icon={Headphones} text="Your chosen listening exercises will appear here." />;
         default: return null;
     }
@@ -697,4 +697,3 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     </>
   );
 }
-
