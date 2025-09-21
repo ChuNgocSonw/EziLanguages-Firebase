@@ -83,7 +83,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 <div className="w-4 h-4 bg-primary rounded-full animate-jump [animation-delay:-0.15s]"></div>
                 <div className="w-4 h-4 bg-primary rounded-full animate-jump"></div>
             </div>
-            <p className="text-lg font-medium text-muted-foreground">Loading your journey...</p>
           </div>
       </div>
     );
