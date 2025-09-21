@@ -9,7 +9,7 @@ import ChatInterface from "@/components/chat-interface";
 import { useAuth } from "@/hooks/use-auth";
 import type { ChatSession } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export default function ChatLayout() {
   const [chats, setChats] = useState<ChatSession[]>([]);
@@ -65,6 +65,9 @@ export default function ChatLayout() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-[280px] p-4 flex flex-col">
+            <SheetHeader>
+               <SheetTitle className="sr-only">Chat History</SheetTitle>
+            </SheetHeader>
            <h3 className="text-lg font-semibold mb-4">Chat History</h3>
             <Button onClick={handleNewChat} className="bg-accent hover:bg-accent/90">
                 <PlusCircle className="mr-2 h-5 w-5" /> New Chat
