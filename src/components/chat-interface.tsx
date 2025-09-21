@@ -334,7 +334,7 @@ export default function ChatInterface({
         </ScrollArea>
         <div className="border-t bg-card p-2 md:p-3 shrink-0">
            <div className="flex items-center gap-2 mb-2">
-              <Label htmlFor="language-select" className="text-sm font-medium">Explain in:</Label>
+              <Label htmlFor="language-select" className="text-sm font-medium">Explanation Language:</Label>
               <Select value={explanationLanguage} onValueChange={setExplanationLanguage}>
                   <SelectTrigger id="language-select" className="w-[140px]">
                       <SelectValue placeholder="Select language" />
