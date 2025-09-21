@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import PageHeader from "@/components/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,7 +11,9 @@ import { AdminUserView, UserRole } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+
+const ITEMS_PER_PAGE = 10;
 
 function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminUserView[], onRoleChange: (userId: string, newRole: UserRole) => void, getRoleBadgeVariant: (role: string) => "default" | "secondary" | "destructive" | "outline" }) {
   const { user: currentUser, userProfile } = useAuth();
@@ -38,7 +40,8 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
         </TableRow>
       </TableHeader>
       <TableBody>
-        {users.map((user) => (
+        {users.length > 0 ? (
+          users.map((user) => (
           <TableRow key={user.uid}>
             <TableCell className="font-medium">{user.name}</TableCell>
             <TableCell>{user.email}</TableCell>
@@ -59,23 +62,20 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
                 <SelectContent>
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="teacher">Teacher</SelectItem>
-                  {userProfile?.role === 'admin' && (
-                    <>
-                      <SelectItem value="admin" disabled>Admin</SelectItem>
-                      <SelectItem value="superadmin" disabled>Super Admin</SelectItem>
-                    </>
-                  )}
-                   {userProfile?.role === 'superadmin' && (
-                    <>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="superadmin">Super Admin</SelectItem>
-                    </>
-                  )}
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="superadmin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
             </TableCell>
           </TableRow>
-        ))}
+        ))
+        ) : (
+           <TableRow>
+              <TableCell colSpan={4} className="h-24 text-center">
+                No users found for this filter.
+              </TableCell>
+            </TableRow>
+        )}
       </TableBody>
     </Table>
   );
@@ -86,6 +86,8 @@ export default function UserManagementPage() {
   const { getAllUsers, updateUserRole } = useAuth();
   const [users, setUsers] = useState<AdminUserView[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState<UserRole | "all">("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
   const fetchUsers = useCallback(async () => {
@@ -145,12 +147,26 @@ export default function UserManagementPage() {
   }
   
   const filteredUsers = useMemo(() => {
-    return {
-      students: users.filter(u => u.role === 'student'),
-      teachers: users.filter(u => u.role === 'teacher'),
-      admins: users.filter(u => u.role === 'admin' || u.role === 'superadmin'),
-    };
-  }, [users]);
+    if (filter === "all") {
+      return users;
+    }
+    if (filter === 'admin') {
+      return users.filter(u => u.role === 'admin' || u.role === 'superadmin');
+    }
+    return users.filter(u => u.role === filter);
+  }, [users, filter]);
+
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
+
+  const handleFilterChange = (value: UserRole | "all") => {
+    setFilter(value);
+    setCurrentPage(1); // Reset to first page on filter change
+  };
 
   return (
     <>
@@ -160,8 +176,21 @@ export default function UserManagementPage() {
       />
       <Card>
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
-          <CardDescription>View all registered users and assign roles based on their category.</CardDescription>
+          <CardTitle>All Users ({users.length})</CardTitle>
+          <CardDescription>View, filter, and assign roles to all registered users.</CardDescription>
+          <div className="pt-2">
+             <Select value={filter} onValueChange={handleFilterChange}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Filter by role..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="student">Students</SelectItem>
+                <SelectItem value="teacher">Teachers</SelectItem>
+                <SelectItem value="admin">Admins & Super Admins</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -169,24 +198,32 @@ export default function UserManagementPage() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <Tabs defaultValue="students" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="students">Students ({filteredUsers.students.length})</TabsTrigger>
-                <TabsTrigger value="teachers">Teachers ({filteredUsers.teachers.length})</TabsTrigger>
-                <TabsTrigger value="admins">Admins ({filteredUsers.admins.length})</TabsTrigger>
-              </TabsList>
-              <TabsContent value="students" className="mt-4">
-                <UserTable users={filteredUsers.students} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
-              </TabsContent>
-              <TabsContent value="teachers" className="mt-4">
-                 <UserTable users={filteredUsers.teachers} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
-              </TabsContent>
-              <TabsContent value="admins" className="mt-4">
-                 <UserTable users={filteredUsers.admins} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
-              </TabsContent>
-            </Tabs>
+            <UserTable users={paginatedUsers} onRoleChange={handleRoleChange} getRoleBadgeVariant={getRoleBadgeVariant} />
           )}
         </CardContent>
+         {totalPages > 1 && (
+          <CardFooter className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </>
   );
