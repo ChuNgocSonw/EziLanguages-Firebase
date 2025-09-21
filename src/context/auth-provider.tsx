@@ -19,6 +19,7 @@ import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, P
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
+import { seedData } from '@/lib/seed-data';
 
 
 export interface AuthContextType {
@@ -70,7 +71,10 @@ export interface AuthContextType {
   getStudentPerformanceDataForFeedback: (studentId: string) => Promise<GenerateFeedbackInput>;
   createLesson: (lessonData: Omit<Lesson, 'id' | 'createdAt' | 'teacherId'>) => Promise<void>;
   getLessons: () => Promise<Lesson[]>;
+  getLessonDetails: (lessonId: string) => Promise<Lesson | null>;
+  updateLesson: (lessonId: string, lessonData: Omit<Lesson, 'id' | 'createdAt' | 'teacherId'>) => Promise<void>;
   deleteLesson: (lessonId: string) => Promise<void>;
+  seedInitialLessons: () => Promise<number>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -968,12 +972,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Lesson));
   }, []);
   
+  const getLessonDetails = useCallback(async (lessonId: string): Promise<Lesson | null> => {
+      if (!auth.currentUser) throw new Error("Not authenticated");
+      const lessonRef = doc(db, "lessons", lessonId);
+      const docSnap = await getDoc(lessonRef);
+      if (docSnap.exists()) {
+          return { id: docSnap.id, ...docSnap.data() } as Lesson;
+      }
+      return null;
+  }, []);
+
+  const updateLesson = useCallback(async (lessonId: string, lessonData: Omit<Lesson, 'id' | 'createdAt' | 'teacherId'>) => {
+    if (!auth.currentUser || !userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
+        throw new Error("You do not have permission to update lessons.");
+    }
+    const lessonRef = doc(db, "lessons", lessonId);
+    await updateDoc(lessonRef, lessonData);
+  }, [userProfile]);
+
+
   const deleteLesson = useCallback(async (lessonId: string) => {
       if (!auth.currentUser || !userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
           throw new Error("You do not have permission to delete lessons.");
       }
       const lessonRef = doc(db, "lessons", lessonId);
       await deleteDoc(lessonRef);
+  }, [userProfile]);
+  
+  const seedInitialLessons = useCallback(async (): Promise<number> => {
+    if (!auth.currentUser || !userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
+      throw new Error("You do not have permission to seed data.");
+    }
+    
+    const lessonsRef = collection(db, "lessons");
+    const snapshot = await getDocs(query(lessonsRef, limit(1)));
+    if (!snapshot.empty) {
+      return 0; // Data already exists
+    }
+
+    const batch = writeBatch(db);
+    seedData.forEach(lesson => {
+      const docRef = doc(lessonsRef); // Auto-generate ID
+      batch.set(docRef, {
+        ...lesson,
+        teacherId: auth.currentUser.uid,
+        createdAt: serverTimestamp(),
+      });
+    });
+    await batch.commit();
+    return seedData.length;
   }, [userProfile]);
 
 
@@ -1026,7 +1073,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getStudentPerformanceDataForFeedback,
     createLesson,
     getLessons,
+    getLessonDetails,
+    updateLesson,
     deleteLesson,
+    seedInitialLessons,
   }), [
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
@@ -1036,7 +1086,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
       getAssignmentAttempt, getStudentCompletedAttempts, getStudentAssignmentAttemptsForClass, sendFeedback,
       getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback, getStudentPerformanceDataForFeedback,
-      createLesson, getLessons, deleteLesson
+      createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson, seedInitialLessons,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

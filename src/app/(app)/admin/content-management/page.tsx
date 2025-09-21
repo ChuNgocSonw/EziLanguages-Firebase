@@ -2,10 +2,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Mic, Headphones, BookOpen, PlusCircle, Trash2, Loader2, Wand2 } from "lucide-react";
+import { Mic, Headphones, BookOpen, PlusCircle, Trash2, Loader2, Wand2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -148,27 +149,34 @@ export default function ContentManagementPage() {
                             <span className="text-lg font-semibold text-left">{lesson.unit}</span>
                         </div>
                     </AccordionTrigger>
-                     <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="ghost" size="icon" className="shrink-0 hover:bg-destructive/10" onClick={(e) => e.stopPropagation()}>
-                            {isDeleting === lesson.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive hover:text-destructive" />}
+                    <div className="flex items-center gap-1 shrink-0 ml-4">
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link href={`/admin/content-management/${lesson.id}/edit`}>
+                                <Pencil className="h-4 w-4 text-muted-foreground" />
+                            </Link>
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the lesson "{lesson.unit}".
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(lesson.id)} className="bg-destructive hover:bg-destructive/90">
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                        <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="shrink-0 hover:bg-destructive/10">
+                                {isDeleting === lesson.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive" />}
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the lesson "{lesson.unit}".
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(lesson.id)} className="bg-destructive hover:bg-destructive/90">
+                                Delete
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
                   </div>
                   <AccordionContent>
                     <div className="space-y-6 pl-4 border-l-2 border-primary/20 ml-4">
