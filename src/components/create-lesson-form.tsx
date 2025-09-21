@@ -89,8 +89,8 @@ export default function CreateLessonForm({ onFinished }: CreateLessonFormProps) 
             await createLesson(lessonPayload as Omit<Lesson, 'id'|'createdAt'|'teacherId'>);
 
             toast({
-                title: "Tạo bài học thành công",
-                description: "Bài học mới đã được tạo thành công.",
+                title: "Lesson Created",
+                description: "The new lesson has been successfully created.",
             });
             onFinished();
         } catch (error: any) {
