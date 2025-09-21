@@ -236,18 +236,18 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
           </div>
        
         <ScrollArea className="flex-1" viewportRef={scrollAreaRef}>
-          <div className="p-4">
+          <div className="p-2 md:p-4">
             {isHistoryLoading ? (
               <div className="flex justify-center items-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {messages.map((message, index) => (
                   <div
                     key={message.id || index}
                     className={cn(
-                      "flex items-start gap-4",
+                      "flex items-start gap-3",
                       message.role === "user" ? "justify-end" : "justify-start"
                     )}
                   >
@@ -310,7 +310,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
             )}
           </div>
         </ScrollArea>
-        <div className="border-t bg-card p-4 space-y-4 shrink-0">
+        <div className="border-t bg-card p-2 md:p-4 space-y-4 shrink-0">
           <form onSubmit={handleSendMessage} className="relative">
             <Textarea
               value={inputValue}
