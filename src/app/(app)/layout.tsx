@@ -77,11 +77,11 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     return (
        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-muted/50">
           <div className="p-4 rounded-lg flex flex-col items-center gap-6 text-center">
-            <Logo width={60} height={60} />
+            <Logo width={80} height={80} />
             <div className="flex items-center justify-center space-x-2">
-                <div className="w-5 h-5 bg-primary rounded-full animate-jump [animation-delay:-0.3s]"></div>
-                <div className="w-5 h-5 bg-primary rounded-full animate-jump [animation-delay:-0.15s]"></div>
-                <div className="w-5 h-5 bg-primary rounded-full animate-jump"></div>
+                <div className="w-4 h-4 bg-primary rounded-full animate-jump [animation-delay:-0.3s]"></div>
+                <div className="w-4 h-4 bg-primary rounded-full animate-jump [animation-delay:-0.15s]"></div>
+                <div className="w-4 h-4 bg-primary rounded-full animate-jump"></div>
             </div>
             <p className="text-lg font-medium text-muted-foreground">Loading your journey...</p>
           </div>
