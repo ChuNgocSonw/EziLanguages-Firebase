@@ -141,7 +141,7 @@ export default function ContentManagementPage() {
             <Accordion type="single" collapsible className="w-full">
               {lessons.map((lesson) => (
                 <AccordionItem value={lesson.id} key={lesson.id}>
-                  <div className="flex items-center w-full">
+                  <div className="flex items-center justify-between w-full">
                     <AccordionTrigger className="flex-1 hover:no-underline">
                         <div className="flex items-center gap-3">
                             <BookOpen className="h-5 w-5 text-primary" />
