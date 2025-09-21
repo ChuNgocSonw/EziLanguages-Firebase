@@ -58,6 +58,12 @@ const readingUnit3: ReadingSentence[] = [
     { unit: "Unit 3: Complex Sounds", text: "Peter Piper picked a peck of pickled peppers." },
 ];
 
+const listeningUnit3: ListeningExercise[] = [
+    { id: "u3e1", type: "typing", text: "The sixth sick sheikh's sixth sheep's sick." },
+    { id: "u3e2", type: "mcq", text: "Surely Sylvia swims, shrieked Stephen.", options: ["Surely Sylvia swims, shrieked Stephen.", "Surely Steven swims, shrieked Sylvia.", "Surely Sylvia sings, shrieked Stephen."], answer: "Surely Sylvia swims, shrieked Stephen." },
+    { id: "u3e3", type: "typing", text: "A big black bug bit a big black dog on his big black nose." },
+];
+
 const readingUnit4: ReadingSentence[] = [
     { unit: "Unit 4: At the Restaurant", text: "Could I see the menu, please?" },
     { unit: "Unit 4: At the Restaurant", text: "I would like to order the grilled chicken salad." },
@@ -181,10 +187,12 @@ export const lessonsData: Lesson[] = [
             - The quick brown fox jumps over the lazy dog near the river bank.
             - She sells seashells by the seashore.
             - Peter Piper picked a peck of pickled peppers.
+            - The sixth sick sheikh's sixth sheep's sick.
+            - A big black bug bit a big black dog on his big black nose.
         `,
         activities: {
             reading: readingUnit3,
-            // No listening exercises for this unit yet
+            listening: listeningUnit3,
         }
     },
     {
