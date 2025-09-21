@@ -48,10 +48,10 @@ type LessonFormData = z.infer<typeof lessonSchema>;
 
 interface CreateLessonFormProps {
     onFinished: () => void;
-    existingLesson?: Lesson;
+    existingLesson?: Lesson | null;
 }
 
-export default function CreateLessonForm({ onFinished, existingLesson }: CreateLessonFormProps) {
+export default function CreateLessonForm({ onFinished, existingLesson = null }: CreateLessonFormProps) {
     const { toast } = useToast();
     const { createLesson, updateLesson } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
@@ -68,7 +68,7 @@ export default function CreateLessonForm({ onFinished, existingLesson }: CreateL
     });
     
     useEffect(() => {
-        if (isEditMode) {
+        if (isEditMode && existingLesson) {
             form.reset({
                 unit: existingLesson.unit,
                 reading: existingLesson.activities.reading || [],
@@ -100,7 +100,7 @@ export default function CreateLessonForm({ onFinished, existingLesson }: CreateL
                 content: [...data.reading, ...data.listening].map(item => `- ${item.text}`).join('\n'),
             };
             
-            if (isEditMode) {
+            if (isEditMode && existingLesson) {
                 await updateLesson(existingLesson.id, lessonPayload as Omit<Lesson, 'id'|'createdAt'|'teacherId'>);
                 toast({
                     title: "Lesson Updated",
@@ -228,11 +228,7 @@ export default function CreateLessonForm({ onFinished, existingLesson }: CreateL
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-                {isEditMode ? (
-                    formContent
-                ) : (
-                    <ScrollArea className="h-[60vh]">{formContent}</ScrollArea>
-                )}
+                <ScrollArea className="h-[60vh]">{formContent}</ScrollArea>
                 <div className="flex justify-end p-4 border-t mt-4">
                     <Button type="submit" disabled={isSaving}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

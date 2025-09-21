@@ -19,7 +19,6 @@ import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, P
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
-import { seedData } from '@/lib/seed-data';
 
 
 export interface AuthContextType {

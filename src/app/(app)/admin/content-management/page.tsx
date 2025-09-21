@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -33,7 +32,9 @@ import type { Lesson } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ContentManagementPage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSeeding, setIsSeeding] = useState(false);
@@ -58,9 +59,16 @@ export default function ContentManagementPage() {
     fetchLessons();
   }, [fetchLessons]);
 
-  const onLessonCreated = () => {
-    setIsDialogOpen(false);
+  const onLessonSaved = () => {
+    setIsCreateDialogOpen(false);
+    setIsEditDialogOpen(false);
+    setEditingLesson(null);
     fetchLessons(); // Refresh the list
+  };
+  
+  const handleEditClick = (lesson: Lesson) => {
+    setEditingLesson(lesson);
+    setIsEditDialogOpen(true);
   };
 
   const handleSeedData = async () => {
@@ -114,7 +122,7 @@ export default function ContentManagementPage() {
                     Seed Initial Lessons
                 </Button>
             )}
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                 <Button>
                     <PlusCircle className="mr-2 h-4 w-4" />
@@ -128,7 +136,7 @@ export default function ContentManagementPage() {
                     Fill out the form to add a new lesson with reading and listening activities.
                     </DialogDescription>
                 </DialogHeader>
-                <CreateLessonForm onFinished={onLessonCreated} />
+                <CreateLessonForm onFinished={onLessonSaved} />
                 </DialogContent>
             </Dialog>
            </div>
@@ -150,10 +158,8 @@ export default function ContentManagementPage() {
                         </div>
                     </AccordionTrigger>
                     <div className="flex items-center gap-1 shrink-0 ml-4">
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link href={`/admin/content-management/${lesson.id}/edit`}>
-                                <Pencil className="h-4 w-4 text-muted-foreground" />
-                            </Link>
+                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(lesson)}>
+                            <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
                         <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -231,6 +237,19 @@ export default function ContentManagementPage() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Edit Lesson</DialogTitle>
+            <DialogDescription>
+              You are currently editing the lesson: "{editingLesson?.unit}"
+            </DialogDescription>
+          </DialogHeader>
+          <CreateLessonForm onFinished={onLessonSaved} existingLesson={editingLesson} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
