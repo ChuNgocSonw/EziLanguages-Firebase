@@ -141,7 +141,13 @@ export default function ContentManagementPage() {
             <Accordion type="single" collapsible className="w-full">
               {lessons.map((lesson) => (
                 <AccordionItem value={lesson.id} key={lesson.id}>
-                  <div className="flex items-center w-full pr-4">
+                  <div className="flex items-center w-full">
+                    <AccordionTrigger className="flex-1 hover:no-underline">
+                        <div className="flex items-center gap-3">
+                            <BookOpen className="h-5 w-5 text-primary" />
+                            <span className="text-lg font-semibold text-left">{lesson.unit}</span>
+                        </div>
+                    </AccordionTrigger>
                      <AlertDialog>
                       <AlertDialogTrigger asChild>
                          <Button variant="ghost" size="icon" className="shrink-0 hover:bg-destructive/10" onClick={(e) => e.stopPropagation()}>
@@ -163,12 +169,6 @@ export default function ContentManagementPage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                    <AccordionTrigger className="flex-1 hover:no-underline">
-                        <div className="flex items-center gap-3">
-                            <BookOpen className="h-5 w-5 text-primary" />
-                            <span className="text-lg font-semibold text-left">{lesson.unit}</span>
-                        </div>
-                    </AccordionTrigger>
                   </div>
                   <AccordionContent>
                     <div className="space-y-6 pl-4 border-l-2 border-primary/20 ml-4">
