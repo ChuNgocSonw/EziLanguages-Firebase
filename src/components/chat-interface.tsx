@@ -45,7 +45,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [explanationLanguage, setExplanationLanguage] = useState("English");
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { getChatMessages, saveChatMessage, deleteChatSession } = useAuth();
   const { toast } = useToast();
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
@@ -156,9 +156,9 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
   }
 
   useEffect(() => {
-    if (viewportRef.current) {
-      viewportRef.current.scrollTo({
-        top: viewportRef.current.scrollHeight,
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
         behavior: 'smooth',
       });
     }
@@ -235,7 +235,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
             )}
           </div>
        
-        <ScrollArea className="flex-1 p-4" viewportRef={viewportRef}>
+        <div className="flex-1 overflow-y-auto p-4" ref={scrollAreaRef}>
           {isHistoryLoading ? (
              <div className="flex justify-center items-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -307,7 +307,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
               )}
             </div>
           )}
-        </ScrollArea>
+        </div>
         <div className="border-t bg-card p-4 space-y-4 shrink-0">
           <form onSubmit={handleSendMessage} className="relative">
             <Textarea

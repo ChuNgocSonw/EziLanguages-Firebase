@@ -206,18 +206,20 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className="flex-1 flex flex-col bg-background overflow-auto p-4 lg:p-6">
-            {!user.emailVerified && !user.email?.endsWith('@ezilanguages.com') && (
-                <Alert variant="default" className="bg-yellow-100 border-yellow-500 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300 mb-4">
-                    <AlertTitle className="font-bold">Verification Required</AlertTitle>
-                    <AlertDescription>
-                        Your email is not verified. Please check your inbox for a verification link to unlock all features.
-                    </AlertDescription>
-                </Alert>
-            )}
-            <div className="flex-1 flex flex-col">
-                {children}
+        <main className="flex-1 flex flex-col bg-background overflow-hidden">
+          <ScrollArea className="flex-1">
+            <div className="p-4 lg:p-6">
+              {!user.emailVerified && !user.email?.endsWith('@ezilanguages.com') && (
+                  <Alert variant="default" className="bg-yellow-100 border-yellow-500 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-300 mb-4">
+                      <AlertTitle className="font-bold">Verification Required</AlertTitle>
+                      <AlertDescription>
+                          Your email is not verified. Please check your inbox for a verification link to unlock all features.
+                      </AlertDescription>
+                  </Alert>
+              )}
+              {children}
             </div>
+          </ScrollArea>
         </main>
       </div>
     </div>
