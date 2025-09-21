@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -351,7 +350,7 @@ export default function ChatInterface({
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type your message here..."
-              className="pr-24 min-h-[50px] resize-none"
+              className="pr-24 min-h-[120px] resize-none"
               disabled={isLoading || isHistoryLoading}
             />
              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
