@@ -260,7 +260,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     const removedQuestion = quizFields[index] as any;
     removeQuiz(index);
     if (removedQuestion.id && removedQuestion.id.startsWith('ai-')) {
-        setAvailableAiQuestions(prev => [...prev, removedQuestion]);
+        setAvailableAiQuestions(prev => [...prev, removedQuestion].sort(() => Math.random() - 0.5));
     }
   });
 
@@ -387,13 +387,13 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                     <div key={q.id || index} className="p-3 border rounded-md bg-muted/30 relative">
                         <p className="font-medium pr-8">{q.question}</p>
                         {q.options && q.options.length > 0 && (
-                            <ul className="mt-2 space-y-1 text-sm list-none ml-4">
+                            <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
                                 {q.options.map((opt, i) => (
                                     <li key={i} className={cn(
                                         "pl-2",
                                         opt.includes(q.answer) ? "font-semibold text-green-700" : ""
                                     )}>
-                                       {String.fromCharCode(65 + i)}) {opt}
+                                       {opt}
                                     </li>
                                 ))}
                             </ul>
@@ -598,13 +598,13 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                 <div key={field.id} className="p-3 border rounded-md bg-muted/30 relative">
                     <p className="font-medium pr-8">{field.question}</p>
                     {field.options && field.options.length > 0 && (
-                        <ul className="mt-2 space-y-1 text-sm list-none ml-4">
+                        <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
                             {field.options.map((opt, i) => (
                                 <li key={i} className={cn(
                                     "pl-2",
                                     opt.includes(field.answer) ? "font-semibold text-green-700" : ""
                                 )}>
-                                    {String.fromCharCode(65 + i)}) {opt}
+                                    {opt}
                                 </li>
                             ))}
                         </ul>

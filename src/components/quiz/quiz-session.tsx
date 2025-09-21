@@ -379,7 +379,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                 <div key={index} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
                   <RadioGroupItem value={option} id={`option-${index}`} />
                   <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                    {String.fromCharCode(65 + index)}) {option}
+                    {option}
                   </Label>
                 </div>
               ))}
@@ -389,11 +389,11 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
               <RadioGroup onValueChange={setSelectedOption} value={selectedOption ?? ""}>
                   <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
                       <RadioGroupItem value="True" id="option-true" />
-                      <Label htmlFor="option-true" className="flex-1 cursor-pointer">A) True</Label>
+                      <Label htmlFor="option-true" className="flex-1 cursor-pointer">True</Label>
                   </div>
                   <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
                       <RadioGroupItem value="False" id="option-false" />
-                      <Label htmlFor="option-false" className="flex-1 cursor-pointer">B) False</Label>
+                      <Label htmlFor="option-false" className="flex-1 cursor-pointer">False</Label>
                   </div>
               </RadioGroup>
           )}
