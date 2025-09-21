@@ -362,7 +362,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
             </Form>
         </Card>
         <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
-            <div className="p-4 border rounded-md min-h-[200px] space-y-3">
+            <div className="p-4 border rounded-md space-y-3">
                 <h4 className="font-medium text-center mb-2">Available AI-Generated Questions</h4>
                 {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
                 {!isGenerating && availableAiQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
@@ -374,15 +374,15 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                                 {q.options.map((opt, i) => (
                                     <li key={i} className={cn(
                                         "pl-2",
-                                        opt === q.answer ? "font-semibold text-green-700" : ""
+                                        opt.includes(q.answer) ? "font-semibold text-green-700" : ""
                                     )}>
-                                       {String.fromCharCode(65 + i)}) {opt}
+                                       {opt}
                                     </li>
                                 ))}
                             </ul>
                         )}
                          {q.type !== 'multiple-choice' && <p className="text-sm font-semibold text-green-700 mt-1">Answer: {q.answer}</p>}
-                        <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddQuestionToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
+                        <Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddQuestionToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
                     </div>
                 ))}
             </div>
@@ -411,14 +411,14 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
             </Form>
         </Card>
         <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
-             <div className="p-4 border rounded-md min-h-[200px] space-y-3">
+             <div className="p-4 border rounded-md space-y-3">
                 <h4 className="font-medium text-center mb-2">Available AI-Generated Sentences</h4>
                 {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
                 {!isGenerating && availableAiSentences.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated sentences will appear here.</p></div>)}
                 {availableAiSentences.map((s, index) => (
                     <div key={index} className="p-3 border rounded-md bg-muted/30 relative">
                         <p className="font-medium pr-8">{s.text}</p>
-                        <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddSentenceToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
+                        <Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddSentenceToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
                     </div>
                 ))}
             </div>
@@ -450,7 +450,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
             </Form>
         </Card>
         <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
-            <div className="p-4 border rounded-md min-h-[200px] space-y-3">
+            <div className="p-4 border rounded-md space-y-3">
                 <h4 className="font-medium text-center mb-2">Available AI-Generated Exercises</h4>
                 {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
                 {!isGenerating && availableAiExercises.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated exercises will appear here.</p></div>)}
@@ -458,7 +458,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                     <div key={ex.id || index} className="p-3 border rounded-md bg-muted/30 relative">
                         <p className="font-medium pr-8">{ex.text}</p>
                         <p className="text-sm text-muted-foreground">Type: {ex.type}</p>
-                        <Button size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddExerciseToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
+                        <Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddExerciseToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
                     </div>
                 ))}
             </div>
@@ -585,7 +585,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                             {(field as any).options.map((opt: string, i: number) => (
                                 <li key={i} className={cn(
                                     "pl-2",
-                                    opt === (field as any).answer ? "font-semibold text-green-700" : ""
+                                    opt.includes((field as any).answer) ? "font-semibold text-green-700" : ""
                                 )}>
                                     {String.fromCharCode(65 + i)}) {opt}
                                 </li>
@@ -697,3 +697,4 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     </>
   );
 }
+
