@@ -81,11 +81,6 @@ export default function VerifyEmailPage() {
                     Resend code
                 </Button>
             </p>
-             <p>
-                <Link href="/login" className="underline font-semibold text-primary">
-                    Back to Login
-                </Link>
-            </p>
         </div>
       </CardContent>
     </Card>
