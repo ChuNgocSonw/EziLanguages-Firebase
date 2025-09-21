@@ -259,9 +259,8 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const handleRemoveQuestionFromSelection = withScrollPreservation((index: number) => {
     const removedQuestion = quizFields[index] as any;
     removeQuiz(index);
-    // If it was an AI-generated question, add it back to the available list.
     if (removedQuestion.id?.startsWith('ai-')) {
-        setAvailableAiQuestions(prev => [...prev, removedQuestion].sort(() => Math.random() - 0.5)); // Re-add and shuffle a bit
+        setAvailableAiQuestions(prev => [...prev, removedQuestion].sort(() => Math.random() - 0.5));
     }
   });
 
@@ -274,7 +273,6 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const handleRemoveSentenceFromSelection = withScrollPreservation((index: number) => {
     const removedSentence = readingFields[index] as any;
     removeReading(index);
-    // If it was an AI sentence, add it back to the available list
     if (availableAiSentences.every(s => s.text !== removedSentence.text)) {
       setAvailableAiSentences(prev => [...prev, removedSentence]);
     }
@@ -425,7 +423,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                             <FormField control={readingGenerationForm.control} name="numberOfSentences" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         </div>
                     </CardContent>
-                    <CardFooter><Button type="submit" disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Sentences"}</Button></CardFooter>
+                    <CardFooter><Button type="button" onClick={readingGenerationForm.handleSubmit(handleGenerateSentences)} disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Sentences"}</Button></CardFooter>
                 </form>
             </Form>
         </Card>
@@ -441,7 +439,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                     </div>
                 ))}
             </div>
-            <Card><CardHeader><CardTitle>Add Reading Sentence Manually</CardTitle><CardDescription>Add sentences one by one for the reading assignment.</CardDescription></CardHeader><Form {...form}><form onSubmit={form.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={form.control} name="unit" render={({ field }) => (<FormItem><FormLabel>Unit / Topic</FormLabel><FormControl><Input placeholder="e.g., Unit 1: Greetings" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence</FormLabel><FormControl><Textarea placeholder="Enter the sentence students will read." {...field} /></FormControl><FormMessage /></FormItem>)} /></CardContent><CardFooter><Button type="submit"><PlusCircle className="mr-2 h-4 w-4" /> Add Sentence</Button></CardFooter></form></Form></Card>
+            <Card><CardHeader><CardTitle>Add Reading Sentence Manually</CardTitle><CardDescription>Add sentences one by one for the reading assignment.</CardDescription></CardHeader><Form {...form}><form onSubmit={form.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={form.control} name="unit" render={({ field }) => (<FormItem><FormLabel>Unit / Topic</FormLabel><FormControl><Input placeholder="e.g., Unit 1: Greetings" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence</FormLabel><FormControl><Textarea placeholder="Enter the sentence students will read." {...field} /></FormControl><FormMessage /></FormItem>)} /></CardContent><CardFooter><Button type="button" onClick={form.handleSubmit(handleAdd)}><PlusCircle className="mr-2 h-4 w-4" /> Add Sentence</Button></CardFooter></form></Form></Card>
         </div>
     </>);
   };
@@ -464,7 +462,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                             <FormField control={listeningGenerationForm.control} name="numberOfExercises" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         </div>
                     </CardContent>
-                    <CardFooter><Button type="submit" disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Exercises"}</Button></CardFooter>
+                    <CardFooter><Button type="button" onClick={listeningGenerationForm.handleSubmit(handleGenerateExercises)} disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Exercises"}</Button></CardFooter>
                 </form>
             </Form>
         </Card>
@@ -481,7 +479,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                     </div>
                 ))}
             </div>
-            <Card><CardHeader><CardTitle>Add Listening Exercise Manually</CardTitle></CardHeader><Form {...manualForm}><form onSubmit={manualForm.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={manualForm.control} name="type" render={({ field }) => (<FormItem><FormLabel>Exercise Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="typing">Type what you hear</SelectItem><SelectItem value="mcq">Multiple Choice</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={manualForm.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence to be heard</FormLabel><FormControl><Textarea placeholder="This is the text that will be converted to audio." {...field} /></FormControl><FormMessage /></FormItem>)} />{type === 'mcq' && (<><FormLabel>Options (Provide 3 choices)</FormLabel>{[0, 1, 2].map(i => (<FormField key={i} control={manualForm.control} name={`options.${i}`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`Option ${i + 1}`} {...field} /></FormControl><FormMessage /></FormItem>)} />))}<FormField control={manualForm.control} name="answer" render={({ field }) => (<FormItem><FormLabel>Correct Answer</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value}>{options?.map((opt, i) => opt.trim() && (<FormItem key={i} className="flex items-center space-x-2"><FormControl><RadioGroupItem value={opt} /></FormControl><FormLabel className="font-normal">{opt}</FormLabel></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} /></>)}</CardContent><CardFooter><Button type="submit"><PlusCircle className="mr-2 h-4 w-4" /> Add Exercise</Button></CardFooter></form></Form></Card>
+            <Card><CardHeader><CardTitle>Add Listening Exercise Manually</CardTitle></CardHeader><Form {...manualForm}><form onSubmit={manualForm.handleSubmit(handleAdd)}><CardContent className="space-y-4"><FormField control={manualForm.control} name="type" render={({ field }) => (<FormItem><FormLabel>Exercise Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="typing">Type what you hear</SelectItem><SelectItem value="mcq">Multiple Choice</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={manualForm.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence to be heard</FormLabel><FormControl><Textarea placeholder="This is the text that will be converted to audio." {...field} /></FormControl><FormMessage /></FormItem>)} />{type === 'mcq' && (<><FormLabel>Options (Provide 3 choices)</FormLabel>{[0, 1, 2].map(i => (<FormField key={i} control={manualForm.control} name={`options.${i}`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`Option ${i + 1}`} {...field} /></FormControl><FormMessage /></FormItem>)} />))}<FormField control={manualForm.control} name="answer" render={({ field }) => (<FormItem><FormLabel>Correct Answer</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value}>{options?.map((opt, i) => opt.trim() && (<FormItem key={i} className="flex items-center space-x-2"><FormControl><RadioGroupItem value={opt} /></FormControl><FormLabel className="font-normal">{opt}</FormLabel></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} /></>)}</CardContent><CardFooter><Button type="button" onClick={manualForm.handleSubmit(handleAdd)}><PlusCircle className="mr-2 h-4 w-4" /> Add Exercise</Button></CardFooter></form></Form></Card>
         </div>
     </>);
   };
@@ -575,7 +573,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                             </FormItem>
                         )} />
                     )}
-                    <Button type="submit" variant="secondary"><PlusCircle className="mr-2 h-4 w-4" /> Add This Question</Button>
+                    <Button type="button" onClick={form.handleSubmit(handleManualSubmit)} variant="secondary"><PlusCircle className="mr-2 h-4 w-4" /> Add This Question</Button>
                 </form>
             </Form>
         </CardContent>
