@@ -55,7 +55,7 @@ export default function ChatLayout() {
 
   const ChatHistoryPanel = () => (
     <ScrollArea className="flex-1 min-h-0">
-        <div className="p-4">
+        <div className="px-4 pb-4">
             {isLoading ? (
                 <div className="flex justify-center items-center h-full">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
