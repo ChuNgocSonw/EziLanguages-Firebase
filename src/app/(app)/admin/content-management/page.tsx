@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Mic, Headphones, BookOpen, PlusCircle, Trash2, Loader2 } from "lucide-react";
+import { Mic, Headphones, BookOpen, PlusCircle, Trash2, Loader2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,8 +35,9 @@ export default function ContentManagementPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const { getLessons, deleteLesson } = useAuth();
+  const { getLessons, deleteLesson, seedInitialLessons } = useAuth();
   const { toast } = useToast();
 
   const fetchLessons = useCallback(async () => {
@@ -60,6 +61,23 @@ export default function ContentManagementPage() {
     setIsDialogOpen(false);
     fetchLessons(); // Refresh the list
   };
+
+  const handleSeedData = async () => {
+    setIsSeeding(true);
+    try {
+        const seededCount = await seedInitialLessons();
+        if (seededCount > 0) {
+            toast({ title: "Success", description: `${seededCount} initial lessons have been seeded.` });
+            fetchLessons();
+        } else {
+            toast({ title: "No Action Needed", description: "Database already contains lessons." });
+        }
+    } catch (error: any) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+        setIsSeeding(false);
+    }
+  }
 
   const handleDelete = async (lessonId: string) => {
     setIsDeleting(lessonId);
@@ -88,23 +106,31 @@ export default function ContentManagementPage() {
               This content is stored in the database.
             </CardDescription>
           </div>
-           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-               <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Create New Lesson
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl">
-              <DialogHeader>
-                <DialogTitle>Create a New Lesson</DialogTitle>
-                <DialogDescription>
-                  Fill out the form to add a new lesson with reading and listening activities.
-                </DialogDescription>
-              </DialogHeader>
-              <CreateLessonForm onFinished={onLessonCreated} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            {lessons.length === 0 && !isLoading && (
+                 <Button variant="outline" onClick={handleSeedData} disabled={isSeeding}>
+                    {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                    Seed Initial Lessons
+                </Button>
+            )}
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create New Lesson
+                </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                    <DialogTitle>Create a New Lesson</DialogTitle>
+                    <DialogDescription>
+                    Fill out the form to add a new lesson with reading and listening activities.
+                    </DialogDescription>
+                </DialogHeader>
+                <CreateLessonForm onFinished={onLessonCreated} />
+                </DialogContent>
+            </Dialog>
+           </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -116,13 +142,7 @@ export default function ContentManagementPage() {
               {lessons.map((lesson) => (
                 <AccordionItem value={lesson.id} key={lesson.id}>
                   <div className="flex items-center w-full pr-4">
-                    <AccordionTrigger className="flex-1 hover:no-underline">
-                        <div className="flex items-center gap-3">
-                            <BookOpen className="h-5 w-5 text-primary" />
-                            <span className="text-lg font-semibold text-left">{lesson.unit}</span>
-                        </div>
-                    </AccordionTrigger>
-                    <AlertDialog>
+                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                          <Button variant="ghost" size="icon" className="shrink-0 hover:bg-destructive/10" onClick={(e) => e.stopPropagation()}>
                             {isDeleting === lesson.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive hover:text-destructive" />}
@@ -143,6 +163,12 @@ export default function ContentManagementPage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    <AccordionTrigger className="flex-1 hover:no-underline">
+                        <div className="flex items-center gap-3">
+                            <BookOpen className="h-5 w-5 text-primary" />
+                            <span className="text-lg font-semibold text-left">{lesson.unit}</span>
+                        </div>
+                    </AccordionTrigger>
                   </div>
                   <AccordionContent>
                     <div className="space-y-6 pl-4 border-l-2 border-primary/20 ml-4">
@@ -173,7 +199,7 @@ export default function ContentManagementPage() {
                               <li key={`listening-${lesson.id}-${index}`}>
                                   <p><span className="font-semibold text-foreground/80">Text:</span> {exercise.text}</p>
                                   <p><span className="font-semibold text-foreground/80">Type:</span> {exercise.type}</p>
-                                  {exercise.type === 'mcq' && (
+                                  {exercise.type === 'mcq' && exercise.options && (
                                       <>
                                           <p><span className="font-semibold text-foreground/80">Options:</span> {exercise.options.join(", ")}</p>
                                           <p><span className="font-semibold text-foreground/80">Answer:</span> {exercise.answer}</p>
@@ -192,7 +218,7 @@ export default function ContentManagementPage() {
           ) : (
             <div className="text-center py-12">
               <h3 className="text-lg font-semibold">No Lessons Found</h3>
-              <p className="text-muted-foreground mt-2">Click "Create New Lesson" to add the first one.</p>
+              <p className="text-muted-foreground mt-2">Click "Create New Lesson" to add the first one or "Seed Initial Lessons" to add sample data.</p>
             </div>
           )}
         </CardContent>
