@@ -28,7 +28,7 @@ import type { UserRole } from '@/lib/types';
 
 
 const allNavItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['student', 'admin', 'superadmin'] },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['student'] },
   { href: '/assignments', icon: BookCopy, label: 'Assignments', roles: ['student'] },
   { href: '/chat', icon: MessageSquare, label: 'AI Chat', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/reading', icon: Mic, label: 'Reading', roles: ['student', 'teacher', 'admin', 'superadmin'] },
