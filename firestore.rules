@@ -3,44 +3,42 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
+      allow read, update, write: if request.auth != null && request.auth.uid == userId;
 
-    match /users/{userId}/quizHistory/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    match /users/{userId}/assignmentAttempts/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
+      match /quizHistory/{docId} {
+        allow read, create: if request.auth != null && request.auth.uid == userId;
+      }
 
-    match /users/{userId}/chats/{chatId} {
-      allow read, create, delete: if request.auth != null && request.auth.uid == userId;
-      
-      // Allow users to read and create messages in their own chats
-      match /messages/{messageId} {
+      match /assignmentAttempts/{docId} {
+        allow read, create: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /chats/{chatId} {
         allow read, create, delete: if request.auth != null && request.auth.uid == userId;
+
+        match /messages/{messageId} {
+          allow read, create, delete: if request.auth != null && request.auth.uid == userId;
+        }
       }
     }
 
     match /classes/{classId} {
-      // Allow teachers to create, read, update, and delete their own classes
-      allow read, create, update, delete: if request.auth != null && request.resource.data.teacherId == request.auth.uid;
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
     }
 
     match /assignments/{assignmentId} {
-      // Teachers can manage their own assignments
-      allow read, create, update, delete: if request.auth != null && request.resource.data.teacherId == request.auth.uid;
-      // Students can read assignments assigned to their class
-      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in resource.data.assignedClasses.map(c => c.classId);
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
     }
     
     match /feedback/{feedbackId} {
-      // Teachers can create and manage feedback they've sent
-      allow read, create, delete: if request.auth != null && request.resource.data.teacherId == request.auth.uid;
-      // Students can read feedback sent to them
-      allow read, update: if request.auth != null && request.resource.data.studentId == request.auth.uid;
+      // Allow teacher and student to read and update (for isRead status)
+      allow read, update: if request.auth != null && (request.auth.uid == resource.data.teacherId || request.auth.uid == resource.data.studentId);
+      // Allow any authenticated user (teacher) to create feedback
+      allow create: if request.auth != null;
+      // Only allow the teacher who sent it to delete it
+      allow delete: if request.auth != null && request.auth.uid == resource.data.teacherId;
     }
-
   }
 }
