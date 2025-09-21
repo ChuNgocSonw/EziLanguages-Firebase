@@ -2,18 +2,33 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper function to check if the requesting user is an admin or superadmin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
+    }
+
     match /users/{userId} {
-      allow read, update, write: if request.auth != null && request.auth.uid == userId;
+      // Allow a user to create their own document
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Allow a user to read their own data, or an admin to read any user's data
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // Allow a user to update their own data, or an admin to update any user's data
+      allow update: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // No one can delete user documents directly
+      allow delete: if false;
 
       match /quizHistory/{docId} {
-        allow read, create: if request.auth != null && request.auth.uid == userId;
+        // Allow user to access their own history, or admin to read it
+        allow read, create: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
 
       match /assignmentAttempts/{docId} {
-        allow read, create: if request.auth != null && request.auth.uid == userId;
+        // Allow user to access their own attempts, or admin to read them
+        allow read, create: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
 
       match /chats/{chatId} {
+        // Keep chat private to the user
         allow read, create, delete: if request.auth != null && request.auth.uid == userId;
 
         match /messages/{messageId} {
@@ -24,19 +39,21 @@ service cloud.firestore {
 
     match /classes/{classId} {
       allow read: if request.auth != null;
-      allow create, update, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
+      // Only the teacher who created the class can manage it
+      allow create, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
     }
 
     match /assignments/{assignmentId} {
       allow read: if request.auth != null;
-      allow create, update, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
+      // Only the teacher who created the assignment can manage it
+      allow create, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
     }
     
     match /feedback/{feedbackId} {
       // Allow teacher and student to read and update (for isRead status)
       allow read, update: if request.auth != null && (request.auth.uid == resource.data.teacherId || request.auth.uid == resource.data.studentId);
-      // Allow any authenticated user (teacher) to create feedback
-      allow create: if request.auth != null;
+      // Allow any authenticated teacher/admin to create feedback
+      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
       // Only allow the teacher who sent it to delete it
       allow delete: if request.auth != null && request.auth.uid == resource.data.teacherId;
     }
