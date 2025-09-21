@@ -53,11 +53,11 @@ export default function LandingPage() {
                         </div>
                          <div className="mt-12 relative">
                             <Image
-                                src="https://picsum.photos/seed/language-app/1200/600"
+                                src="/landing-screenshot.png"
                                 alt="App Screenshot"
-                                width={1200}
-                                height={600}
-                                className="rounded-lg shadow-2xl"
+                                width={1000}
+                                height={500}
+                                className="rounded-lg shadow-2xl mx-auto"
                                 data-ai-hint="language learning app"
                             />
                         </div>

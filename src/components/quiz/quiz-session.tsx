@@ -377,7 +377,10 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
               {question.options?.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
                   <RadioGroupItem value={option} id={`option-${index}`} />
-                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">{option}</Label>
+                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                    <span className="font-bold mr-2">{String.fromCharCode(97 + index)}.</span>
+                    {option}
+                  </Label>
                 </div>
               ))}
             </RadioGroup>
@@ -386,11 +389,11 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
               <RadioGroup onValueChange={setSelectedOption} value={selectedOption ?? ""}>
                   <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
                       <RadioGroupItem value="True" id="option-true" />
-                      <Label htmlFor="option-true" className="flex-1 cursor-pointer">True</Label>
+                      <Label htmlFor="option-true" className="flex-1 cursor-pointer">a. True</Label>
                   </div>
                   <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted transition-colors">
                       <RadioGroupItem value="False" id="option-false" />
-                      <Label htmlFor="option-false" className="flex-1 cursor-pointer">False</Label>
+                      <Label htmlFor="option-false" className="flex-1 cursor-pointer">b. False</Label>
                   </div>
               </RadioGroup>
           )}
@@ -428,7 +431,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
             <div className="space-y-4">
                 {questions.map((q, i) => (
                     <div key={i} className="p-2 border rounded-md">
-                        <p className="font-medium">{q.question}</p>
+                        <p className="font-medium">{i + 1}. {q.question}</p>
                         <p className={cn("text-sm flex items-center gap-2", selectedAnswers[i].trim().toLowerCase() === q.answer.trim().toLowerCase() ? "text-green-600" : "text-destructive")}>
                            {selectedAnswers[i].trim().toLowerCase() === q.answer.trim().toLowerCase() ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                            Your answer: {selectedAnswers[i]}
@@ -578,7 +581,3 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
     </Card>
   );
 }
-
-    
-
-
