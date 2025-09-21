@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ShieldCheck, School } from 'lucide-react';
+import { User, Settings, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ShieldCheck, School, LayoutDashboard } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { MainNav } from '@/components/main-nav';
@@ -173,6 +173,14 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{user.displayName ?? 'My Account'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {userProfile?.role === 'student' && (
+                <DropdownMenuItem asChild>
+                    <Link href="/dashboard">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                    </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild>
                 <Link href="/profile">
                   <User className="mr-2 h-4 w-4" />
