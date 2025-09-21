@@ -260,7 +260,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     const removedQuestion = quizFields[index] as any;
     removeQuiz(index);
     if (removedQuestion.id && removedQuestion.id.startsWith('ai-')) {
-        setAvailableAiQuestions(prev => [...prev, removedQuestion].sort(() => Math.random() - 0.5));
+        setAvailableAiQuestions(prev => [...prev, removedQuestion]);
     }
   });
 
