@@ -310,7 +310,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
             )}
           </div>
         </ScrollArea>
-        <div className="border-t bg-card p-2 md:p-4 space-y-4 shrink-0">
+        <div className="border-t bg-card p-2 md:p-3 space-y-4 shrink-0">
           <form onSubmit={handleSendMessage} className="relative">
             <Textarea
               value={inputValue}
