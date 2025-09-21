@@ -313,7 +313,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const batch = writeBatch(db);
 
-    const messagesSnapshot = await getDocs(messagesRef);
+    const messagesSnapshot = await getDocs(query(messagesRef));
     messagesSnapshot.forEach(doc => {
       batch.delete(doc.ref);
     });
