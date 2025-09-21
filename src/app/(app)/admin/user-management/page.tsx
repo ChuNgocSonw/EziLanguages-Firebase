@@ -147,9 +147,23 @@ export default function UserManagementPage() {
   }
   
   const filteredUsers = useMemo(() => {
+    const roleOrder: Record<UserRole, number> = {
+      superadmin: 1,
+      admin: 2,
+      teacher: 3,
+      student: 4,
+    };
+
     if (filter === "all") {
-      return users;
+      return [...users].sort((a, b) => {
+        const roleComparison = roleOrder[a.role] - roleOrder[b.role];
+        if (roleComparison !== 0) {
+          return roleComparison;
+        }
+        return (a.name || '').localeCompare(b.name || '');
+      });
     }
+    
     if (filter === 'admin') {
       return users.filter(u => u.role === 'admin' || u.role === 'superadmin');
     }
