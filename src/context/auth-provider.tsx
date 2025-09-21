@@ -177,24 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
     
-    const newUserProfile: UserProfile = {
-      name: name,
-      email: email,
-      age: 0,
-      language: "EN",
-      role: 'student',
-      xp: 0,
-      weeklyXP: 0,
-      streak: 0,
-      badges: [],
-      badgeCount: 0,
-      pronunciationScores: {},
-      listeningScores: {},
-      completedAssignments: [],
-      completedAssignmentDetails: [],
-    };
-
-    await setDoc(doc(db, "users", userCredential.user.uid), newUserProfile);
+    // We will NO LONGER create the user document here. It will be created on first login after verification.
 
     await sendEmailVerification(userCredential.user);
     await signOut(auth); // Log out user until they are verified
@@ -211,19 +194,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
     }
     
-    // Fetch user profile to determine role and redirect accordingly
-    const userDoc = await getDoc(doc(db, "users", loggedInUser.uid));
-    if (userDoc.exists()) {
-        const profile = userDoc.data() as UserProfile;
-        if (profile.role === 'admin' || profile.role === 'superadmin') {
-            router.push('/admin');
-        } else if (profile.role === 'teacher') {
-            router.push('/teacher');
-        } else {
-            router.push('/dashboard');
-        }
+    // On login, check if the user document exists in Firestore.
+    const userDocRef = doc(db, "users", loggedInUser.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    let profile: UserProfile;
+
+    if (!userDoc.exists()) {
+        // This is the first login after verification. Create the user document now.
+        const newUserProfile: UserProfile = {
+            name: loggedInUser.displayName || "New User",
+            email: loggedInUser.email!,
+            age: 0,
+            language: "EN",
+            role: 'student',
+            xp: 0,
+            weeklyXP: 0,
+            streak: 0,
+            badges: [],
+            badgeCount: 0,
+            pronunciationScores: {},
+            listeningScores: {},
+            completedAssignments: [],
+            completedAssignmentDetails: [],
+        };
+        await setDoc(userDocRef, newUserProfile);
+        profile = newUserProfile;
     } else {
-        // Fallback to dashboard if profile doesn't exist for some reason
+        profile = userDoc.data() as UserProfile;
+    }
+    
+    // Redirect based on role
+    if (profile.role === 'admin' || profile.role === 'superadmin') {
+        router.push('/admin');
+    } else if (profile.role === 'teacher') {
+        router.push('/teacher');
+    } else {
         router.push('/dashboard');
     }
   }, [router]);
