@@ -1,46 +1,55 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+    // Users can read their own profile, admins/superadmins can read any profile.
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin']);
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Teachers can manage their own classes.
     match /classes/{classId} {
-      allow read, write, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
+        allow read, write, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
     }
     
-    match /assignments/{assignmentId} {
-      allow read, write, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
-    }
-
+    // Admins can manage lesson content. Anyone can read.
     match /lessons/{lessonId} {
-      allow list, get: if request.auth != null;
-      allow write, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'];
     }
 
+    // Students can read/write their own chat history.
+    match /users/{userId}/chats/{chatId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+     match /users/{userId}/chats/{chatId}/messages/{messageId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Students can write to their own quiz history, but not edit/delete.
+    match /users/{userId}/quizHistory/{attemptId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Students can write to their own assignment attempts, but not edit/delete.
+    match /users/{userId}/assignmentAttempts/{attemptId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Teachers can manage assignments.
+    match /assignments/{assignmentId} {
+        allow read, write, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
+    }
+
+    // Feedback can be read by sender/receiver, but only created/deleted by teachers.
     match /feedback/{feedbackId} {
-      allow read, write: if request.auth != null;
-      allow delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
+      allow read: if request.auth != null && (request.auth.uid == resource.data.studentId || request.auth.uid == resource.data.teacherId);
+      allow create, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
+      allow update: if request.auth != null && request.auth.uid == resource.data.studentId; // Student can mark as read
     }
 
-    match /{path=**}/chats/{chatId} {
-      allow read, write, delete: if request.auth != null && request.auth.uid == path[1];
-    }
-    
-    match /{path=**}/messages/{messageId} {
-      allow read, write, delete: if request.auth != null && path[1] == request.auth.uid;
-    }
-
-    match /{path=**}/quizHistory/{quizId} {
-      allow read, write: if request.auth != null && path[1] == request.auth.uid;
-    }
-    
-    match /{path=**}/assignmentAttempts/{attemptId} {
-       allow read, write: if request.auth != null && path[1] == request.auth.uid;
-    }
   }
 }
