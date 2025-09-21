@@ -211,7 +211,18 @@ export default function ChatInterface({
     <Card className="flex-1 flex flex-col h-full overflow-hidden">
         
           <div className="flex items-center justify-between p-2 border-b shrink-0 gap-2">
-            <div className="flex-grow"></div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="language-select" className="text-sm font-medium">Explanation Language:</Label>
+              <Select value={explanationLanguage} onValueChange={setExplanationLanguage}>
+                  <SelectTrigger id="language-select" className="w-[140px]">
+                      <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="English">English</SelectItem>
+                      <SelectItem value="Vietnamese">Vietnamese</SelectItem>
+                  </SelectContent>
+              </Select>
+            </div>
 
             <div className="flex items-center gap-2">
                 <Sheet open={historySheetOpen} onOpenChange={onHistorySheetOpenChange}>
@@ -331,26 +342,14 @@ export default function ChatInterface({
             )}
           </div>
         </ScrollArea>
-        <div className="border-t bg-card p-2 md:p-3 space-y-4 shrink-0">
-          <div className="flex items-center gap-2 px-1">
-              <Label htmlFor="language-select" className="text-sm font-medium">Explanation Language:</Label>
-              <Select value={explanationLanguage} onValueChange={setExplanationLanguage}>
-                  <SelectTrigger id="language-select" className="w-[140px]">
-                      <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="English">English</SelectItem>
-                      <SelectItem value="Vietnamese">Vietnamese</SelectItem>
-                  </SelectContent>
-              </Select>
-          </div>
+        <div className="border-t bg-card p-2 md:p-3 shrink-0">
           <form onSubmit={handleSendMessage} className="relative">
             <Textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type your message here..."
-              className="pr-24 min-h-[120px] resize-none"
+              className="pr-24 min-h-[50px] resize-none"
               disabled={isLoading || isHistoryLoading}
             />
              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">

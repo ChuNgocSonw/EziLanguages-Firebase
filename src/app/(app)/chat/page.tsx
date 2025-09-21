@@ -3,7 +3,7 @@ import PageHeader from "@/components/page-header";
 
 export default function ChatPage() {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[calc(100vh-160px)]">
       <div className="mb-2">
         <PageHeader
             title="AI Language Practice"
