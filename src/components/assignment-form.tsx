@@ -376,7 +376,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                                         "pl-2",
                                         opt.includes(q.answer) ? "font-semibold text-green-700" : ""
                                     )}>
-                                       {opt}
+                                       {String.fromCharCode(65 + i)}) {opt}
                                     </li>
                                 ))}
                             </ul>
@@ -677,7 +677,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                         <CardTitle>Final Assignment Content</CardTitle>
                     </CardHeader>
                     <form onSubmit={contentForm.handleSubmit(handleSaveAssignment)}>
-                        <CardContent className="space-y-3 min-h-[200px]">
+                        <CardContent className="space-y-3">
                             {renderSelectedContent()}
                         </CardContent>
                         <CardFooter className="justify-between">
