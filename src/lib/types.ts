@@ -17,6 +17,7 @@ export const QuizQuestionSchema = z.object({
   type: QuestionType,
   options: z.array(z.string()).optional(),
   answer: z.string(),
+  isAI: z.boolean().optional(),
 });
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 

@@ -213,7 +213,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
       const generated = await generateQuizQuestions(data);
       if (!generated || generated.length === 0) throw new Error("The AI failed to generate questions for this topic.");
       
-      const questionsWithIds = generated.map(q => ({ ...q, id: `ai-${new Date().getTime()}-${Math.random()}`}));
+      const questionsWithIds = generated.map(q => ({ ...q, id: `ai-${new Date().getTime()}-${Math.random()}`, isAI: true }));
       setAvailableAiQuestions(questionsWithIds);
 
     } catch (error: any) {
@@ -259,8 +259,8 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
   const handleRemoveQuestionFromSelection = withScrollPreservation((index: number) => {
     const removedQuestion = quizFields[index] as QuizQuestion;
     removeQuiz(index);
-    if (removedQuestion.id?.startsWith('ai-')) {
-        setAvailableAiQuestions(prev => [...prev, removedQuestion]);
+    if (removedQuestion.isAI) {
+      setAvailableAiQuestions(prev => [...prev, removedQuestion]);
     }
   });
 
@@ -337,7 +337,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
             title: assignmentDetails.title, 
             language: "EN",
             assignmentType: assignmentType,
-            questions: assignmentType === 'quiz' ? questions : [],
+            questions: assignmentType === 'quiz' ? questions.map(({ isAI, ...q }: QuizQuestion) => q) : [],
             readingSentences: assignmentType === 'reading' ? readingSentences : [],
             listeningExercises: assignmentType === 'listening' ? listeningExercises : [],
         };
@@ -488,7 +488,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     const form = useForm<ManualQuestionFormData>({ resolver: zodResolver(manualQuestionSchema), defaultValues: { type: 'multiple-choice', question: "", options: ["", "", "", ""], answer: "" } });
     const questionType = useWatch({ control: form.control, name: 'type' });
     const options = useWatch({ control: form.control, name: 'options' });
-    const handleManualSubmit = (data: ManualQuestionFormData) => { const finalQuestion: QuizQuestion = { id: new Date().getTime().toString(), type: data.type, question: data.question, answer: data.answer, options: data.type === 'multiple-choice' ? data.options : [], }; onAddQuestion(finalQuestion); form.reset(); };
+    const handleManualSubmit = (data: ManualQuestionFormData) => { const finalQuestion: QuizQuestion = { id: new Date().getTime().toString(), type: data.type, question: data.question, answer: data.answer, options: data.type === 'multiple-choice' ? data.options : [], isAI: false }; onAddQuestion(finalQuestion); form.reset(); };
     return (
       <Card>
         <CardHeader>
