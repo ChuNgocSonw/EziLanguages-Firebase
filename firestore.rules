@@ -1,76 +1,46 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // =============================================================
-    //   /users/{userId}
-    // =============================================================
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && (
-        request.auth.uid == userId ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin']
-      );
-
-      // --- Subcollections ---
-      match /quizHistory/{docId} {
-        allow read: if request.auth != null && (
-          request.auth.uid == userId ||
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin']
-        );
-        allow create: if request.auth != null && request.auth.uid == userId;
-        allow update, delete: if false;
-      }
-
-      match /assignmentAttempts/{docId} {
-        allow read: if request.auth != null && (
-          request.auth.uid == userId ||
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin']
-        );
-        allow create: if request.auth != null && request.auth.uid == userId;
-        allow update, delete: if false;
-      }
-      
-      match /chats/{chatId} {
-        allow read, create, delete: if request.auth != null && request.auth.uid == userId;
-        
-        match /messages/{messageId} {
-          allow read, create: if request.auth != null && request.auth.uid == userId;
-        }
-      }
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // =============================================================
-    //   /classes/{classId}
-    // =============================================================
-    match /classes/{classId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
-      allow update, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
+    match /users/{userId}/quizHistory/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // =============================================================
-    //   /assignments/{assignmentId}
-    // =============================================================
-    match /assignments/{assignmentId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.teacherId == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
+    match /users/{userId}/assignmentAttempts/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // =============================================================
-    //   /feedback/{feedbackId}
-    // =============================================================
-    match /feedback/{feedbackId} {
-      allow read: if request.auth != null && (
-        resource.data.teacherId == request.auth.uid ||
-        resource.data.studentId == request.auth.uid
-      );
-      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin', 'superadmin'];
-      allow update: if request.auth != null && resource.data.studentId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.teacherId == request.auth.uid;
+    match /users/{userId}/chats/{chatId} {
+      allow read, create, delete: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to read and create messages in their own chats
+      match /messages/{messageId} {
+        allow read, create, delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
+
+    match /classes/{classId} {
+      // Allow teachers to create, read, update, and delete their own classes
+      allow read, create, update, delete: if request.auth != null && request.resource.data.teacherId == request.auth.uid;
+    }
+
+    match /assignments/{assignmentId} {
+      // Teachers can manage their own assignments
+      allow read, create, update, delete: if request.auth != null && request.resource.data.teacherId == request.auth.uid;
+      // Students can read assignments assigned to their class
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId in resource.data.assignedClasses.map(c => c.classId);
+    }
+    
+    match /feedback/{feedbackId} {
+      // Teachers can create and manage feedback they've sent
+      allow read, create, delete: if request.auth != null && request.resource.data.teacherId == request.auth.uid;
+      // Students can read feedback sent to them
+      allow read, update: if request.auth != null && request.resource.data.studentId == request.auth.uid;
+    }
+
   }
 }
