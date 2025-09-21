@@ -78,8 +78,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-muted/50">
           <div className="p-4 rounded-lg flex flex-col items-center gap-6 text-center">
              <div className="relative h-24 w-24">
-                <div className="absolute inset-0 border-4 border-muted rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-t-primary border-l-primary rounded-full animate-spin"></div>
+                <div className="absolute inset-0 border-4 border-t-primary border-transparent rounded-full animate-spin"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                     <Logo width={60} height={60} />
                 </div>
