@@ -57,7 +57,7 @@ export default function ChatLayout() {
 
   return (
     <div className="relative h-full">
-       <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
+       <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
                 <Button variant="outline" size="icon">
