@@ -235,7 +235,7 @@ export default function ChatInterface({
                         <span className="sr-only">Toggle Chat History</span>
                     </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
+                    <SheetContent side="left" className="w-[350px] p-0 flex flex-col">
                         <SheetHeader className="p-4 border-b">
                             <SheetTitle>Chat History</SheetTitle>
                         </SheetHeader>
