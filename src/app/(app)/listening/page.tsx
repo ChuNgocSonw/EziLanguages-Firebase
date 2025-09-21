@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -16,9 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { lessonsData } from "@/lib/lessons";
-import type { ListeningExercise } from "@/lib/lessons";
-import type { Assignment } from "@/lib/types";
+import type { ListeningExercise, Lesson, Assignment } from "@/lib/types";
 
 // Reusable component for a single listening exercise
 function ExerciseInterface({ exercise, onCorrect, onIncorrect }: {
@@ -181,8 +179,26 @@ export function ListeningAssignmentSession({ assignment, onFinish }: { assignmen
 export default function ListeningPage() {
     const [activeExercise, setActiveExercise] = useState<ListeningExercise | null>(null);
     const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
+    const [lessons, setLessons] = useState<Lesson[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
-    const { userProfile, saveListeningScore } = useAuth();
+    const { userProfile, saveListeningScore, getLessons } = useAuth();
+
+    useEffect(() => {
+        const fetchLessons = async () => {
+            setIsLoading(true);
+            try {
+                const fetchedLessons = await getLessons();
+                setLessons(fetchedLessons);
+            } catch (error) {
+                console.error("Failed to load lessons:", error);
+                toast({ title: "Error", description: "Could not load lessons.", variant: "destructive" });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchLessons();
+    }, [getLessons, toast]);
 
     const handleCorrect = async () => {
         if (!activeExercise) return;
@@ -252,53 +268,62 @@ export default function ListeningPage() {
                     <CardTitle>Choose a Lesson</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Accordion type="single" collapsible className="w-full">
-                        {lessonsData.map((lesson, index) => {
-                             const listeningExercises = lesson.activities.listening || [];
-                            if (listeningExercises.length === 0) return null;
-                            const progress = getUnitProgress(listeningExercises);
-                            return (
-                            <AccordionItem value={`item-${index}`} key={lesson.unit}>
-                                <AccordionTrigger>
-                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full pr-4">
-                                        <span className="text-left">{lesson.unit}</span>
-                                        <div className="flex items-center gap-2 mt-2 md:mt-0 w-full md:w-48">
-                                            <Progress value={progress} className="h-2 w-full" />
-                                            <span className="text-sm text-muted-foreground font-normal">{Math.round(progress)}%</span>
+                    {isLoading ? (
+                        <div className="flex justify-center items-center h-48">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : lessons.length === 0 ? (
+                        <div className="text-center py-12">
+                            <h3 className="text-lg font-semibold">No Lessons Available</h3>
+                            <p className="text-muted-foreground mt-2">Check back later for new content.</p>
+                        </div>
+                    ) : (
+                        <Accordion type="single" collapsible className="w-full">
+                            {lessons.map((lesson, index) => {
+                                const listeningExercises = lesson.activities.listening || [];
+                                if (listeningExercises.length === 0) return null;
+                                const progress = getUnitProgress(listeningExercises);
+                                return (
+                                <AccordionItem value={`item-${index}`} key={lesson.unit}>
+                                    <AccordionTrigger>
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full pr-4">
+                                            <span className="text-left">{lesson.unit}</span>
+                                            <div className="flex items-center gap-2 mt-2 md:mt-0 w-full md:w-48">
+                                                <Progress value={progress} className="h-2 w-full" />
+                                                <span className="text-sm text-muted-foreground font-normal">{Math.round(progress)}%</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    <ul className="space-y-2">
-                                        {listeningExercises.map((exercise, sIndex) => {
-                                            const xpEarned = userProfile?.listeningScores?.[exercise.id];
-                                            return (
-                                            <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
-                                                <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">
-                                                    Exercise {sIndex + 1}: {exercise.type === 'mcq' ? 'Multiple Choice' : 'Type the sentence'}
-                                                </p>
-                                                <div className="flex items-center gap-4">
-                                                    {xpEarned ? (
-                                                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
-                                                            <Star className="mr-1 h-3 w-3" /> +{xpEarned} XP
-                                                        </Badge>
-                                                    ) : <div className="w-[88px] md:w-[88px]"></div>}
-                                                    <Button variant="outline" size="sm" onClick={() => handleSelectExercise(exercise)}>
-                                                        <BookCheck className="mr-2 h-4 w-4" />
-                                                        {xpEarned ? "Practice Again" : "Practice"}
-                                                    </Button>
-                                                </div>
-                                            </li>
-                                        )})}
-                                    </ul>
-                                </AccordionContent>
-                            </AccordionItem>
-                        )})}
-                    </Accordion>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <ul className="space-y-2">
+                                            {listeningExercises.map((exercise, sIndex) => {
+                                                const xpEarned = userProfile?.listeningScores?.[exercise.id];
+                                                return (
+                                                <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
+                                                    <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">
+                                                        Exercise {sIndex + 1}: {exercise.type === 'mcq' ? 'Multiple Choice' : 'Type the sentence'}
+                                                    </p>
+                                                    <div className="flex items-center gap-4">
+                                                        {xpEarned ? (
+                                                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
+                                                                <Star className="mr-1 h-3 w-3" /> +{xpEarned} XP
+                                                            </Badge>
+                                                        ) : <div className="w-[88px] md:w-[88px]"></div>}
+                                                        <Button variant="outline" size="sm" onClick={() => handleSelectExercise(exercise)}>
+                                                            <BookCheck className="mr-2 h-4 w-4" />
+                                                            {xpEarned ? "Practice Again" : "Practice"}
+                                                        </Button>
+                                                    </div>
+                                                </li>
+                                            )})}
+                                        </ul>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            )})}
+                        </Accordion>
+                    )}
                 </CardContent>
             </Card>
         </>
     );
 }
-
-    

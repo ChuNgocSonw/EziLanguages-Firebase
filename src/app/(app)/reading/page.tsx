@@ -5,16 +5,14 @@ import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, MicOff, Loader2, BookCheck, X, CheckCircle, PlayCircle, Star, ArrowLeft } from "lucide-react";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { analyzePronunciation } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
-import type { PronunciationAttempt, Assignment } from "@/lib/types";
+import type { PronunciationAttempt, Assignment, ReadingSentence, Lesson } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import { lessonsData } from "@/lib/lessons";
-import type { ReadingSentence } from "@/lib/lessons";
 
 // Helper to create a Firestore-safe key from a sentence
 const createSafeKey = (sentence: string) => sentence.replace(/[.#$[\]/]/g, '_');
@@ -245,7 +243,26 @@ export function ReadingAssignmentSession({ assignment, onFinish }: { assignment:
 // Main page component (Practice Mode)
 export default function ReadingPage() {
   const [activeSentence, setActiveSentence] = useState<ReadingSentence | null>(null);
-  const { userProfile, savePronunciationAttempt } = useAuth();
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { userProfile, savePronunciationAttempt, getLessons } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchLessons = async () => {
+        setIsLoading(true);
+        try {
+            const fetchedLessons = await getLessons();
+            setLessons(fetchedLessons);
+        } catch (error) {
+            console.error("Failed to load lessons:", error);
+            toast({ title: "Error", description: "Could not load lessons.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchLessons();
+  }, [getLessons, toast]);
   
   const handleSelectSentence = (sentence: ReadingSentence) => {
     setActiveSentence(sentence);
@@ -278,60 +295,69 @@ export default function ReadingPage() {
               <CardTitle>Choose a Lesson</CardTitle>
           </CardHeader>
           <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                  {lessonsData.map((lesson, index) => {
-                      const readingSentences = lesson.activities.reading || [];
-                      if (readingSentences.length === 0) return null;
-                      const progress = getUnitProgress(readingSentences);
-                      return (
-                          <AccordionItem value={`item-${index}`} key={lesson.unit}>
-                              <AccordionTrigger>
-                                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full pr-4">
-                                      <span className="text-left">{lesson.unit}</span>
-                                      <div className="flex items-center gap-2 mt-2 md:mt-0 w-full md:w-48">
-                                          <Progress value={progress} className="h-2 w-full" />
-                                          <span className="text-sm text-muted-foreground font-normal">{Math.round(progress)}%</span>
-                                      </div>
-                                  </div>
-                              </AccordionTrigger>
-                              <AccordionContent>
-                                  <ul className="space-y-2">
-                                      {readingSentences.map((sentence, sIndex) => {
-                                          const safeKey = createSafeKey(sentence.text);
-                                          const bestAttempt = userProfile?.pronunciationScores?.[safeKey];
-                                          return (
-                                              <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
-                                                  <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">{sentence.text}</p>
-                                                  <div className="flex items-center gap-4">
-                                                      {bestAttempt ? (
-                                                          <div className="flex items-center gap-2">
-                                                              <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100">
-                                                                  Best: {bestAttempt.score}%
-                                                              </Badge>
-                                                               {bestAttempt.score === 100 && (
-                                                                   <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
-                                                                      <Star className="mr-1 h-3 w-3" /> +15 XP
-                                                                  </Badge>
-                                                               )}
-                                                          </div>
-                                                      ) : <div className="w-[180px] md:w-[170px]"></div>}
-                                                      <Button variant="outline" size="sm" onClick={() => handleSelectSentence(sentence)}>
-                                                         <BookCheck className="mr-2 h-4 w-4" /> {bestAttempt ? "Improve" : "Practice"}
-                                                      </Button>
-                                                  </div>
-                                              </li>
-                                          )
-                                      })}
-                                  </ul>
-                              </AccordionContent>
-                          </AccordionItem>
-                      )
-                  })}
-              </Accordion>
+              {isLoading ? (
+                <div className="flex justify-center items-center h-48">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : lessons.length === 0 ? (
+                <div className="text-center py-12">
+                    <h3 className="text-lg font-semibold">No Lessons Available</h3>
+                    <p className="text-muted-foreground mt-2">Check back later for new content.</p>
+                </div>
+              ) : (
+                <Accordion type="single" collapsible className="w-full">
+                    {lessons.map((lesson, index) => {
+                        const readingSentences = lesson.activities.reading || [];
+                        if (readingSentences.length === 0) return null;
+                        const progress = getUnitProgress(readingSentences);
+                        return (
+                            <AccordionItem value={`item-${index}`} key={lesson.unit}>
+                                <AccordionTrigger>
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full pr-4">
+                                        <span className="text-left">{lesson.unit}</span>
+                                        <div className="flex items-center gap-2 mt-2 md:mt-0 w-full md:w-48">
+                                            <Progress value={progress} className="h-2 w-full" />
+                                            <span className="text-sm text-muted-foreground font-normal">{Math.round(progress)}%</span>
+                                        </div>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <ul className="space-y-2">
+                                        {readingSentences.map((sentence, sIndex) => {
+                                            const safeKey = createSafeKey(sentence.text);
+                                            const bestAttempt = userProfile?.pronunciationScores?.[safeKey];
+                                            return (
+                                                <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
+                                                    <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">{sentence.text}</p>
+                                                    <div className="flex items-center gap-4">
+                                                        {bestAttempt ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100">
+                                                                    Best: {bestAttempt.score}%
+                                                                </Badge>
+                                                                {bestAttempt.score === 100 && (
+                                                                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
+                                                                        <Star className="mr-1 h-3 w-3" /> +15 XP
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        ) : <div className="w-[180px] md:w-[170px]"></div>}
+                                                        <Button variant="outline" size="sm" onClick={() => handleSelectSentence(sentence)}>
+                                                            <BookCheck className="mr-2 h-4 w-4" /> {bestAttempt ? "Improve" : "Practice"}
+                                                        </Button>
+                                                    </div>
+                                                </li>
+                                            )
+                                        })}
+                                    </ul>
+                                </AccordionContent>
+                            </AccordionItem>
+                        )
+                    })}
+                </Accordion>
+              )}
           </CardContent>
       </Card>
     </>
   );
 }
-
-    

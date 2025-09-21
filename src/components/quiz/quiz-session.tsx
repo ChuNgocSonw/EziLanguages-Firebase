@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -9,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { generateQuizQuestions } from "@/lib/actions";
-import type { QuizQuestion, Assignment } from "@/lib/types";
+import type { QuizQuestion, Assignment, Lesson } from "@/lib/types";
 import { Loader2, ArrowRight, Check, X, RefreshCw, BookCopy, Pilcrow, ChevronLeft } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -17,8 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { lessonsData } from "@/lib/lessons";
-
 
 type QuizState = "idle" | "loading" | "active" | "finished";
 type Difficulty = "Easy" | "Medium" | "Hard";
@@ -66,7 +63,8 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
   const [isSaving, setIsSaving] = useState(false);
   const [quizTopic, setQuizTopic] = useState(""); // This will store the final topic for the summary page
   const { toast } = useToast();
-  const { saveQuizAttempt } = useAuth();
+  const { saveQuizAttempt, getLessons } = useAuth();
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   
   useEffect(() => {
     if (assignment) {
@@ -75,8 +73,17 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
       setQuizState("active");
     } else {
       setQuizState("idle");
+      const fetchLessons = async () => {
+          try {
+              const fetchedLessons = await getLessons();
+              setLessons(fetchedLessons);
+          } catch (error) {
+              console.error("Failed to fetch lessons for quiz generation:", error);
+          }
+      };
+      fetchLessons();
     }
-  }, [assignment]);
+  }, [assignment, getLessons]);
 
 
   const startQuizGeneration = async (generationParams: { topic: string; difficulty: Difficulty; numberOfQuestions: number; displayTopic: string; language: Language; }) => {
@@ -243,7 +250,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
       const [language, setLanguage] = useState<Language>("English");
 
       const handleLessonChange = (value: string) => {
-          const selectedLesson = lessonsData.find(lesson => lesson.id === value);
+          const selectedLesson = lessons.find(lesson => lesson.id === value);
           if (selectedLesson) {
               setLessonContent(selectedLesson.content);
               setLessonTitle(selectedLesson.unit);
@@ -264,7 +271,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                         <Select onValueChange={handleLessonChange}>
                             <SelectTrigger><SelectValue placeholder="Choose a lesson to generate a quiz..." /></SelectTrigger>
                             <SelectContent>
-                                {lessonsData.map(lesson => (
+                                {lessons.map(lesson => (
                                     <SelectItem key={lesson.id} value={lesson.id}>
                                         {lesson.unit}
                                     </SelectItem>

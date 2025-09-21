@@ -1,6 +1,6 @@
+
 import { z } from "zod";
 import type { Timestamp } from "firebase/firestore";
-import type { ReadingSentence, ListeningExercise } from "./lessons";
 
 export const UserRole = z.enum(["student", "teacher", "admin", "superadmin"]);
 export type UserRole = z.infer<typeof UserRole>;
@@ -41,6 +41,38 @@ export interface Class {
   studentIds: string[];
   createdAt: Timestamp;
 }
+
+export interface ReadingSentence {
+    unit: string;
+    text: string;
+}
+
+interface BaseExercise {
+    id: string;
+    text: string;
+}
+interface TypingExercise extends BaseExercise {
+    type: 'typing';
+}
+interface McqExercise extends BaseExercise {
+    type: 'mcq';
+    options: string[];
+    answer: string;
+}
+export type ListeningExercise = TypingExercise | McqExercise;
+
+export interface Lesson {
+    id: string;
+    unit: string;
+    content: string; // Combined content for the AI
+    activities: {
+        reading?: ReadingSentence[];
+        listening?: ListeningExercise[];
+    },
+    teacherId: string;
+    createdAt: Timestamp;
+}
+
 
 export interface Assignment {
   id: string;

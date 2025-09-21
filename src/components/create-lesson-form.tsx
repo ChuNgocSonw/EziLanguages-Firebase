@@ -8,20 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { lessonsData } from "@/lib/lessons";
-
+import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
+import type { Lesson } from "@/lib/types";
 
 const readingSchema = z.object({
   text: z.string().min(10, "Sentence must be at least 10 characters long."),
 });
 
 const listeningSchema = z.object({
+  id: z.string(),
   type: z.enum(['typing', 'mcq']),
   text: z.string().min(10, "The sentence to be heard is required."),
   options: z.array(z.string()).optional(),
@@ -48,20 +50,17 @@ interface CreateLessonFormProps {
     onFinished: () => void;
 }
 
-
 export default function CreateLessonForm({ onFinished }: CreateLessonFormProps) {
     const { toast } = useToast();
-    
-    // In a real app, you'd fetch this or have a better way to select which lesson to edit.
-    // For this demo, we'll hardcode editing the last lesson in the array.
-    const lessonToEdit = lessonsData[lessonsData.length - 1];
+    const { createLesson } = useAuth();
+    const [isSaving, setIsSaving] = useState(false);
 
     const form = useForm<LessonFormData>({
         resolver: zodResolver(lessonSchema),
         defaultValues: {
-            unit: lessonToEdit.unit,
-            reading: lessonToEdit.activities.reading || [],
-            listening: lessonToEdit.activities.listening || [],
+            unit: "",
+            reading: [],
+            listening: [],
         },
     });
 
@@ -75,15 +74,35 @@ export default function CreateLessonForm({ onFinished }: CreateLessonFormProps) 
         name: "listening",
     });
 
-    const onSubmit = (data: LessonFormData) => {
-        // In a real application, you would send this data to a server to be saved in a database.
-        // For this demo, we are just showing a success message as we cannot modify the static file.
-        console.log("Submitted data:", data);
-        toast({
-            title: "Lesson Saved (Demo)",
-            description: "In a real app, this lesson would be saved. Please refresh to see the original placeholder.",
-        });
-        onFinished();
+    const onSubmit = async (data: LessonFormData) => {
+        setIsSaving(true);
+        try {
+            const lessonPayload = {
+                unit: data.unit,
+                activities: {
+                    reading: data.reading.map(r => ({ ...r, unit: data.unit })),
+                    listening: data.listening.map(l => ({ ...l, answer: l.type === 'typing' ? l.text : l.answer })),
+                },
+                content: [...data.reading, ...data.listening].map(item => `- ${item.text}`).join('\n'),
+            };
+
+            await createLesson(lessonPayload as Omit<Lesson, 'id'|'createdAt'|'teacherId'>);
+
+            toast({
+                title: "Lesson Created",
+                description: "The new lesson has been successfully saved to the database.",
+            });
+            onFinished();
+        } catch (error: any) {
+            console.error("Failed to save lesson:", error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to save the lesson.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
     };
     
     const watchListeningType = useWatch({ control: form.control, name: 'listening' });
@@ -173,13 +192,13 @@ export default function CreateLessonForm({ onFinished }: CreateLessonFormProps) 
                                                     )}/>
                                                 ))}
                                                  <FormField control={form.control} name={`listening.${index}.answer`} render={({ field }) => (
-                                                    <FormItem><FormLabel>Correct Answer</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value}>{watchListeningType[index]?.options?.map((opt, i) => opt.trim() && (<FormItem key={`${field.id}-ans-${i}`} className="flex items-center space-x-2"><FormControl><RadioGroupItem value={opt} /></FormControl><FormLabel className="font-normal">{opt}</FormLabel></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>
+                                                    <FormItem><FormLabel>Correct Answer</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value}>{watchListeningType[index]?.options?.map((opt, i) => opt?.trim() && (<FormItem key={`${field.id}-ans-${i}`} className="flex items-center space-x-2"><FormControl><RadioGroupItem value={opt} /></FormControl><FormLabel className="font-normal">{opt}</FormLabel></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>
                                                 )} />
                                             </div>
                                         )}
                                     </div>
                                 ))}
-                                <Button type="button" variant="outline" onClick={() => appendListening({ type: 'typing', text: '', options: ["", "", ""], answer: "" })}>
+                                <Button type="button" variant="outline" onClick={() => appendListening({ id: `new-${Date.now()}`, type: 'typing', text: '', options: ["", "", ""], answer: "" })}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Exercise
                                 </Button>
                             </CardContent>
@@ -187,7 +206,10 @@ export default function CreateLessonForm({ onFinished }: CreateLessonFormProps) 
                     </div>
                 </ScrollArea>
                 <div className="flex justify-end p-4 border-t">
-                    <Button type="submit">Save Lesson</Button>
+                    <Button type="submit" disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Lesson
+                    </Button>
                 </div>
             </form>
         </Form>
