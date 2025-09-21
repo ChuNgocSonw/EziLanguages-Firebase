@@ -124,16 +124,16 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
             {isLoading ? (
-                 <div className="flex justify-center items-center h-[250px]">
+                 <div className="flex justify-center items-center h-[350px]">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                  </div>
                ) : (
-                <div className="h-[250px]">
+                <div className="h-[350px]">
                     <ChartContainer config={chartConfig} className="h-full w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={5}>
+                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={80} outerRadius={120} paddingAngle={5}>
                                     {stats?.roleDistribution.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
