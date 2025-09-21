@@ -73,7 +73,6 @@ export interface AuthContextType {
   getLessonDetails: (lessonId: string) => Promise<Lesson | null>;
   updateLesson: (lessonId: string, lessonData: Omit<Lesson, 'id' | 'createdAt' | 'teacherId'>) => Promise<void>;
   deleteLesson: (lessonId: string) => Promise<void>;
-  seedInitialLessons: () => Promise<number>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -997,31 +996,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lessonRef = doc(db, "lessons", lessonId);
       await deleteDoc(lessonRef);
   }, [userProfile]);
-  
-  const seedInitialLessons = useCallback(async (): Promise<number> => {
-    if (!auth.currentUser || !userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
-      throw new Error("You do not have permission to seed data.");
-    }
-    
-    const lessonsRef = collection(db, "lessons");
-    const snapshot = await getDocs(query(lessonsRef, limit(1)));
-    if (!snapshot.empty) {
-      return 0; // Data already exists
-    }
-
-    const batch = writeBatch(db);
-    seedData.forEach(lesson => {
-      const docRef = doc(lessonsRef); // Auto-generate ID
-      batch.set(docRef, {
-        ...lesson,
-        teacherId: auth.currentUser.uid,
-        createdAt: serverTimestamp(),
-      });
-    });
-    await batch.commit();
-    return seedData.length;
-  }, [userProfile]);
-
 
   const value: AuthContextType = useMemo(() => ({
     user,
@@ -1075,7 +1049,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getLessonDetails,
     updateLesson,
     deleteLesson,
-    seedInitialLessons,
   }), [
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
@@ -1085,7 +1058,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
       getAssignmentAttempt, getStudentCompletedAttempts, getStudentAssignmentAttemptsForClass, sendFeedback,
       getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback, getStudentPerformanceDataForFeedback,
-      createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson, seedInitialLessons,
+      createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

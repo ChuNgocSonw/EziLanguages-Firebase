@@ -37,9 +37,8 @@ export default function ContentManagementPage() {
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSeeding, setIsSeeding] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const { getLessons, deleteLesson, seedInitialLessons } = useAuth();
+  const { getLessons, deleteLesson } = useAuth();
   const { toast } = useToast();
 
   const fetchLessons = useCallback(async () => {
@@ -71,23 +70,6 @@ export default function ContentManagementPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleSeedData = async () => {
-    setIsSeeding(true);
-    try {
-        const seededCount = await seedInitialLessons();
-        if (seededCount > 0) {
-            toast({ title: "Success", description: `${seededCount} initial lessons have been seeded.` });
-            fetchLessons();
-        } else {
-            toast({ title: "No Action Needed", description: "Database already contains lessons." });
-        }
-    } catch (error: any) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-        setIsSeeding(false);
-    }
-  }
-
   const handleDelete = async (lessonId: string) => {
     setIsDeleting(lessonId);
     try {
@@ -116,12 +98,6 @@ export default function ContentManagementPage() {
             </CardDescription>
           </div>
           <div className="flex gap-2">
-            {lessons.length === 0 && !isLoading && (
-                 <Button variant="outline" onClick={handleSeedData} disabled={isSeeding}>
-                    {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                    Seed Initial Lessons
-                </Button>
-            )}
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                 <Button>
@@ -232,7 +208,7 @@ export default function ContentManagementPage() {
           ) : (
             <div className="text-center py-12">
               <h3 className="text-lg font-semibold">No Lessons Found</h3>
-              <p className="text-muted-foreground mt-2">Click "Create New Lesson" to add the first one or "Seed Initial Lessons" to add sample data.</p>
+              <p className="text-muted-foreground mt-2">Click "Create New Lesson" to add the first one.</p>
             </div>
           )}
         </CardContent>
