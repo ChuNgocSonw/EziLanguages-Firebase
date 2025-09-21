@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SendHorizonal, Bot, CornerDownLeft, Sparkles, HelpCircle, Languages, Loader2, Trash2 } from "lucide-react";
+import { SendHorizonal, Bot, CornerDownLeft, Sparkles, HelpCircle, Languages, Loader2, Trash2, History, PlusCircle } from "lucide-react";
 import { chatWithTutor } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { Card } from "./ui/card";
@@ -26,6 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Label } from "./ui/label";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const suggestedPrompts = [
     "Correct this for me: She don't like coffee.",
@@ -37,9 +38,21 @@ interface ChatInterfaceProps {
     chatId: string | null;
     onNewChat: (newChatId: string) => void;
     onChatDeleted: () => void;
+    onNewChatClick: () => void;
+    historySheetOpen: boolean;
+    onHistorySheetOpenChange: (open: boolean) => void;
+    children: React.ReactNode; // For the history sheet
 }
 
-export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: ChatInterfaceProps) {
+export default function ChatInterface({ 
+    chatId, 
+    onNewChat, 
+    onChatDeleted,
+    onNewChatClick,
+    historySheetOpen,
+    onHistorySheetOpenChange,
+    children
+}: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -198,7 +211,7 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
   return (
     <Card className="flex-1 flex flex-col h-full overflow-hidden">
         
-          <div className="flex items-center justify-between p-2 border-b shrink-0">
+          <div className="flex items-center justify-between p-2 border-b shrink-0 gap-2">
              <div className="flex items-center gap-2">
                 <Label htmlFor="language-select" className="text-sm font-medium">Explanation Language:</Label>
                 <Select value={explanationLanguage} onValueChange={setExplanationLanguage}>
@@ -211,28 +224,50 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
                     </SelectContent>
                 </Select>
             </div>
-            {currentChatId && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Chat
+            
+            <div className="flex-grow"></div>
+
+            <div className="flex items-center gap-2">
+                <Sheet open={historySheetOpen} onOpenChange={onHistorySheetOpenChange}>
+                    <SheetTrigger asChild>
+                    <Button variant="outline" size="icon">
+                        <History className="h-5 w-5" />
+                        <span className="sr-only">Toggle Chat History</span>
+                    </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
+                        <SheetHeader className="p-4 border-b">
+                            <SheetTitle>Chat History</SheetTitle>
+                        </SheetHeader>
+                        {children}
+                    </SheetContent>
+                </Sheet>
+                <Button onClick={onNewChatClick} className="bg-accent hover:bg-accent/90">
+                    <PlusCircle className="mr-2 h-5 w-5" /> New Chat
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete this chat session and all of its messages.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            )}
+                {currentChatId && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete Chat</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete this chat session and all of its messages.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                )}
+            </div>
           </div>
        
         <ScrollArea className="flex-1" viewportRef={scrollAreaRef}>
