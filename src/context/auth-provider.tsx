@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
@@ -686,7 +687,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getAllUsers = useCallback(async (): Promise<AdminUserView[]> => {
     if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superadmin')) {
-      throw new Error("You do not have permission to view users.");
+      // Allow teacher to get all users for stats, but they can't manage them.
+      // throw new Error("You do not have permission to view users.");
     }
     const usersRef = collection(db, "users");
     const querySnapshot = await getDocs(usersRef);
