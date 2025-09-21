@@ -235,79 +235,81 @@ export default function ChatInterface({ chatId, onNewChat, onChatDeleted }: Chat
             )}
           </div>
        
-        <div className="flex-1 overflow-y-auto p-4" ref={scrollAreaRef}>
-          {isHistoryLoading ? (
-             <div className="flex justify-center items-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-             </div>
-          ) : (
-            <div className="space-y-6">
-              {messages.map((message, index) => (
-                <div
-                  key={message.id || index}
-                  className={cn(
-                    "flex items-start gap-4",
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  )}
-                >
-                  {message.role === "bot" && (
-                    <Avatar className="h-8 w-8 border-2 border-primary">
-                      <AvatarFallback><Bot className="h-5 w-5"/></AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div className={cn(
-                      "max-w-md rounded-lg p-3",
-                      message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
-                  )}>
-                    {message.role === "user" && <p>{message.original}</p>}
-                    {message.role === "bot" && (
-                      <div className="space-y-2">
-                          <p className="font-semibold">{message.response}</p>
-                          <p className="text-sm text-muted-foreground italic flex items-start gap-2 pt-2">
-                            {getBotMessageIcon(message)}
-                            <span>{message.explanation}</span>
-                          </p>
-                          {message.suggestions && (
-                              <div className="pt-2">
-                                  <p className="text-sm font-medium mb-2">Try asking:</p>
-                                  <div className="flex flex-wrap gap-2">
-                                      {message.suggestions.map((suggestion, i) => (
-                                          <Button
-                                              key={i}
-                                              variant="outline"
-                                              size="sm"
-                                              className="text-xs h-auto py-1.5"
-                                              onClick={() => handleSuggestionClick(suggestion)}
-                                              disabled={isLoading}
-                                          >
-                                              {suggestion}
-                                          </Button>
-                                      ))}
-                                  </div>
-                              </div>
-                          )}
-                      </div>
+        <ScrollArea className="flex-1" viewportRef={scrollAreaRef}>
+          <div className="p-4">
+            {isHistoryLoading ? (
+              <div className="flex justify-center items-center h-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {messages.map((message, index) => (
+                  <div
+                    key={message.id || index}
+                    className={cn(
+                      "flex items-start gap-4",
+                      message.role === "user" ? "justify-end" : "justify-start"
                     )}
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex items-start gap-4 justify-start">
-                  <Avatar className="h-8 w-8 border-2 border-primary">
-                      <AvatarFallback><Bot className="h-5 w-5"/></AvatarFallback>
-                    </Avatar>
-                    <div className="max-w-md rounded-lg p-3 bg-muted text-foreground">
-                      <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse [animation-delay:0.2s]"></div>
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse [animation-delay:0.4s]"></div>
-                      </div>
+                  >
+                    {message.role === "bot" && (
+                      <Avatar className="h-8 w-8 border-2 border-primary">
+                        <AvatarFallback><Bot className="h-5 w-5"/></AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className={cn(
+                        "max-w-md rounded-lg p-3",
+                        message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
+                    )}>
+                      {message.role === "user" && <p>{message.original}</p>}
+                      {message.role === "bot" && (
+                        <div className="space-y-2">
+                            <p className="font-semibold">{message.response}</p>
+                            <p className="text-sm text-muted-foreground italic flex items-start gap-2 pt-2">
+                              {getBotMessageIcon(message)}
+                              <span>{message.explanation}</span>
+                            </p>
+                            {message.suggestions && (
+                                <div className="pt-2">
+                                    <p className="text-sm font-medium mb-2">Try asking:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {message.suggestions.map((suggestion, i) => (
+                                            <Button
+                                                key={i}
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs h-auto py-1.5"
+                                                onClick={() => handleSuggestionClick(suggestion)}
+                                                disabled={isLoading}
+                                            >
+                                                {suggestion}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                      )}
                     </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex items-start gap-4 justify-start">
+                    <Avatar className="h-8 w-8 border-2 border-primary">
+                        <AvatarFallback><Bot className="h-5 w-5"/></AvatarFallback>
+                      </Avatar>
+                      <div className="max-w-md rounded-lg p-3 bg-muted text-foreground">
+                        <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse [animation-delay:0.2s]"></div>
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse [animation-delay:0.4s]"></div>
+                        </div>
+                      </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
         <div className="border-t bg-card p-4 space-y-4 shrink-0">
           <form onSubmit={handleSendMessage} className="relative">
             <Textarea
