@@ -3,14 +3,14 @@ import PageHeader from "@/components/page-header";
 
 export default function ChatPage() {
   return (
-    <>
+    <div className="flex flex-col h-[calc(100vh-theme(spacing.14)-theme(spacing.4))]">
       <PageHeader
         title="AI Language Practice"
         description="Chat in your target language. Our AI will provide corrections and suggestions."
       />
-      <div className="mt-4 h-[calc(100vh-10rem)]">
+      <div className="flex-1 min-h-0">
         <ChatLayout />
       </div>
-    </>
+    </div>
   );
 }
