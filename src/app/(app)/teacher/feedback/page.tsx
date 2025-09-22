@@ -330,16 +330,16 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-center justify-between">
-                                        <AccordionTrigger className="font-medium transition-all hover:no-underline p-4 text-left [&>svg]:hidden">
+                                        <AccordionTrigger className="group font-medium transition-all hover:no-underline p-4 text-left [&>svg]:hidden">
                                             <div className="w-full space-y-1">
-                                                <p className="font-semibold truncate">{fb.title}</p>
+                                                <p className="font-semibold truncate group-hover:underline">{fb.title}</p>
                                                 <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full text-sm text-muted-foreground font-normal">
-                                                    <div className="flex items-center gap-1 truncate">
+                                                    <div className="flex items-center gap-1 truncate group-hover:underline">
                                                         <User className="h-3 w-3 shrink-0" />
                                                         <span>To: {fb.studentName}</span>
                                                     </div>
                                                     <div className="flex-grow"></div>
-                                                     <div className="flex items-center justify-end gap-1">
+                                                     <div className="flex items-center justify-end gap-1 group-hover:underline">
                                                         <Calendar className="h-3 w-3" />
                                                         <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
                                                     </div>
