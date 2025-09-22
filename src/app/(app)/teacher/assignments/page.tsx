@@ -288,7 +288,7 @@ export default function TeacherAssignmentsPage() {
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={() => handleDeleteAssignment(assignment.id)}
-                                className="bg-destructive hover:bg-destructive/90"
+                                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                             >
                                 Delete
                             </AlertDialogAction>
