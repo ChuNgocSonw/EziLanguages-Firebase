@@ -175,7 +175,7 @@ function ReviewStudentAssignmentsDialog({ student, classId }: { student: AdminUs
     );
 }
 
-function StudentStatisticsTable({ students, totalAssignments, totalLessons }: { students: AdminUserView[], totalAssignments: number, totalLessons: number }) {
+function StudentStatisticsTable({ students, totalAssignments, totalLessons, selectedClassId }: { students: AdminUserView[], totalAssignments: number, totalLessons: number, selectedClassId: string | null }) {
     if (students.length === 0) {
         return (
             <div className="text-center py-12 text-muted-foreground">
@@ -350,7 +350,7 @@ export default function TeacherStatisticsPage() {
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             </div>
                         ) : selectedClassId ? (
-                            <StudentStatisticsTable students={students} totalAssignments={totalAssignments} totalLessons={totalLessons} />
+                            <StudentStatisticsTable students={students} totalAssignments={totalAssignments} totalLessons={totalLessons} selectedClassId={selectedClassId} />
                         ) : (
                              <div className="text-center py-12 text-muted-foreground">
                                 <p>Please select a class to view student statistics.</p>
