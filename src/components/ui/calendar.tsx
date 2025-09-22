@@ -30,7 +30,7 @@ function Calendar({
           "text-sm font-medium",
           props.captionLayout === "dropdown-buttons" && "hidden"
         ),
-        nav: "space-x-1 flex items-center",
+        nav: "space-x-1 flex items-center hidden",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
