@@ -57,6 +57,7 @@ function Calendar({
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
+        caption_dropdowns: "flex gap-1 justify-center",
         ...classNames,
       }}
       components={{
@@ -80,7 +81,7 @@ function Calendar({
                 handleChange(value)
               }}
             >
-              <SelectTrigger className="pr-1.5 focus:ring-0">
+              <SelectTrigger className="pr-1.5 focus:ring-0 w-fit">
                 <SelectValue>{selected?.props?.children}</SelectValue>
               </SelectTrigger>
               <SelectContent position="popper">
