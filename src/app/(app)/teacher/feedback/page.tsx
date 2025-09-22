@@ -330,8 +330,8 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-center justify-between">
-                                        <AccordionTrigger className="flex-1 hover:no-underline">
-                                            <div className="grid grid-cols-1 w-full text-left">
+                                        <AccordionTrigger className="flex flex-1 items-center justify-between hover:no-underline">
+                                            <div className="w-full text-left">
                                                 <p className="font-semibold truncate">{fb.title}</p>
                                                 <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full mt-1">
                                                     <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 truncate">
@@ -360,8 +360,16 @@ export default function TeacherFeedbackPage() {
                                                     </Button>
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
-                                                    <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this feedback. The student will no longer be able to see it.</AlertDialogDescription></AlertDialogHeader>
-                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Yes, delete</AlertDialogAction></AlertDialogFooter>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>This will permanently delete this feedback. The student will no longer be able to see it.</AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                                                            Yes, delete
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>
                                         </div>
