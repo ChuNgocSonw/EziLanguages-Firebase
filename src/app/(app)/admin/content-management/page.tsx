@@ -139,8 +139,8 @@ export default function ContentManagementPage() {
                         </Button>
                         <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="shrink-0 hover:bg-destructive/10">
-                                {isDeleting === lesson.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive" />}
+                            <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                                {isDeleting === lesson.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
                             </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
