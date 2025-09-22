@@ -173,7 +173,8 @@ export interface AdminUserView extends UserProfile {
   uid: string;
   assignmentsCompletedCount?: number;
   completedAssignmentDetails: CompletedAssignmentDetail[];
-  lessonsCompletedCount?: number;
+  readingUnitsCompleted?: number;
+  listeningUnitsCompleted?: number;
 }
 
 export interface LeaderboardEntry {
@@ -227,3 +228,5 @@ export const GenerateFeedbackInputSchema = z.object({
   }).describe("A collection of the student's performance data across different activities."),
 });
 export type GenerateFeedbackInput = z.infer<typeof GenerateFeedbackInputSchema>;
+
+    

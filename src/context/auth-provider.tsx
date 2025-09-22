@@ -645,29 +645,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const studentData = doc.data() as UserProfile;
             const completedAssignmentDetails = studentData.completedAssignmentDetails || [];
             
-            let lessonsCompletedCount = 0;
+            let readingUnitsCompleted = 0;
+            let listeningUnitsCompleted = 0;
+
             if (allLessons.length > 0) {
                 allLessons.forEach(lesson => {
                     const readingActivities = lesson.activities.reading || [];
+                    if (readingActivities.length > 0) {
+                        const allReadingDone = readingActivities.every(sentence => 
+                            studentData.pronunciationScores?.[createSafeKey(sentence.text)] !== undefined
+                        );
+                        if (allReadingDone) readingUnitsCompleted++;
+                    }
+
                     const listeningActivities = lesson.activities.listening || [];
-                    const totalActivities = readingActivities.length + listeningActivities.length;
-                    
-                    if (totalActivities === 0) return;
-
-                    let completedActivities = 0;
-                    readingActivities.forEach(sentence => {
-                        if (studentData.pronunciationScores?.[createSafeKey(sentence.text)]) {
-                            completedActivities++;
-                        }
-                    });
-                    listeningActivities.forEach(exercise => {
-                        if (studentData.listeningScores?.[exercise.id]) {
-                            completedActivities++;
-                        }
-                    });
-
-                    if (completedActivities === totalActivities) {
-                        lessonsCompletedCount++;
+                    if (listeningActivities.length > 0) {
+                        const allListeningDone = listeningActivities.every(exercise => 
+                             studentData.listeningScores?.[exercise.id] !== undefined
+                        );
+                        if (allListeningDone) listeningUnitsCompleted++;
                     }
                 });
             }
@@ -677,7 +673,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 ...studentData,
                 assignmentsCompletedCount: completedAssignmentDetails.length,
                 completedAssignmentDetails: completedAssignmentDetails,
-                lessonsCompletedCount: lessonsCompletedCount,
+                readingUnitsCompleted,
+                listeningUnitsCompleted,
             } as AdminUserView
         });
 
@@ -1137,3 +1134,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+    

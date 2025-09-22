@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
 import type { Class, AdminUserView, QuizAttempt, Assignment, PronunciationAttempt, Lesson } from "@/lib/types";
-import { Loader2, Award, Flame, Star, CheckCircle2, BookOpen, Check, X, Mic, Headphones, Book } from "lucide-react";
+import { Loader2, Award, Flame, Star, CheckCircle2, BookOpen, Check, X, Mic, Headphones } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,6 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Progress } from "@/components/ui/progress";
 
 // Helper to create a Firestore-safe key from a sentence
 const createSafeKey = (sentence: string) => sentence.replace(/[.#$[\]/]/g, '_');
@@ -176,7 +175,7 @@ function ReviewStudentAssignmentsDialog({ student, classId }: { student: AdminUs
     );
 }
 
-function StudentStatisticsTable({ students, totalAssignments, totalLessons, classId }: { students: AdminUserView[], totalAssignments: number, totalLessons: number, classId: string }) {
+function StudentStatisticsTable({ students, totalAssignments, totalLessons }: { students: AdminUserView[], totalAssignments: number, totalLessons: number }) {
     if (students.length === 0) {
         return (
             <div className="text-center py-12 text-muted-foreground">
@@ -198,7 +197,8 @@ function StudentStatisticsTable({ students, totalAssignments, totalLessons, clas
                         <TableHead className="text-center">Streak</TableHead>
                         <TableHead className="text-center">Badges</TableHead>
                         <TableHead className="text-center">Assignments Completed</TableHead>
-                        <TableHead className="text-center">Lessons Completed</TableHead>
+                        <TableHead className="text-center">Reading Units</TableHead>
+                        <TableHead className="text-center">Listening Units</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -240,18 +240,19 @@ function StudentStatisticsTable({ students, totalAssignments, totalLessons, clas
                                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                                         {student.assignmentsCompletedCount} / {totalAssignments}
                                      </div>
-                                     <ReviewStudentAssignmentsDialog student={student} classId={classId} />
+                                     <ReviewStudentAssignmentsDialog student={student} classId={selectedClassId!} />
                                 </div>
                             </TableCell>
-                             <TableCell>
-                                <div className="flex items-center justify-center gap-4">
-                                     <div className="flex items-center justify-center gap-1 font-semibold">
-                                        <Book className="h-4 w-4 text-indigo-500" />
-                                        {student.lessonsCompletedCount} / {totalLessons}
-                                     </div>
-                                     <Button variant="outline" size="sm" disabled>
-                                        <BookOpen className="mr-2 h-4 w-4" /> Review
-                                     </Button>
+                             <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-1 font-semibold">
+                                    <Mic className="h-4 w-4 text-indigo-500" />
+                                    {student.readingUnitsCompleted} / {totalLessons}
+                                </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-1 font-semibold">
+                                    <Headphones className="h-4 w-4 text-cyan-500" />
+                                    {student.listeningUnitsCompleted} / {totalLessons}
                                 </div>
                             </TableCell>
                         </TableRow>
@@ -349,7 +350,7 @@ export default function TeacherStatisticsPage() {
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             </div>
                         ) : selectedClassId ? (
-                            <StudentStatisticsTable students={students} totalAssignments={totalAssignments} totalLessons={totalLessons} classId={selectedClassId} />
+                            <StudentStatisticsTable students={students} totalAssignments={totalAssignments} totalLessons={totalLessons} />
                         ) : (
                              <div className="text-center py-12 text-muted-foreground">
                                 <p>Please select a class to view student statistics.</p>
@@ -361,3 +362,5 @@ export default function TeacherStatisticsPage() {
         </>
     );
 }
+
+    
