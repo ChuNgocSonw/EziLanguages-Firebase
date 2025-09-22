@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -9,42 +8,80 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isStudent() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
     }
 
-    // Rules for collections
+    function isAdmin() {
+      return isSignedIn() && (getUserData(request.auth.uid).role == 'admin' || getUserData(request.auth.uid).role == 'superadmin');
+    }
+
+    function isTeacher() {
+      return isSignedIn() && getUserData(request.auth.uid).role == 'teacher';
+    }
+
+    // A teacher can access a student's data if that student is in a class taught by that teacher.
+    function isTeacherOfStudent(studentId) {
+      let studentData = getUserData(studentId);
+      // Check if student has a classId
+      return 'classId' in studentData &&
+             // Get the class document and check if the teacherId matches the current user
+             get(/databases/$(database)/documents/classes/$(studentData.classId)).data.teacherId == request.auth.uid;
+    }
+
+
+    // RULES
     match /users/{userId} {
-      // Any signed-in user can read user profiles (for leaderboards).
       allow read: if isSignedIn();
-      // Only the owner can write to their own profile.
-      allow write: if isOwner(userId);
+      allow write: if isUser(userId) || isAdmin();
 
-      // Sub-collections can only be accessed by the owner.
-      match /{allPaths=**} {
-        allow read, write: if isOwner(userId);
+      // Subcollections
+      match /quizHistory/{docId} {
+        allow read, write: if isUser(userId);
+      }
+      match /assignmentAttempts/{docId} {
+        allow read, write: if isUser(userId);
+      }
+      match /chats/{chatId} {
+        allow read, write, delete: if isUser(userId);
+        match /messages/{messageId} {
+          allow read, write: if isUser(userId);
+        }
       }
     }
 
     match /classes/{classId} {
-      allow read, write: if isSignedIn(); // Simplified for now, can be restricted to teachers later.
+      allow read: if isSignedIn() && (
+        getUserData(request.auth.uid).role == 'teacher' && resource.data.teacherId == request.auth.uid ||
+        getUserData(request.auth.uid).classId == classId ||
+        isAdmin()
+      );
+      allow create: if isTeacher() || isAdmin();
+      allow update, delete: if isSignedIn() && (
+        getUserData(request.auth.uid).role == 'teacher' && resource.data.teacherId == request.auth.uid ||
+        isAdmin()
+      );
     }
 
     match /assignments/{assignmentId} {
-        allow read, write: if isSignedIn(); // Simplified for now, can be restricted to teachers later.
+      allow read: if isTeacher() || isAdmin() || (isSignedIn() && getUserData(request.auth.uid).classId in resource.data.assignedClasses);
+      allow create, update, delete: if isTeacher() || isAdmin();
     }
 
     match /lessons/{lessonId} {
         allow read: if isSignedIn();
-        allow write: if isSignedIn(); // Simplified for now, can be restricted to admins later.
+        allow create, update, delete: if isAdmin();
     }
-    
+
     match /feedback/{feedbackId} {
-        allow read, write: if isSignedIn(); // Simplified for now
+      allow read: if isSignedIn() && (resource.data.studentId == request.auth.uid || resource.data.teacherId == request.auth.uid || isAdmin());
+      allow create: if isTeacher() || isAdmin();
+      allow update: if isSignedIn() && resource.data.studentId == request.auth.uid; // Student can mark as read
+      allow delete: if (isTeacher() && resource.data.teacherId == request.auth.uid) || isAdmin();
     }
   }
 }
