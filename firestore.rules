@@ -9,78 +9,95 @@ service cloud.firestore {
     }
     
     function isOneOfRoles(roles) {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in roles;
+      let userRole = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return userRole in roles;
     }
 
-    // Helper function to check if the requesting user is the teacher of a given class
-    function isTeacherOfClass(classId) {
-      return get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
+    function isOwner(doc) {
+      return doc.data.teacherId == request.auth.uid;
+    }
+    
+    function isStudentInClass(classId) {
+       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId == classId;
+    }
+    
+    // Check if the teacher requesting access is the teacher of the student's class
+    function isTeacherOfStudent(studentId) {
+        let student = get(/databases/$(database)/documents/users/$(studentId)).data;
+        // Check if the student has a classId
+        if (!('classId' in student)) {
+            return false;
+        }
+        let classDoc = get(/databases/$(database)/documents/classes/$(student.classId)).data;
+        return classDoc.teacherId == request.auth.uid;
     }
 
-    // Rules for the 'users' collection
+    // USERS collection
     match /users/{userId} {
-      // Any authenticated user can create their own user document (on first login)
-      allow create: if request.auth != null;
+      allow read: if request.auth.uid == userId 
+                   || isOneOfRoles(['admin', 'superadmin']) 
+                   || (isRole('teacher') && isTeacherOfStudent(userId));
+                   
+      allow write: if request.auth.uid == userId 
+                    || isOneOfRoles(['admin', 'superadmin']);
 
-      // Users can read their own data.
-      // Admins/Superadmins can read any user's data.
-      // Teachers can read a student's data if that student is in one of their classes.
-      allow read: if request.auth.uid == userId
-                  || isOneOfRoles(['admin', 'superadmin'])
-                  || (isRole('teacher') && resource.data.role == 'student' && isTeacherOfClass(resource.data.classId));
-                  
-      // Users can update their own data.
-      // Admins/Superadmins can update any user's data, but cannot change their own role to prevent self-escalation unless they are superadmin.
-      allow update: if request.auth.uid == userId
-                    || (isOneOfRoles(['admin', 'superadmin']) && (request.resource.data.role == resource.data.role || isRole('superadmin')));
+      // Subcollections for user-specific data
+      match /quizHistory/{docId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      match /assignmentAttempts/{docId} {
+         allow read, write: if request.auth.uid == userId;
+      }
+      match /chats/{chatId} {
+        allow read, write, delete: if request.auth.uid == userId;
+        match /messages/{messageId} {
+          allow read, write, create: if request.auth.uid == userId;
+        }
+      }
     }
-
-    // Rules for 'classes' collection
+    
+    // CLASSES collection
     match /classes/{classId} {
-      // Only teachers, admins, or superadmins can create classes
-      allow create: if isOneOfRoles(['teacher', 'admin', 'superadmin']);
-      
-      // Only the teacher of the class or an admin can read/update it
-      allow read, update: if isTeacherOfClass(classId) || isOneOfRoles(['admin', 'superadmin']);
-      
-      // Only the teacher of the class or an admin can delete it
-      allow delete: if resource.data.teacherId == request.auth.uid || isOneOfRoles(['admin', 'superadmin']);
+        allow read: if isOneOfRoles(['admin', 'superadmin']) 
+                     || isOwner(get(/databases/$(database)/documents/classes/$(classId)))
+                     || isStudentInClass(classId);
+                     
+        allow create: if isOneOfRoles(['teacher', 'admin', 'superadmin']);
+        
+        allow update, delete: if isOneOfRoles(['admin', 'superadmin']) 
+                               || isOwner(get(/databases/$(database)/documents/classes/$(classId)));
     }
     
-    // Rules for 'assignments' collection
+    // ASSIGNMENTS collection
     match /assignments/{assignmentId} {
-       // Teachers and admins can create/update/delete assignments
-      allow write: if isOneOfRoles(['teacher', 'admin', 'superadmin']);
-      
-      // Any authenticated user can read assignments (students need this)
-      allow read: if request.auth != null;
-    }
+        allow read: if isOneOfRoles(['admin', 'superadmin'])
+                     || isOwner(get(/databases/$(database)/documents/assignments/$(assignmentId)))
+                     || get(/databases/$(database)/documents/assignments/$(assignmentId)).data.assignedClasses[0].classId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.classId;
 
-    // Rules for 'lessons' collection
-    match /lessons/{lessonId} {
-      // Only admins/superadmins can create, update, or delete lessons
-      allow write: if isOneOfRoles(['admin', 'superadmin']);
-      
-      // Any authenticated user can read lessons
-      allow read: if request.auth != null;
+        allow create: if isOneOfRoles(['teacher', 'admin', 'superadmin']);
+        
+        allow update, delete: if isOneOfRoles(['admin', 'superadmin']) 
+                               || isOwner(get(/databases/$(database)/documents/assignments/$(assignmentId)));
     }
     
-    // Rules for 'feedback' collection
+    // FEEDBACK collection
     match /feedback/{feedbackId} {
-      // Teachers can create (send) feedback
-      allow create: if isRole('teacher');
-      
-      // Only the sender (teacher) or receiver (student) can read the feedback
-      allow read: if resource.data.teacherId == request.auth.uid || resource.data.studentId == request.auth.uid;
-      
-      // Only the sender can update (e.g., mark as read, though students do this) or delete
-      allow update, delete: if resource.data.teacherId == request.auth.uid || resource.data.studentId == request.auth.uid;
+        allow read: if request.auth.uid == resource.data.studentId 
+                     || request.auth.uid == resource.data.teacherId
+                     || isOneOfRoles(['admin', 'superadmin']);
+                     
+        allow create: if isOneOfRoles(['teacher', 'admin', 'superadmin']);
+        
+        allow update, delete: if request.auth.uid == resource.data.teacherId 
+                               || isOneOfRoles(['admin', 'superadmin']);
+    }
+    
+    // LESSONS collection
+    match /lessons/{lessonId} {
+        allow read: if isOneOfRoles(['student', 'teacher', 'admin', 'superadmin']);
+        
+        allow create, update, delete: if isOneOfRoles(['admin', 'superadmin']);
     }
 
-    // Subcollections within 'users'
-    match /users/{userId}/{collection}/{docId} {
-      // Users can read/write to their own subcollections (quizHistory, chats, etc.)
-      allow read, write: if request.auth.uid == userId;
-    }
   }
 }
