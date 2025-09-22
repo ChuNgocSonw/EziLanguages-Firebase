@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { generateFeedback } from "@/lib/actions";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const feedbackSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -373,9 +374,11 @@ export default function TeacherFeedbackPage() {
                                         </div>
                                     </div>
                                     <AccordionContent>
-                                        <div className="prose dark:prose-invert max-w-none p-2 bg-muted/50 rounded-md">
-                                            <p style={{ whiteSpace: 'pre-wrap' }}>{fb.content}</p>
-                                        </div>
+                                        <ScrollArea className="max-h-60">
+                                            <div className="prose dark:prose-invert max-w-none p-2 bg-muted/50 rounded-md">
+                                                <p style={{ whiteSpace: 'pre-wrap' }}>{fb.content}</p>
+                                            </div>
+                                        </ScrollArea>
                                     </AccordionContent>
                                 </AccordionItem>
                             ))}
