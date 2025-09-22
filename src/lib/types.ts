@@ -33,6 +33,18 @@ export interface QuizAttempt {
   assignmentId?: string | null;
 }
 
+// A version of QuizAttempt safe to pass to server actions
+export interface PerformanceQuizAttempt {
+  topic: string;
+  questions: QuizQuestion[];
+  selectedAnswers: string[];
+  score: number;
+  percentage: number;
+  completedAt: string; // ISO date string
+  assignmentId?: string | null;
+}
+
+
 export interface Class {
   id: string;
   className: string;
@@ -211,11 +223,12 @@ const PronunciationScoreSchema = z.record(z.string(), z.object({
 
 const ListeningScoreSchema = z.record(z.string(), z.number());
 
-const QuizAttemptSchema = z.object({
+const PerformanceQuizAttemptSchema = z.object({
     topic: z.string(),
     score: z.number(),
     percentage: z.number(),
     questions: z.array(z.object({ question: z.string() })).length,
+    completedAt: z.string(),
 });
 
 export const GenerateFeedbackInputSchema = z.object({
@@ -223,10 +236,8 @@ export const GenerateFeedbackInputSchema = z.object({
   performanceData: z.object({
       pronunciationScores: z.optional(PronunciationScoreSchema).describe("Student's pronunciation scores. The key is the sentence, value contains score and transcribed text."),
       listeningScores: z.optional(ListeningScoreSchema).describe("Student's listening scores. The key is the exercise ID, value is the XP earned (10 for correct)."),
-      quizHistory: z.optional(z.array(QuizAttemptSchema)).describe("History of self-generated quizzes taken by the student."),
-      assignmentHistory: z.optional(z.array(QuizAttemptSchema)).describe("History of assigned quizzes taken by the student."),
+      quizHistory: z.optional(z.array(PerformanceQuizAttemptSchema)).describe("History of self-generated quizzes taken by the student."),
+      assignmentHistory: z.optional(z.array(PerformanceQuizAttemptSchema)).describe("History of assigned quizzes taken by the student."),
   }).describe("A collection of the student's performance data across different activities."),
 });
 export type GenerateFeedbackInput = z.infer<typeof GenerateFeedbackInputSchema>;
-
-    

@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
-import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment, Feedback, GenerateFeedbackInput, Lesson } from '@/lib/types';
+import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment, Feedback, GenerateFeedbackInput, Lesson, PerformanceQuizAttempt } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
 import { useToast } from '@/hooks/use-toast';
@@ -963,6 +963,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const userProfile = userDoc.data() as UserProfile;
+      
+      const processHistory = (history: QuizAttempt[]): PerformanceQuizAttempt[] => {
+        return history.map(item => ({
+          ...item,
+          completedAt: item.completedAt.toDate().toISOString(), // Convert Timestamp to ISO string
+        }));
+      };
 
       const quizHistoryRef = collection(db, "users", studentId, "quizHistory");
       const quizHistoryQuery = query(quizHistoryRef, orderBy("completedAt", "desc"));
@@ -979,8 +986,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           performanceData: {
               pronunciationScores: userProfile.pronunciationScores,
               listeningScores: userProfile.listeningScores,
-              quizHistory: quizHistory,
-              assignmentHistory: assignmentHistory,
+              quizHistory: processHistory(quizHistory),
+              assignmentHistory: processHistory(assignmentHistory),
           }
       };
   }, []);
