@@ -152,7 +152,7 @@ export default function ContentManagementPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(lesson.id)} className="bg-destructive hover:bg-destructive/90">
+                            <AlertDialogAction onClick={() => handleDelete(lesson.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
                                 Delete
                             </AlertDialogAction>
                             </AlertDialogFooter>
