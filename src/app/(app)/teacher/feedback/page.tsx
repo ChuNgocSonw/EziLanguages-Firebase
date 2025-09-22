@@ -331,26 +331,26 @@ export default function TeacherFeedbackPage() {
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-center">
                                         <AccordionTrigger className="font-medium transition-all flex-1 hover:no-underline p-4 text-left">
-                                            <div className="grid grid-cols-1 w-full gap-1">
-                                                <p className="font-semibold truncate col-span-full">{fb.title}</p>
-                                                <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full mt-1">
-                                                    <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 truncate">
-                                                        <User className="h-3 w-3 shrink-0" />
-                                                        <span>To: {fb.studentName}</span>
-                                                    </p>
-                                                    <div className="flex-grow"></div>
-                                                    <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                        <Calendar className="h-3 w-3" />
-                                                        <span>
-                                                            Sent: {format(fb.createdAt.toDate(), 'PPP')}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                        {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
-                                                        <span>{fb.isRead ? "Read" : "Sent"}</span>
+                                             <div className="flex items-center w-full">
+                                                <div className="flex-1 space-y-1">
+                                                    <p className="font-semibold truncate col-span-full">{fb.title}</p>
+                                                    <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full text-sm text-muted-foreground font-normal">
+                                                        <div className="flex items-center gap-1 truncate">
+                                                            <User className="h-3 w-3 shrink-0" />
+                                                            <span>To: {fb.studentName}</span>
+                                                        </div>
+                                                        <div className="flex-grow"></div>
+                                                         <div className="flex items-center justify-end gap-1">
+                                                            <Calendar className="h-3 w-3" />
+                                                            <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-end gap-1">
+                                                            {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
+                                                            <span>{fb.isRead ? "Read" : "Sent"}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                             </div>
                                         </AccordionTrigger>
                                         <div className="pr-4">
                                             <AlertDialog>
