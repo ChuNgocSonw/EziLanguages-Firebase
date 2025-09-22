@@ -174,8 +174,8 @@ export default function TeacherClassesPage() {
                     </Button>
                      <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={isDeleting === c.id} className="hover:bg-[#FDECEA]">
-                           {isDeleting === c.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4 text-destructive hover:text-destructive" />}
+                        <Button variant="ghost" size="icon" disabled={isDeleting === c.id} className="text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                           {isDeleting === c.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
