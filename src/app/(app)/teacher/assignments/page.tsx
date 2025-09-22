@@ -76,11 +76,14 @@ function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assign
     }
   };
   
-  const handleCheckboxChange = (classId: string, checked: boolean | 'indeterminate') => {
+  const handleCheckboxChange = (classId: string) => {
     setSelectedClasses(prev => 
-      checked ? [...prev, classId] : prev.filter(id => id !== classId)
+      prev.includes(classId) 
+        ? prev.filter(id => id !== classId)
+        : [...prev, classId]
     );
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -107,7 +110,7 @@ function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assign
                   <Checkbox 
                     id={`class-${c.id}`} 
                     checked={selectedClasses.includes(c.id)}
-                    onCheckedChange={(checked) => handleCheckboxChange(c.id, checked)}
+                    onCheckedChange={() => handleCheckboxChange(c.id)}
                   />
                   <Label htmlFor={`class-${c.id}`} className="flex-1 cursor-pointer">
                     <p className="font-semibold">{c.className}</p>
