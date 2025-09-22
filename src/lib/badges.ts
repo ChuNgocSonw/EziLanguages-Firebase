@@ -1,5 +1,5 @@
 import type { UserProfile, QuizAttempt } from './types';
-import { Flame, Star, Trophy, Target, BookCheck, Sparkles, Award, Mic, Headphones, BrainCircuit } from "lucide-react";
+import { Flame, Star, Trophy, Target, BookCheck, Sparkles, Award, Mic, Headphones, BrainCircuit, Crown } from "lucide-react";
 import type { LucideIcon } from 'lucide-react';
 
 export interface Badge {
@@ -124,7 +124,7 @@ const hardBadges: Badge[] = [
         id: 'streak-100',
         name: 'Unstoppable',
         description: 'Maintained an incredible 100-day learning streak!',
-        icon: Flame,
+        icon: Crown,
         condition: (profile) => profile.streak >= 100,
     },
 ];
