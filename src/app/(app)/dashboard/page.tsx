@@ -85,7 +85,7 @@ export default function DashboardPage() {
                             <p className="font-semibold">{lastActivity.title}</p>
                         </div>
                     </div>
-                    <Button asChild className="ml-auto shrink-0 bg-accent hover:bg-accent/90">
+                    <Button asChild className="ml-auto shrink-0 bg-accent hover:bg-accent/90 text-white">
                         <Link href={`/${lastActivity.type}`}>
                             Continue <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
