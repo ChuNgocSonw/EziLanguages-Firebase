@@ -329,13 +329,13 @@ export default function TeacherFeedbackPage() {
                         <Accordion type="single" collapsible className="w-full">
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
-                                    <div className="flex items-center justify-between w-full">
-                                        <AccordionTrigger className="flex-1 hover:no-underline [&_svg]:hidden">
-                                            <div className="grid grid-cols-[1fr_auto] w-full items-start gap-x-4 text-left">
+                                    <div className="flex w-full items-center justify-between">
+                                        <AccordionTrigger className="flex-1 hover:no-underline">
+                                            <div className="grid grid-cols-[1fr_auto] w-full items-start gap-x-4 text-left mr-2">
                                                 {/* Row 1 */}
                                                 <p className="font-semibold truncate">{fb.title}</p>
                                                 <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                    {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
+                                                     {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
                                                     <span>{fb.isRead ? "Read" : "Sent"}</span>
                                                 </div>
 
@@ -346,14 +346,13 @@ export default function TeacherFeedbackPage() {
                                                 </p>
                                                 <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
                                                    <Calendar className="h-3 w-3" />
-                                                    <span className="text-sm">
+                                                    <span>
                                                         Sent: {format(fb.createdAt.toDate(), 'PPP')}
                                                     </span>
                                                 </div>
                                             </div>
                                         </AccordionTrigger>
                                         <div className="flex items-center pl-2">
-                                            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
@@ -388,3 +387,4 @@ export default function TeacherFeedbackPage() {
     </>
   );
 }
+
