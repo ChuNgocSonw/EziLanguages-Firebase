@@ -100,7 +100,7 @@ export default function ContentManagementPage() {
           <div className="flex gap-2">
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
-                <Button>
+                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create New Lesson
                 </Button>
