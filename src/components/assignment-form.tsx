@@ -573,7 +573,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                             </FormItem>
                         )} />
                     )}
-                    <Button type="button" onClick={form.handleSubmit(handleManualSubmit)} variant="secondary"><PlusCircle className="mr-2 h-4 w-4" /> Add This Question</Button>
+                    <Button type="button" onClick={form.handleSubmit(handleManualSubmit)} className="bg-accent hover:bg-accent/90 text-accent-foreground"><PlusCircle className="mr-2 h-4 w-4" /> Add This Question</Button>
                 </form>
             </Form>
         </CardContent>
@@ -714,4 +714,3 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
     </>
   );
 }
-
