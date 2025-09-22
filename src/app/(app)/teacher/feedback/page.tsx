@@ -329,8 +329,8 @@ export default function TeacherFeedbackPage() {
                         <Accordion type="single" collapsible className="w-full">
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
-                                    <div className="flex w-full items-center justify-between">
-                                        <AccordionTrigger className="flex flex-1 items-center justify-between hover:no-underline p-4">
+                                    <div className="flex w-full items-center">
+                                        <AccordionTrigger className="flex flex-1 items-center justify-between hover:no-underline p-4 [&>svg]:hidden">
                                             <div className="w-full text-left">
                                                 <p className="font-semibold truncate">{fb.title}</p>
                                                 <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full mt-1">
@@ -351,7 +351,6 @@ export default function TeacherFeedbackPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                                         </AccordionTrigger>
                                         <div className="flex items-center pr-4">
                                             <AlertDialog>
