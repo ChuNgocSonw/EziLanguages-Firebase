@@ -114,6 +114,13 @@ const hardBadges: Badge[] = [
         condition: (profile, quizHistory) => (quizHistory?.length || 0) >= 100,
     },
     {
+        id: 'pronunciation-pro',
+        name: 'Pronunciation Pro',
+        description: 'Achieved a perfect score on 25 reading exercises.',
+        icon: Award,
+        condition: (profile) => Object.values(profile.pronunciationScores || {}).filter(attempt => attempt.score === 100).length >= 25,
+    },
+    {
         id: 'streak-100',
         name: 'Unstoppable',
         description: 'Maintained an incredible 100-day learning streak!',
