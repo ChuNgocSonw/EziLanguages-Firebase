@@ -213,7 +213,7 @@ export default function ChatInterface({
         
           <div className="flex items-center justify-between p-2 border-b shrink-0 gap-2">
             <div>
-                 <Button onClick={onNewChatClick} className="bg-accent hover:bg-accent/90">
+                 <Button onClick={onNewChatClick} className="bg-accent hover:bg-accent/90 text-white">
                     <PlusCircle className="mr-2 h-5 w-5" /> New Chat
                 </Button>
             </div>
