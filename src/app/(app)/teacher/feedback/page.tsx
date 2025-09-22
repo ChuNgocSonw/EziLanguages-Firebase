@@ -330,12 +330,12 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex items-center justify-between w-full">
-                                        <AccordionTrigger className="flex-1 hover:no-underline pr-2">
-                                            <div className="grid grid-cols-[1fr_auto] w-full items-start gap-x-4 text-left">
+                                        <AccordionTrigger className="flex-1 hover:no-underline pr-2 items-start [&>svg]:pt-1">
+                                            <div className="grid grid-cols-[1fr_auto] w-full items-center gap-x-4 text-left">
                                                 {/* Row 1 */}
                                                 <p className="font-semibold truncate">{fb.title}</p>
                                                 <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                     {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
+                                                    {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
                                                     <span>{fb.isRead ? "Read" : "Sent"}</span>
                                                 </div>
 
