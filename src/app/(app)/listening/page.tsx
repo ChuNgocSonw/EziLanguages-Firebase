@@ -79,7 +79,7 @@ function ExerciseInterface({ exercise, onCorrect, onIncorrect }: {
                 </RadioGroup>
             )}
             <div className="pt-2">
-               <Button onClick={checkAnswer} disabled={!answer} className="bg-accent hover:bg-accent/90">Check Answer</Button>
+               <Button onClick={checkAnswer} disabled={!answer} className="bg-accent hover:bg-accent/90 text-accent-foreground">Check Answer</Button>
             </div>
         </div>
     );
