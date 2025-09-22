@@ -374,7 +374,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                             <FormField control={generationForm.control} name="numberOfQuestions" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         </div>
                     </CardContent>
-                    <CardFooter><Button type="button" onClick={generationForm.handleSubmit(handleGenerateQuestions)} disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Questions"}</Button></CardFooter>
+                    <CardFooter><Button type="button" onClick={generationForm.handleSubmit(handleGenerateQuestions)} disabled={isGenerating} className="bg-accent hover:bg-accent/90 text-accent-foreground">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Questions"}</Button></CardFooter>
                 </form>
             </Form>
         </Card>
@@ -423,7 +423,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                             <FormField control={readingGenerationForm.control} name="numberOfSentences" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         </div>
                     </CardContent>
-                    <CardFooter><Button type="button" onClick={readingGenerationForm.handleSubmit(handleGenerateSentences)} disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Sentences"}</Button></CardFooter>
+                    <CardFooter><Button type="button" onClick={readingGenerationForm.handleSubmit(handleGenerateSentences)} disabled={isGenerating} className="bg-accent hover:bg-accent/90 text-accent-foreground">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Sentences"}</Button></CardFooter>
                 </form>
             </Form>
         </Card>
@@ -462,7 +462,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                             <FormField control={listeningGenerationForm.control} name="numberOfExercises" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                         </div>
                     </CardContent>
-                    <CardFooter><Button type="button" onClick={listeningGenerationForm.handleSubmit(handleGenerateExercises)} disabled={isGenerating} className="bg-accent hover:bg-accent/90">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Exercises"}</Button></CardFooter>
+                    <CardFooter><Button type="button" onClick={listeningGenerationForm.handleSubmit(handleGenerateExercises)} disabled={isGenerating} className="bg-accent hover:bg-accent/90 text-accent-foreground">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Exercises"}</Button></CardFooter>
                 </form>
             </Form>
         </Card>
