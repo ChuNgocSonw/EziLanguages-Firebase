@@ -331,23 +331,24 @@ export default function TeacherFeedbackPage() {
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-center justify-between">
                                         <AccordionTrigger className="flex-1 hover:no-underline">
-                                             <div className="grid grid-cols-[1fr_auto_auto] w-full items-center gap-x-4 text-left mr-2">
-                                                <div className="flex flex-col">
-                                                    <p className="font-semibold truncate">{fb.title}</p>
+                                            <div className="grid grid-cols-1 w-full text-left">
+                                                <p className="font-semibold truncate">{fb.title}</p>
+                                                <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full mt-1">
                                                     <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 truncate">
                                                         <User className="h-3 w-3 shrink-0" />
                                                         <span>To: {fb.studentName}</span>
                                                     </p>
-                                                </div>
-                                                <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                    {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
-                                                    <span>{fb.isRead ? "Read" : "Sent"}</span>
-                                                </div>
-                                                <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                   <Calendar className="h-3 w-3" />
-                                                    <span>
-                                                        Sent: {format(fb.createdAt.toDate(), 'PPP')}
-                                                    </span>
+                                                    <div className="flex-grow"></div> 
+                                                    <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
+                                                        {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
+                                                        <span>{fb.isRead ? "Read" : "Sent"}</span>
+                                                    </div>
+                                                    <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
+                                                        <Calendar className="h-3 w-3" />
+                                                        <span>
+                                                            Sent: {format(fb.createdAt.toDate(), 'PPP')}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </AccordionTrigger>
@@ -360,7 +361,7 @@ export default function TeacherFeedbackPage() {
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
                                                     <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this feedback. The student will no longer be able to see it.</AlertDialogDescription></AlertDialogHeader>
-                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Delete</AlertDialogAction></AlertDialogFooter>
+                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Yes, delete</AlertDialogAction></AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>
                                         </div>
