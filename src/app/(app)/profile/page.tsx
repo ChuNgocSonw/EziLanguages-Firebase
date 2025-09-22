@@ -150,10 +150,6 @@ export default function ProfilePage() {
                                 captionLayout="dropdown-buttons"
                                 fromYear={1920}
                                 toYear={new Date().getFullYear()}
-                                classNames={{
-                                  caption_dropdowns: "flex gap-2",
-                                  vhidden: "hidden",
-                                }}
                                 initialFocus
                               />
                             </PopoverContent>
@@ -244,3 +240,4 @@ export default function ProfilePage() {
     </>
   );
 }
+
