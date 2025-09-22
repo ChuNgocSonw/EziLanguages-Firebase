@@ -150,6 +150,9 @@ export default function ProfilePage() {
                                 captionLayout="dropdown"
                                 fromYear={1920}
                                 toYear={new Date().getFullYear()}
+                                classNames={{
+                                  dropdown_year: "[--scroll-area-height:10rem]",
+                                }}
                                 initialFocus
                               />
                             </PopoverContent>
