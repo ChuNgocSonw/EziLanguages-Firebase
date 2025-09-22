@@ -1,3 +1,4 @@
+
 "use client";
 
 import PageHeader from "@/components/page-header";
@@ -134,7 +135,7 @@ function PracticeInterface({ activeSentence, onSaveAttempt, onBack }: {
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-4">
         <div className="flex flex-wrap items-center gap-4">
-          <Button onClick={handleToggleRecording} variant="default" size="lg" className="bg-accent hover:bg-accent/90" disabled={isLoading}>
+          <Button onClick={handleToggleRecording} variant="default" size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isLoading}>
             {isLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Analyzing...</> : isRecording ? <><MicOff className="mr-2 h-5 w-5" /> Stop</> : <><Mic className="mr-2 h-5 w-5" /> Record</>}
           </Button>
         </div>
