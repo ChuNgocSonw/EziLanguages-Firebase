@@ -231,7 +231,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                 />
             </CardContent>
             <CardFooter className="px-1">
-                <Button type="submit" disabled={!topic.trim()} className="w-full bg-accent hover:bg-accent/90">
+                <Button type="submit" disabled={!topic.trim()} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                     Generate Quiz
                 </Button>
             </CardFooter>
@@ -301,7 +301,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                  />
             </CardContent>
             <CardFooter className="px-1">
-                <Button type="submit" disabled={!lessonContent.trim()} className="w-full bg-accent hover:bg-accent/90">
+                <Button type="submit" disabled={!lessonContent.trim()} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                     Generate Quiz
                 </Button>
             </CardFooter>
@@ -414,7 +414,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
           )}
         </CardContent>
         <CardFooter>
-          <Button onClick={handleNextQuestion} disabled={!selectedOption} className="bg-accent hover:bg-accent/90">
+          <Button onClick={handleNextQuestion} disabled={!selectedOption} className="bg-accent hover:bg-accent/90 text-accent-foreground">
             {currentQuestionIndex < questions.length - 1 ? "Next Question" : "Finish & Save Quiz"}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
