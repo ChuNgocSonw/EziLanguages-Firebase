@@ -73,6 +73,7 @@ export interface AuthContextType {
   getLessonDetails: (lessonId: string) => Promise<Lesson | null>;
   updateLesson: (lessonId: string, lessonData: Omit<Lesson, 'id' | 'createdAt' | 'teacherId'>) => Promise<void>;
   deleteLesson: (lessonId: string) => Promise<void>;
+  getStudentLessonProgress: (studentId: string) => Promise<any[]>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -996,6 +997,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const lessonRef = doc(db, "lessons", lessonId);
       await deleteDoc(lessonRef);
   }, [userProfile]);
+  
+  const getStudentLessonProgress = useCallback(async (studentId: string) => {
+    const userDocRef = doc(db, "users", studentId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+        throw new Error("Student not found");
+    }
+    
+    const studentProfile = userDoc.data() as UserProfile;
+    const allLessons = await getLessons();
+    
+    return allLessons.map(lesson => {
+        const readingSentences = lesson.activities.reading || [];
+        const listeningExercises = lesson.activities.listening || [];
+
+        let completedReading = 0;
+        if (readingSentences.length > 0 && studentProfile.pronunciationScores) {
+            readingSentences.forEach(sentence => {
+                if (studentProfile.pronunciationScores?.[createSafeKey(sentence.text)]) {
+                    completedReading++;
+                }
+            });
+        }
+
+        let completedListening = 0;
+        if (listeningExercises.length > 0 && studentProfile.listeningScores) {
+            listeningExercises.forEach(exercise => {
+                if (studentProfile.listeningScores?.[exercise.id]) {
+                    completedListening++;
+                }
+            });
+        }
+        
+        return {
+            id: lesson.id,
+            unit: lesson.unit,
+            readingProgress: readingSentences.length > 0 ? (completedReading / readingSentences.length) * 100 : null,
+            listeningProgress: listeningExercises.length > 0 ? (completedListening / listeningExercises.length) * 100 : null,
+        }
+    });
+  }, [getLessons]);
 
   const value: AuthContextType = useMemo(() => ({
     user,
@@ -1049,6 +1092,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getLessonDetails,
     updateLesson,
     deleteLesson,
+    getStudentLessonProgress,
   }), [
       user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
@@ -1058,7 +1102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
       getAssignmentAttempt, getStudentCompletedAttempts, getStudentAssignmentAttemptsForClass, sendFeedback,
       getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback, getStudentPerformanceDataForFeedback,
-      createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson,
+      createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson, getStudentLessonProgress,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
