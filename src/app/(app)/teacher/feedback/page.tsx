@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import type { Class, AdminUserView, Feedback, PerformanceQuizAttempt } from "@/lib/types";
-import { Loader2, Send, Check, User, ChevronRight, MessageSquare, Trash2, Wand2, Calendar } from "lucide-react";
+import { Loader2, Send, Check, User, ChevronRight, MessageSquare, Trash2, Wand2, Calendar, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
@@ -330,8 +330,8 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex items-center justify-between w-full">
-                                        <AccordionTrigger className="flex-1 hover:no-underline pr-2 [&>svg]:pt-1 [&>svg]:self-start">
-                                            <div className="grid grid-cols-[1fr_auto] w-full items-center gap-x-4 text-left">
+                                        <AccordionTrigger className="flex-1 hover:no-underline [&_svg]:hidden">
+                                            <div className="grid grid-cols-[1fr_auto] w-full items-start gap-x-4 text-left">
                                                 {/* Row 1 */}
                                                 <p className="font-semibold truncate">{fb.title}</p>
                                                 <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
@@ -352,17 +352,20 @@ export default function TeacherFeedbackPage() {
                                                 </div>
                                             </div>
                                         </AccordionTrigger>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
-                                                    {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this feedback. The student will no longer be able to see it.</AlertDialogDescription></AlertDialogHeader>
-                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                                        <div className="flex items-center pl-2">
+                                            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                                                        {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this feedback. The student will no longer be able to see it.</AlertDialogDescription></AlertDialogHeader>
+                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
                                     </div>
                                     <AccordionContent>
                                         <div className="prose dark:prose-invert max-w-none p-2 bg-muted/50 rounded-md">
