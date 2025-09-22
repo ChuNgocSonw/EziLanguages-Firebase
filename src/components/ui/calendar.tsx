@@ -66,80 +66,52 @@ function Calendar({
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
         Dropdown: (props: DropdownProps) => {
-          const { fromDate, toDate, fromMonth, toMonth } = props;
-          const fromYear = fromDate?.getFullYear();
-          const toYear = toDate?.getFullYear();
-
+          const { fromDate, fromMonth, fromYear, toDate, toMonth, toYear } = props;
           const { onMonthChange, onYearChange } = props;
-          const months: { value: string; label: string }[] = [];
-          if (fromMonth && toMonth) {
-            for (
-              let i = fromMonth.getMonth();
-              i <= toMonth.getMonth();
-              i++
-            ) {
-              months.push({
+          const options: { value: string; label: string }[] = [];
+
+          if (props.name === 'months' && fromMonth && toMonth) {
+            for (let i = fromMonth.getMonth(); i <= toMonth.getMonth(); i++) {
+              options.push({
                 value: i.toString(),
-                label: new Date(new Date().getFullYear(), i).toLocaleString(
-                  "default",
-                  { month: "long" }
-                ),
+                label: new Date(new Date().getFullYear(), i).toLocaleString("default", { month: "long" }),
               });
             }
-          }
-          const years: { value: string; label: string }[] = [];
-          if (fromYear && toYear) {
+          } else if (props.name === 'years' && fromYear && toYear) {
             for (let i = fromYear; i <= toYear; i++) {
-              years.push({ value: i.toString(), label: i.toString() });
+              options.push({ value: i.toString(), label: i.toString() });
             }
           }
+          
           return (
-            <div className="flex gap-1.5 w-full">
-              {props.name === "months" ? (
-                <Select
-                  value={props.value?.toString()}
-                  onValueChange={(value) => {
+            <Select
+              value={props.value?.toString()}
+              onValueChange={(value) => {
+                  if (props.name === 'months') {
                     onMonthChange?.(new Date(new Date().getFullYear(), parseInt(value)));
-                  }}
-                  
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue>
-                      {new Date(new Date().getFullYear(), Number(props.value)).toLocaleString("default", {
-                        month: "long",
-                      })}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((month) => (
-                      <SelectItem key={month.value} value={month.value}>
-                        {month.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Select
-                  value={props.value?.toString()}
-                  onValueChange={(value) => {
+                  } else if (props.name === 'years') {
                     onYearChange?.(new Date(parseInt(value), new Date().getMonth()));
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue>{props.value}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className={classNames?.dropdown_year}>
-                     <ScrollArea className="h-[var(--scroll-area-height,10rem)] pr-2">
-                        {years.map((year) => (
-                        <SelectItem key={year.value} value={year.value}>
-                            {year.label}
-                        </SelectItem>
-                        ))}
-                    </ScrollArea>
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+                  }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                 <SelectValue>
+                    {props.name === 'months' 
+                        ? new Date(new Date().getFullYear(), Number(props.value)).toLocaleString("default", { month: "long" })
+                        : props.value
+                    }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className={classNames?.dropdown_year}>
+                 <ScrollArea className="h-[var(--scroll-area-height,10rem)] pr-2">
+                    {options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                    </SelectItem>
+                    ))}
+                </ScrollArea>
+              </SelectContent>
+            </Select>
           );
         },
       }}
