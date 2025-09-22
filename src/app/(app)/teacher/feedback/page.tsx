@@ -333,19 +333,20 @@ export default function TeacherFeedbackPage() {
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex items-center justify-between w-full">
                                         <AccordionTrigger className="flex-1 hover:no-underline pr-2">
-                                            <div className="flex justify-between items-start w-full gap-x-4">
-                                                <div className="text-left flex-1 min-w-0">
-                                                    <p className="font-semibold truncate">{fb.title}</p>
-                                                    <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 mt-1 truncate">
-                                                        <User className="h-3 w-3 flex-shrink-0" /> To: {fb.studentName}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right text-xs text-muted-foreground font-normal shrink-0">
-                                                    <div className="flex items-center gap-1 justify-end">
+                                            <div className="flex flex-col w-full text-left gap-1">
+                                                <div className="flex justify-between items-center w-full">
+                                                    <p className="font-semibold truncate pr-4">{fb.title}</p>
+                                                    <div className="text-xs text-muted-foreground font-normal flex items-center gap-1 shrink-0">
                                                         <Calendar className="h-3 w-3" />
                                                         <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1 justify-end mt-1">
+                                                </div>
+                                                <div className="flex justify-between items-center w-full">
+                                                    <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 truncate">
+                                                        <User className="h-3 w-3 shrink-0" />
+                                                        <span>To: {fb.studentName}</span>
+                                                    </p>
+                                                    <div className="text-xs text-muted-foreground font-normal flex items-center gap-1 shrink-0">
                                                         {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
                                                         <span>{fb.isRead ? "Read" : "Sent"}</span>
                                                     </div>
