@@ -330,7 +330,7 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-center justify-between">
-                                        <AccordionTrigger className="flex flex-1 items-center justify-between hover:no-underline">
+                                        <AccordionTrigger className="flex flex-1 items-center justify-between hover:no-underline p-4">
                                             <div className="w-full text-left">
                                                 <p className="font-semibold truncate">{fb.title}</p>
                                                 <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full mt-1">
@@ -338,21 +338,22 @@ export default function TeacherFeedbackPage() {
                                                         <User className="h-3 w-3 shrink-0" />
                                                         <span>To: {fb.studentName}</span>
                                                     </p>
-                                                    <div className="flex-grow"></div> 
-                                                    <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                        {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
-                                                        <span>{fb.isRead ? "Read" : "Sent"}</span>
-                                                    </div>
+                                                    <div className="flex-grow"></div>
                                                     <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
                                                         <Calendar className="h-3 w-3" />
                                                         <span>
                                                             Sent: {format(fb.createdAt.toDate(), 'PPP')}
                                                         </span>
                                                     </div>
+                                                    <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
+                                                        {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
+                                                        <span>{fb.isRead ? "Read" : "Sent"}</span>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                                         </AccordionTrigger>
-                                        <div className="flex items-center pl-2">
+                                        <div className="flex items-center pr-4">
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
