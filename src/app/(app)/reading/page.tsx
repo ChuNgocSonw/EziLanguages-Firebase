@@ -128,7 +128,7 @@ function PracticeInterface({ activeSentence, onSaveAttempt, onBack }: {
         ) : (
           <p className="text-xl font-headline tracking-wide leading-relaxed">
             {result.words.map((word, index) => (
-              <span key={index} className={!word.correct ? "text-destructive font-bold" : ""}>{word.word}{' '}</span>
+              <span key={index} className={!word.correct ? "text-red-500 font-bold" : ""}>{word.word}{' '}</span>
             ))}
           </p>
         )}
