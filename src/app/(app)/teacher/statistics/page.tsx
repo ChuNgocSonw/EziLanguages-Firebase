@@ -196,9 +196,9 @@ function StudentStatisticsTable({ students, totalAssignments, totalLessons, sele
                         <TableHead className="text-center">XP</TableHead>
                         <TableHead className="text-center">Streak</TableHead>
                         <TableHead className="text-center">Badges</TableHead>
-                        <TableHead className="text-center">Assignments Completed</TableHead>
                         <TableHead className="text-center">Reading Units</TableHead>
                         <TableHead className="text-center">Listening Units</TableHead>
+                        <TableHead className="text-center">Assignments Completed</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -234,15 +234,6 @@ function StudentStatisticsTable({ students, totalAssignments, totalLessons, sele
                                     {student.badgeCount}
                                 </div>
                             </TableCell>
-                             <TableCell>
-                                <div className="flex items-center justify-center gap-4">
-                                     <div className="flex items-center justify-center gap-1 font-semibold">
-                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                        {student.assignmentsCompletedCount} / {totalAssignments}
-                                     </div>
-                                     <ReviewStudentAssignmentsDialog student={student} classId={selectedClassId!} />
-                                </div>
-                            </TableCell>
                              <TableCell className="text-center">
                                 <div className="flex items-center justify-center gap-1 font-semibold">
                                     <Mic className="h-4 w-4 text-indigo-500" />
@@ -253,6 +244,15 @@ function StudentStatisticsTable({ students, totalAssignments, totalLessons, sele
                                 <div className="flex items-center justify-center gap-1 font-semibold">
                                     <Headphones className="h-4 w-4 text-cyan-500" />
                                     {student.listeningUnitsCompleted} / {totalLessons}
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex items-center justify-center gap-4">
+                                     <div className="flex items-center justify-center gap-1 font-semibold">
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        {student.assignmentsCompletedCount} / {totalAssignments}
+                                     </div>
+                                     <ReviewStudentAssignmentsDialog student={student} classId={selectedClassId!} />
                                 </div>
                             </TableCell>
                         </TableRow>
@@ -362,5 +362,7 @@ export default function TeacherStatisticsPage() {
         </>
     );
 }
+
+    
 
     
