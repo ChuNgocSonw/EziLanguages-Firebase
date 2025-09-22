@@ -335,8 +335,8 @@ export default function TeacherFeedbackPage() {
                                                 {/* Row 1 */}
                                                 <p className="font-semibold truncate">{fb.title}</p>
                                                 <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                    <Calendar className="h-3 w-3" />
-                                                    <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
+                                                     {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
+                                                    <span>{fb.isRead ? "Read" : "Sent"}</span>
                                                 </div>
 
                                                 {/* Row 2 */}
@@ -344,9 +344,9 @@ export default function TeacherFeedbackPage() {
                                                     <User className="h-3 w-3 shrink-0" />
                                                     <span>To: {fb.studentName}</span>
                                                 </p>
-                                                <div className="text-xs text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                    {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
-                                                    <span>{fb.isRead ? "Read" : "Sent"}</span>
+                                                <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
+                                                   <Calendar className="h-3 w-3" />
+                                                    <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
                                                 </div>
                                             </div>
                                         </AccordionTrigger>
