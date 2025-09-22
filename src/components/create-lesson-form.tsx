@@ -161,8 +161,8 @@ export default function CreateLessonForm({ onFinished, existingLesson = null }: 
                                     </FormItem>
                                 )}
                             />
-                            <Button type="button" variant="ghost" size="icon" onClick={() => removeReading(index)} className="hover:bg-destructive/10">
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => removeReading(index)} className="text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                                <Trash2 className="h-4 w-4" />
                             </Button>
                         </div>
                     ))}
@@ -183,8 +183,8 @@ export default function CreateLessonForm({ onFinished, existingLesson = null }: 
                 <CardContent className="space-y-6">
                     {listeningFields.map((field, index) => (
                         <div key={field.id} className="p-4 border rounded-md space-y-4 relative">
-                            <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 hover:bg-destructive/10" onClick={() => removeListening(index)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                            <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={() => removeListening(index)}>
+                                <Trash2 className="h-4 w-4" />
                             </Button>
                             <h4 className="font-medium">Exercise {index + 1}</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
