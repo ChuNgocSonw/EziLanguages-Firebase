@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import type { Class, AdminUserView, Feedback, PerformanceQuizAttempt } from "@/lib/types";
-import { Loader2, Send, Check, User, ChevronRight, MessageSquare, Trash2, Wand2 } from "lucide-react";
+import { Loader2, Send, Check, User, ChevronRight, MessageSquare, Trash2, Wand2, Calendar } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { generateFeedback } from "@/lib/actions";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const feedbackSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -164,7 +165,8 @@ export default function TeacherFeedbackPage() {
         
         // Send the fetched data to the server action for AI processing
         const result = await generateFeedback({
-            ...performanceData,
+            studentName: performanceData.studentName,
+            performanceData: performanceData.performanceData,
             language: aiLanguage,
         });
         
@@ -326,35 +328,48 @@ export default function TeacherFeedbackPage() {
                     {isLoadingHistory ? (
                         <div className="flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin text-primary"/></div>
                     ) : sentFeedback.length > 0 ? (
-                        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                        <Accordion type="single" collapsible className="w-full">
                             {sentFeedback.map(fb => (
-                                <div key={fb.id} className="p-3 rounded-md border flex justify-between items-start">
-                                    <div className="flex-1 pr-4">
-                                        <p className="font-semibold">{fb.title}</p>
-                                        <p className="text-sm text-muted-foreground mt-1" style={{ whiteSpace: 'pre-wrap' }}>{fb.content}</p>
-                                        <div className="text-xs text-muted-foreground mt-2 flex items-center gap-4">
-                                            <span className="flex items-center gap-1"><User className="h-3 w-3" /> To: {fb.studentName}</span>
-                                            <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
-                                            <span className="flex items-center gap-1">
-                                                {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
-                                                {fb.isRead ? "Read" : "Sent"}
-                                            </span>
-                                        </div>
+                                <AccordionItem value={fb.id} key={fb.id}>
+                                    <div className="flex items-center justify-between w-full">
+                                        <AccordionTrigger className="flex-1 hover:no-underline pr-2">
+                                            <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full">
+                                                <div className="text-left mb-2 md:mb-0">
+                                                    <p className="font-semibold">{fb.title}</p>
+                                                    <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 mt-1"><User className="h-3 w-3" /> To: {fb.studentName}</p>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-xs text-muted-foreground font-normal">
+                                                    <span className="flex items-center gap-1">
+                                                        <Calendar className="h-3 w-3" />
+                                                        Sent: {format(fb.createdAt.toDate(), 'PPP')}
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
+                                                        {fb.isRead ? "Read" : "Sent"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                                                    {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this feedback. The student will no longer be able to see it.</AlertDialogDescription></AlertDialogHeader>
+                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
-                                                {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this feedback. The student will no longer be able to see it.</AlertDialogDescription></AlertDialogHeader>
-                                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)}>Delete</AlertDialogAction></AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </div>
+                                    <AccordionContent>
+                                        <div className="prose dark:prose-invert max-w-none p-2 bg-muted/50 rounded-md">
+                                            <p style={{ whiteSpace: 'pre-wrap' }}>{fb.content}</p>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
                             ))}
-                        </div>
+                        </Accordion>
                     ) : (
                         <div className="text-center py-12">
                             <h3 className="text-lg font-semibold">No Feedback Sent</h3>
