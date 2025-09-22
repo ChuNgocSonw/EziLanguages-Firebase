@@ -330,9 +330,9 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-center">
-                                        <AccordionTrigger className="flex flex-1 items-center justify-between hover:no-underline p-4 [&>svg]:hidden">
-                                            <div className="w-full text-left">
-                                                <p className="font-semibold truncate">{fb.title}</p>
+                                        <AccordionTrigger className="font-medium transition-all [&[data-state=open]>svg]:rotate-180 flex flex-1 items-center justify-between hover:no-underline p-4">
+                                            <div className="grid grid-cols-1 w-full text-left">
+                                                <p className="font-semibold truncate col-span-full">{fb.title}</p>
                                                 <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full mt-1">
                                                     <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 truncate">
                                                         <User className="h-3 w-3 shrink-0" />
@@ -351,6 +351,7 @@ export default function TeacherFeedbackPage() {
                                                     </div>
                                                 </div>
                                             </div>
+                                            <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                                         </AccordionTrigger>
                                         <div className="flex items-center pr-4">
                                             <AlertDialog>
@@ -395,3 +396,5 @@ export default function TeacherFeedbackPage() {
     </>
   );
 }
+
+    
