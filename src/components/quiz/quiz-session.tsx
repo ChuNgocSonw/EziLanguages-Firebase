@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -439,11 +440,11 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                 {questions.map((q, i) => (
                     <div key={i} className="p-2 border rounded-md">
                         <p className="font-medium">{i + 1}. {q.question}</p>
-                        <p className={cn("text-sm flex items-center gap-2", selectedAnswers[i].trim().toLowerCase() === q.answer.trim().toLowerCase() ? "text-green-600" : "text-destructive")}>
+                        <p className={cn("text-sm flex items-center gap-2", selectedAnswers[i].trim().toLowerCase() === q.answer.trim().toLowerCase() ? "text-green-500" : "text-red-500")}>
                            {selectedAnswers[i].trim().toLowerCase() === q.answer.trim().toLowerCase() ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                            Your answer: {selectedAnswers[i]}
                         </p>
-                         {selectedAnswers[i].trim().toLowerCase() !== q.answer.trim().toLowerCase() && <p className="text-sm text-green-700">Correct answer: {q.answer}</p>}
+                         {selectedAnswers[i].trim().toLowerCase() !== q.answer.trim().toLowerCase() && <p className="text-sm text-green-500">Correct answer: {q.answer}</p>}
                     </div>
                 ))}
             </div>

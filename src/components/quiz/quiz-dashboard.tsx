@@ -100,11 +100,11 @@ export default function QuizDashboard() {
                 {selectedQuiz.questions.map((q, i) => (
                     <div key={i} className="p-3 border rounded-md bg-muted/50">
                         <p className="font-medium">{i + 1}. {q.question}</p>
-                        <p className={cn("text-sm flex items-center gap-2 mt-2", selectedQuiz.selectedAnswers[i] === q.answer ? "text-green-600" : "text-destructive")}>
+                        <p className={cn("text-sm flex items-center gap-2 mt-2", selectedQuiz.selectedAnswers[i] === q.answer ? "text-green-500" : "text-red-500")}>
                            {selectedQuiz.selectedAnswers[i] === q.answer ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                            Your answer: {selectedQuiz.selectedAnswers[i]}
                         </p>
-                         {selectedQuiz.selectedAnswers[i] !== q.answer && <p className="text-sm text-green-700 ml-6">Correct answer: {q.answer}</p>}
+                         {selectedQuiz.selectedAnswers[i] !== q.answer && <p className="text-sm text-green-500 ml-6">Correct answer: {q.answer}</p>}
                     </div>
                 ))}
             </div>
