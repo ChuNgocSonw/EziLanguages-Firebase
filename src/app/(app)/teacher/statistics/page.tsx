@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
 import type { Class, AdminUserView, QuizAttempt, Assignment, PronunciationAttempt, Lesson } from "@/lib/types";
-import { Loader2, Award, Flame, Star, CheckCircle2, BookOpen, Check, X, Mic, Headphones } from "lucide-react";
+import { Loader2, Award, Flame, Star, CheckCircle2, BookOpen, Check, X, Mic, Headphones, Book } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -176,7 +176,7 @@ function ReviewStudentAssignmentsDialog({ student, classId }: { student: AdminUs
     );
 }
 
-function StudentStatisticsTable({ students, totalAssignments, classId }: { students: AdminUserView[], totalAssignments: number, classId: string }) {
+function StudentStatisticsTable({ students, totalAssignments, totalLessons, classId }: { students: AdminUserView[], totalAssignments: number, totalLessons: number, classId: string }) {
     if (students.length === 0) {
         return (
             <div className="text-center py-12 text-muted-foreground">
@@ -188,7 +188,7 @@ function StudentStatisticsTable({ students, totalAssignments, classId }: { stude
     return (
         <>
             <p className="text-sm text-muted-foreground mb-4">
-                This class has <span className="font-semibold text-primary">{totalAssignments}</span> assigned {totalAssignments === 1 ? 'assignment' : 'assignments'}.
+                This class has <span className="font-semibold text-primary">{totalAssignments}</span> assigned {totalAssignments === 1 ? 'assignment' : 'assignments'} and <span className="font-semibold text-primary">{totalLessons}</span> available {totalLessons === 1 ? 'lesson' : 'lessons'}.
             </p>
             <Table>
                 <TableHeader>
@@ -198,6 +198,7 @@ function StudentStatisticsTable({ students, totalAssignments, classId }: { stude
                         <TableHead className="text-center">Streak</TableHead>
                         <TableHead className="text-center">Badges</TableHead>
                         <TableHead className="text-center">Assignments Completed</TableHead>
+                        <TableHead className="text-center">Lessons Completed</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -242,6 +243,17 @@ function StudentStatisticsTable({ students, totalAssignments, classId }: { stude
                                      <ReviewStudentAssignmentsDialog student={student} classId={classId} />
                                 </div>
                             </TableCell>
+                             <TableCell>
+                                <div className="flex items-center justify-center gap-4">
+                                     <div className="flex items-center justify-center gap-1 font-semibold">
+                                        <Book className="h-4 w-4 text-indigo-500" />
+                                        {student.lessonsCompletedCount} / {totalLessons}
+                                     </div>
+                                     <Button variant="outline" size="sm" disabled>
+                                        <BookOpen className="mr-2 h-4 w-4" /> Review
+                                     </Button>
+                                </div>
+                            </TableCell>
                         </TableRow>
                     )})}
                 </TableBody>
@@ -255,6 +267,7 @@ export default function TeacherStatisticsPage() {
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [students, setStudents] = useState<AdminUserView[]>([]);
     const [totalAssignments, setTotalAssignments] = useState(0);
+    const [totalLessons, setTotalLessons] = useState(0);
     const [isLoadingClasses, setIsLoadingClasses] = useState(true);
     const [isLoadingStudents, setIsLoadingStudents] = useState(false);
     const { getTeacherClasses, getStudentsForClass } = useAuth();
@@ -281,9 +294,10 @@ export default function TeacherStatisticsPage() {
                 setIsLoadingStudents(true);
                 setStudents([]);
                 try {
-                    const { students: studentData, totalAssignments: assignmentsCount } = await getStudentsForClass(selectedClassId);
+                    const { students: studentData, totalAssignments: assignmentsCount, totalLessons: lessonsCount } = await getStudentsForClass(selectedClassId);
                     setStudents(studentData);
                     setTotalAssignments(assignmentsCount);
+                    setTotalLessons(lessonsCount);
                 } catch (error) {
                     console.error("Failed to fetch students:", error);
                 } finally {
@@ -335,7 +349,7 @@ export default function TeacherStatisticsPage() {
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             </div>
                         ) : selectedClassId ? (
-                            <StudentStatisticsTable students={students} totalAssignments={totalAssignments} classId={selectedClassId} />
+                            <StudentStatisticsTable students={students} totalAssignments={totalAssignments} totalLessons={totalLessons} classId={selectedClassId} />
                         ) : (
                              <div className="text-center py-12 text-muted-foreground">
                                 <p>Please select a class to view student statistics.</p>

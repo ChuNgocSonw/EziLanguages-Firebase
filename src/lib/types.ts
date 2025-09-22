@@ -173,6 +173,7 @@ export interface AdminUserView extends UserProfile {
   uid: string;
   assignmentsCompletedCount?: number;
   completedAssignmentDetails: CompletedAssignmentDetail[];
+  lessonsCompletedCount?: number;
 }
 
 export interface LeaderboardEntry {

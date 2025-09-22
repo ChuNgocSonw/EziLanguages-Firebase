@@ -48,7 +48,7 @@ export interface AuthContextType {
   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
   getClassDetails: (classId: string) => Promise<Class | null>;
   getStudentsForClassManagement: (classId: string) => Promise<AdminUserView[]>;
-  getStudentsForClass: (classId: string) => Promise<{ students: AdminUserView[], totalAssignments: number }>;
+  getStudentsForClass: (classId: string) => Promise<{ students: AdminUserView[], totalAssignments: number, totalLessons: number }>;
   addStudentToClass: (classId: string, studentId: string) => Promise<void>;
   removeStudentFromClass: (classId: string, studentId: string) => Promise<void>;
   searchStudentsByEmail: (emailQuery: string) => Promise<AdminUserView[]>;
@@ -613,17 +613,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   }, []);
 
-  const getStudentsForClass = useCallback(async (classId: string): Promise<{ students: AdminUserView[], totalAssignments: number }> => {
+  const getLessons = useCallback(async (): Promise<Lesson[]> => {
+    const lessonsRef = collection(db, "lessons");
+    const q = query(lessonsRef, orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Lesson));
+  }, []);
+
+  const getStudentsForClass = useCallback(async (classId: string): Promise<{ students: AdminUserView[], totalAssignments: number, totalLessons: number }> => {
       const classDetails = await getClassDetails(classId);
-      if (!classDetails) return { students: [], totalAssignments: 0 };
+      if (!classDetails) return { students: [], totalAssignments: 0, totalLessons: 0 };
       
       const assignmentsRef = collection(db, "assignments");
       const qAssignments = query(assignmentsRef, where("assignedClasses", "array-contains", classDetails.id));
       const assignmentsSnapshot = await getDocs(qAssignments);
       const totalAssignments = assignmentsSnapshot.size;
 
+      const allLessons = await getLessons();
+      const totalLessons = allLessons.length;
+
       if (classDetails.studentIds.length === 0) {
-        return { students: [], totalAssignments };
+        return { students: [], totalAssignments, totalLessons };
       }
       
       const studentPromises = classDetails.studentIds.map(id => getDoc(doc(db, "users", id)));
@@ -634,16 +644,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .map(doc => {
             const studentData = doc.data() as UserProfile;
             const completedAssignmentDetails = studentData.completedAssignmentDetails || [];
+            
+            let lessonsCompletedCount = 0;
+            if (allLessons.length > 0) {
+                allLessons.forEach(lesson => {
+                    const readingActivities = lesson.activities.reading || [];
+                    const listeningActivities = lesson.activities.listening || [];
+                    const totalActivities = readingActivities.length + listeningActivities.length;
+                    
+                    if (totalActivities === 0) return;
+
+                    let completedActivities = 0;
+                    readingActivities.forEach(sentence => {
+                        if (studentData.pronunciationScores?.[createSafeKey(sentence.text)]) {
+                            completedActivities++;
+                        }
+                    });
+                    listeningActivities.forEach(exercise => {
+                        if (studentData.listeningScores?.[exercise.id]) {
+                            completedActivities++;
+                        }
+                    });
+
+                    if (completedActivities === totalActivities) {
+                        lessonsCompletedCount++;
+                    }
+                });
+            }
+
             return { 
                 uid: doc.id, 
                 ...studentData,
                 assignmentsCompletedCount: completedAssignmentDetails.length,
                 completedAssignmentDetails: completedAssignmentDetails,
+                lessonsCompletedCount: lessonsCompletedCount,
             } as AdminUserView
         });
 
-      return { students, totalAssignments };
-  }, [getClassDetails]);
+      return { students, totalAssignments, totalLessons };
+  }, [getClassDetails, getLessons]);
   
   const getStudentsForClassManagement = useCallback(async (classId: string): Promise<AdminUserView[]> => {
       const classDetails = await getClassDetails(classId);
@@ -961,12 +1000,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, [userProfile]);
 
-  const getLessons = useCallback(async (): Promise<Lesson[]> => {
-    const lessonsRef = collection(db, "lessons");
-    const q = query(lessonsRef, orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Lesson));
-  }, []);
   
   const getLessonDetails = useCallback(async (lessonId: string): Promise<Lesson | null> => {
       if (!auth.currentUser) throw new Error("Not authenticated");
