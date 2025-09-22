@@ -67,7 +67,7 @@ function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assign
     try {
       await assignAssignmentToClasses(assignment.id, selectedClasses);
       onAssignmentAssigned(assignment.id, selectedClasses);
-      toast({ title: "Success", description: "Assignment has been assigned." });
+      toast({ title: "Success", description: "Assignment classes have been updated." });
       setIsOpen(false);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -125,7 +125,7 @@ function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assign
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
-          <Button onClick={handleAssign} disabled={isAssigning || isLoading || selectedClasses.length === 0}>
+          <Button onClick={handleAssign} disabled={isAssigning || isLoading}>
             {isAssigning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Confirm Assignment
           </Button>
