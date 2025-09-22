@@ -333,12 +333,12 @@ export default function TeacherFeedbackPage() {
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex items-center justify-between w-full">
                                         <AccordionTrigger className="flex-1 hover:no-underline pr-2">
-                                            <div className="flex justify-between items-center w-full flex-col sm:flex-row gap-2">
-                                                <div className="text-left">
+                                            <div className="flex justify-between items-center w-full flex-col sm:flex-row gap-2 sm:gap-4">
+                                                <div className="text-left flex-1">
                                                     <p className="font-semibold">{fb.title}</p>
                                                     <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 mt-1"><User className="h-3 w-3" /> To: {fb.studentName}</p>
                                                 </div>
-                                                <div className="flex items-center gap-4 text-xs text-muted-foreground font-normal shrink-0">
+                                                <div className="flex items-center gap-4 text-xs text-muted-foreground font-normal shrink-0 self-end sm:self-center">
                                                     <span className="flex items-center gap-1">
                                                         <Calendar className="h-3 w-3" />
                                                         Sent: {format(fb.createdAt.toDate(), 'PPP')}
