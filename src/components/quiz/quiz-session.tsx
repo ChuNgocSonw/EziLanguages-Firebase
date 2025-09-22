@@ -468,7 +468,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
             topic: randomTopic,
             difficulty: difficulty,
             numberOfQuestions: 5,
-            displayTopic: `Random ${language} Quiz`,
+            displayTopic: `Random ${language} Quiz - ${difficulty}`,
             language: language,
         });
     };
