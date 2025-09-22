@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import PageHeader from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Mic, Headphones, BookOpen, PlusCircle, Trash2, Loader2, Wand2, Pencil } from "lucide-react";
+import { Mic, Headphones, BookOpen, PlusCircle, Trash2, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
