@@ -66,33 +66,44 @@ function Calendar({
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
         Dropdown: (props: DropdownProps) => {
-          const { fromDate, fromMonth, fromYear, toDate, toMonth, toYear } = props;
-          const { onMonthChange, onYearChange } = props;
+          const { fromMonth, toMonth, fromYear, toYear, fromDate, toDate } = props;
+          
           const options: { value: string; label: string }[] = [];
-
-          if (props.name === 'months' && fromMonth && toMonth) {
-            for (let i = fromMonth.getMonth(); i <= toMonth.getMonth(); i++) {
-              options.push({
-                value: i.toString(),
-                label: new Date(new Date().getFullYear(), i).toLocaleString("default", { month: "long" }),
-              });
+          if (props.name === "months") {
+            const months = Array.from({ length: 12 }, (_, i) => new Date(new Date().getFullYear(), i, 1));
+            months.forEach(month => {
+                options.push({
+                    value: month.getMonth().toString(),
+                    label: month.toLocaleString("default", { month: "long" }),
+                });
+            });
+          } else if (props.name === "years") {
+            const years: number[] = [];
+            if (fromYear && toYear) {
+                for(let i = fromYear; i <= toYear; i++) {
+                    years.push(i);
+                }
             }
-          } else if (props.name === 'years' && fromYear && toYear) {
-            for (let i = fromYear; i <= toYear; i++) {
-              options.push({ value: i.toString(), label: i.toString() });
-            }
+             years.forEach(year => {
+                options.push({
+                    value: year.toString(),
+                    label: year.toString(),
+                });
+            });
           }
+          
+          const handleChange = (value: string) => {
+              if (props.name === 'months') {
+                props.onChange?.(new Date(new Date().getFullYear(), parseInt(value, 10)));
+              } else if (props.name === 'years') {
+                props.onChange?.(new Date(parseInt(value, 10), new Date().getMonth()));
+              }
+          };
           
           return (
             <Select
               value={props.value?.toString()}
-              onValueChange={(value) => {
-                  if (props.name === 'months') {
-                    onMonthChange?.(new Date(new Date().getFullYear(), parseInt(value)));
-                  } else if (props.name === 'years') {
-                    onYearChange?.(new Date(parseInt(value), new Date().getMonth()));
-                  }
-              }}
+              onValueChange={(value) => handleChange(value)}
             >
               <SelectTrigger className="w-full">
                  <SelectValue>
