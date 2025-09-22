@@ -3,12 +3,10 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker, DropdownProps } from "react-day-picker"
+import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select"
-import { ScrollArea } from "./scroll-area"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
@@ -26,9 +24,7 @@ function Calendar({
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium hidden",
-        caption_dropdowns: "flex justify-center gap-1 w-full",
-        vhidden: "hidden",
+        caption_label: "text-sm font-medium",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -48,10 +44,10 @@ function Calendar({
         ),
         day_range_end: "day-range-end",
         day_selected:
-          "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         day_today: "bg-accent text-accent-foreground",
         day_outside:
-          "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
+          "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:text-accent-foreground",
         day_disabled: "text-muted-foreground opacity-50",
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
@@ -59,72 +55,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRight className={cn("h-4 w-4", className)} {...props} />
-        ),
-        Dropdown: (props: DropdownProps) => {
-          const { fromMonth, toMonth, fromYear, toYear, fromDate, toDate } = props;
-          
-          const options: { value: string; label: string }[] = [];
-          if (props.name === "months") {
-            const months = Array.from({ length: 12 }, (_, i) => new Date(new Date().getFullYear(), i, 1));
-            months.forEach(month => {
-                options.push({
-                    value: month.getMonth().toString(),
-                    label: month.toLocaleString("default", { month: "long" }),
-                });
-            });
-          } else if (props.name === "years") {
-            const years: number[] = [];
-            if (fromYear && toYear) {
-                for(let i = fromYear; i <= toYear; i++) {
-                    years.push(i);
-                }
-            }
-             years.forEach(year => {
-                options.push({
-                    value: year.toString(),
-                    label: year.toString(),
-                });
-            });
-          }
-          
-          const handleChange = (value: string) => {
-              if (props.name === 'months') {
-                props.onChange?.(new Date(new Date().getFullYear(), parseInt(value, 10)));
-              } else if (props.name === 'years') {
-                props.onChange?.(new Date(parseInt(value, 10), new Date().getMonth()));
-              }
-          };
-          
-          return (
-            <Select
-              value={props.value?.toString()}
-              onValueChange={(value) => handleChange(value)}
-            >
-              <SelectTrigger className="w-full">
-                 <SelectValue>
-                    {props.name === 'months' 
-                        ? new Date(new Date().getFullYear(), Number(props.value)).toLocaleString("default", { month: "long" })
-                        : props.value
-                    }
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className={classNames?.dropdown_year}>
-                 <ScrollArea className="h-[var(--scroll-area-height,10rem)] pr-2">
-                    {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                    </SelectItem>
-                    ))}
-                </ScrollArea>
-              </SelectContent>
-            </Select>
-          );
-        },
+        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
       }}
       {...props}
     />

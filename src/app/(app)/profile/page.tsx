@@ -151,7 +151,8 @@ export default function ProfilePage() {
                                 fromYear={1920}
                                 toYear={new Date().getFullYear()}
                                 classNames={{
-                                  dropdown_year: "[--scroll-area-height:10rem]",
+                                  caption_dropdowns: "flex gap-2",
+                                  vhidden: "hidden",
                                 }}
                                 initialFocus
                               />
