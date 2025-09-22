@@ -60,24 +60,17 @@ export default function CreateLessonForm({ onFinished, existingLesson = null }: 
 
     const form = useForm<LessonFormData>({
         resolver: zodResolver(lessonSchema),
-        defaultValues: {
+        defaultValues: isEditMode ? {
+            unit: existingLesson.unit,
+            reading: existingLesson.activities?.reading || [],
+            listening: existingLesson.activities?.listening || [],
+        } : {
             unit: "",
             reading: [],
             listening: [],
         },
     });
     
-    useEffect(() => {
-        if (isEditMode && existingLesson) {
-            form.reset({
-                unit: existingLesson.unit,
-                reading: existingLesson.activities?.reading || [],
-                listening: existingLesson.activities?.listening || [],
-            });
-        }
-    }, [isEditMode, existingLesson, form]);
-
-
     const { fields: readingFields, append: appendReading, remove: removeReading } = useFieldArray({
         control: form.control,
         name: "reading",
