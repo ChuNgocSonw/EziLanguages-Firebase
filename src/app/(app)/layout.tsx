@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 // Create a context to hold the scroll area ref
 const ScrollContext = createContext<React.RefObject<HTMLDivElement> | null>(null);
@@ -164,6 +165,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="w-full flex-1">
             {/* Can add a search bar here if needed */}
           </div>
+          <ThemeSwitcher />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
