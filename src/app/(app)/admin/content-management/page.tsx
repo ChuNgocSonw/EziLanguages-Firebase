@@ -66,7 +66,7 @@ export default function ContentManagementPage() {
   };
   
   const handleEditClick = (lesson: Lesson) => {
-    setEditingLesson(lesson);
+    setEditingLesson({ ...lesson });
     setIsEditDialogOpen(true);
   };
 
@@ -223,7 +223,11 @@ export default function ContentManagementPage() {
               You are currently editing the lesson: "{editingLesson?.unit}"
             </DialogDescription>
           </DialogHeader>
-          <CreateLessonForm onFinished={onLessonSaved} existingLesson={editingLesson} />
+          <CreateLessonForm 
+            key={editingLesson?.id}
+            onFinished={onLessonSaved} 
+            existingLesson={editingLesson} 
+          />
         </DialogContent>
       </Dialog>
     </>
