@@ -126,7 +126,7 @@ export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export const profileSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters."),
-    age: z.coerce.number().min(0, "Age must be a positive number.").optional(),
+    dob: z.date().optional(),
     language: z.enum(["EN"]).default("EN").optional(),
 });
 export type ProfileFormData = z.infer<typeof profileSchema>;
@@ -151,7 +151,7 @@ export interface CompletedAssignmentDetail {
 export interface UserProfile {
   name: string;
   email: string;
-  age: number;
+  dob: Timestamp | null;
   language: "EN";
   role: UserRole;
   xp: number;

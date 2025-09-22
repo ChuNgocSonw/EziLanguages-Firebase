@@ -211,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const newUserProfile: UserProfile = {
             name: loggedInUser.displayName || "New User",
             email: loggedInUser.email!,
-            age: 0,
+            dob: null,
             language: "EN",
             role: 'student',
             xp: 0,
@@ -1121,7 +1121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     deleteLesson,
     getStudentLessonProgress,
   }), [
-      user, userProfile, loading, signUp, logIn, logOut, updateUserProfile, updateUserAppData, sendPasswordReset,
+      user, userProfile, loading, signUp, logIn, logOut, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
       saveListeningScore, saveQuizAttempt, completeAssignment, getQuizHistory, getLeaderboard, createClass, getTeacherClasses,
       deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement, getStudentsForClass,
@@ -1129,7 +1129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
       getAssignmentAttempt, getStudentCompletedAttempts, getStudentAssignmentAttemptsForClass, sendFeedback,
       getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback, getStudentPerformanceDataForFeedback,
-      createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson, getStudentLessonProgress,
+      createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson, getStudentLessonProgress, updateUserProfile,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

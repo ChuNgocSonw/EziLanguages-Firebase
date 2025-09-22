@@ -12,12 +12,15 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { profileSchema, ProfileFormData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, CalendarIcon } from "lucide-react";
 import { badgeCategories } from "@/lib/badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 export default function ProfilePage() {
   const { user, userProfile, updateUserProfile, updateUserAppData } = useAuth();
@@ -28,7 +31,7 @@ export default function ProfilePage() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: "",
-      age: 0,
+      dob: undefined,
       language: "EN",
     },
   });
@@ -37,7 +40,7 @@ export default function ProfilePage() {
     if (userProfile) {
       form.reset({
         name: userProfile.name || user?.displayName || "",
-        age: userProfile.age || 0,
+        dob: userProfile.dob ? userProfile.dob.toDate() : undefined,
         language: "EN",
       });
     }
@@ -51,7 +54,7 @@ export default function ProfilePage() {
       }
       
       await updateUserAppData({
-        age: data.age,
+        dob: data.dob,
         language: "EN",
       });
 
@@ -93,7 +96,7 @@ export default function ProfilePage() {
             <Card>
                 <CardHeader>
                 <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Update your display name and age.</CardDescription>
+                <CardDescription>Update your display name and date of birth.</CardDescription>
                 </CardHeader>
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -112,17 +115,45 @@ export default function ProfilePage() {
                         )}
                     />
                     <FormField
-                        control={form.control}
-                        name="age"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Age</FormLabel>
-                            <FormControl>
-                            <Input type="number" placeholder="Your age" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
-                            </FormControl>
-                            <FormMessage />
+                      control={form.control}
+                      name="dob"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Date of Birth</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
                         </FormItem>
-                        )}
+                      )}
                     />
                      <div className="space-y-2">
                         <FormLabel>Email</FormLabel>
