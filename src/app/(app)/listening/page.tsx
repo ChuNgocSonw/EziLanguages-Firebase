@@ -164,7 +164,7 @@ export function ListeningAssignmentSession({ assignment, onFinish }: { assignmen
                             {result.status === 'correct' ? <CheckCircle className="mr-2 h-5 w-5" /> : <XCircle className="mr-2 h-5 w-5" />}
                             {result.message}
                         </div>
-                        <Button onClick={handleNext} disabled={isFinishing}>
+                        <Button onClick={handleNext} disabled={isFinishing} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                             {isFinishing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {currentIndex < (assignment.listeningExercises?.length || 0) - 1 ? "Next Exercise" : "Finish Assignment"}
                         </Button>
