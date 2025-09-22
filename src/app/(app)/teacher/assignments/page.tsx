@@ -216,7 +216,7 @@ export default function TeacherAssignmentsPage() {
             <CardTitle>Assignment List</CardTitle>
             <CardDescription>All the assignments you have created.</CardDescription>
           </div>
-          <Button className="bg-accent hover:bg-accent/90" asChild>
+          <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
             <Link href="/teacher/assignments/new">
               <PlusCircle className="mr-2 h-4 w-4" />
               Create New Assignment
