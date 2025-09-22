@@ -512,7 +512,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
                     <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                         <Button onClick={() => handleRandomQuizDifficultySelect('Easy')} size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white text-base py-6">Easy</Button>
                         <Button onClick={() => handleRandomQuizDifficultySelect('Medium')} size="lg" className="w-full bg-accent hover:bg-accent/90 text-base py-6">Medium</Button>
-                        <Button onClick={() => handleRandomQuizDifficultySelect('Hard')} size="lg" variant="destructive" className="w-full text-base py-6">Hard</Button>
+                        <Button onClick={() => handleRandomQuizDifficultySelect('Hard')} size="lg" className="w-full text-base py-6 bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white">Hard</Button>
                     </div>
                  </div>
             </CardContent>
