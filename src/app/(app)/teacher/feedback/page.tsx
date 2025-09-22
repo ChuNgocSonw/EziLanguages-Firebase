@@ -160,10 +160,8 @@ export default function TeacherFeedbackPage() {
     setIsGenerating(true);
     try {
         const studentId = selectedStudentIds[0];
-        // Fetch data on the client with user credentials
         const performanceData = await getStudentPerformanceDataForFeedback(studentId);
         
-        // Send the fetched data to the server action for AI processing
         const result = await generateFeedback({
             studentName: performanceData.studentName,
             performanceData: performanceData.performanceData,
@@ -334,7 +332,7 @@ export default function TeacherFeedbackPage() {
                                     <div className="flex items-center justify-between w-full">
                                         <AccordionTrigger className="flex-1 hover:no-underline pr-2">
                                             <div className="flex flex-col w-full text-left gap-1">
-                                                <div className="flex justify-between items-center w-full">
+                                                <div className="flex justify-between items-start w-full">
                                                     <p className="font-semibold truncate pr-4">{fb.title}</p>
                                                     <div className="text-xs text-muted-foreground font-normal flex items-center gap-1 shrink-0">
                                                         <Calendar className="h-3 w-3" />
