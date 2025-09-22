@@ -1,4 +1,3 @@
-
 "use client";
 
 import PageHeader from "@/components/page-header";
@@ -197,6 +196,7 @@ export function ReadingAssignmentSession({ assignment, onFinish }: { assignment:
         }
     };
 
+    const isAllCompleted = completedSentences.length === (assignment.readingSentences?.length || 0);
 
     if (activeSentence) {
         return <PracticeInterface activeSentence={activeSentence} onSaveAttempt={(sentence, attempt) => savePronunciationAttempt(sentence, attempt, false)} onBack={handleBackToList} />;
@@ -230,9 +230,9 @@ export function ReadingAssignmentSession({ assignment, onFinish }: { assignment:
                 </ul>
             </CardContent>
             <CardFooter>
-                <Button onClick={handleFinishAssignment} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isFinishing}>
+                <Button onClick={handleFinishAssignment} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isFinishing || !isAllCompleted}>
                     {isFinishing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Mark as Complete & Finish
+                    Mark as Complete &amp; Finish
                 </Button>
             </CardFooter>
         </Card>
@@ -287,7 +287,7 @@ export default function ReadingPage() {
   return (
     <>
       <PageHeader
-        title="Reading & Pronunciation"
+        title="Reading &amp; Pronunciation"
         description="Select a lesson, choose a sentence, and get feedback on your pronunciation."
       />
       <Card>
