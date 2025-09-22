@@ -117,7 +117,7 @@ const hardBadges: Badge[] = [
         id: 'pronunciation-pro',
         name: 'Pronunciation Pro',
         description: 'Achieved a perfect score on 25 reading exercises.',
-        icon: Award,
+        icon: Trophy,
         condition: (profile) => Object.values(profile.pronunciationScores || {}).filter(attempt => attempt.score === 100).length >= 25,
     },
     {
