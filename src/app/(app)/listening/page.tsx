@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import type { ListeningExercise, Lesson, Assignment } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 // Reusable component for a single listening exercise
 function ExerciseInterface({ exercise, onCorrect, onIncorrect }: {
@@ -159,7 +160,7 @@ export function ListeningAssignmentSession({ assignment, onFinish }: { assignmen
                     <ExerciseInterface exercise={currentExercise} onCorrect={handleCorrect} onIncorrect={handleIncorrect} />
                 ) : (
                     <div className="space-y-4">
-                        <div className={`flex items-center ${result.status === 'correct' ? 'text-green-600' : 'text-destructive'}`}>
+                        <div className={cn("flex items-center", result.status === 'correct' ? 'text-green-600' : 'text-red-500')}>
                             {result.status === 'correct' ? <CheckCircle className="mr-2 h-5 w-5" /> : <XCircle className="mr-2 h-5 w-5" />}
                             {result.message}
                         </div>
@@ -247,7 +248,7 @@ export default function ListeningPage() {
                  <CardFooter className="flex-col items-start gap-4">
                     {result === 'correct' && <div className="flex items-center text-green-600"><CheckCircle className="mr-2 h-5 w-5" /> Correct! Well done.</div>}
                     {result === 'incorrect' && (
-                         <div className="flex items-center text-destructive">
+                         <div className="flex items-center text-red-500">
                             <XCircle className="mr-2 h-5 w-5" /> 
                             Not quite. The correct answer was: "{activeExercise.type === 'typing' ? activeExercise.text : (activeExercise as any).answer}"
                         </div>
