@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { Timestamp } from "firebase/firestore";
 
 export default function ProfilePage() {
   const { user, userProfile, updateUserProfile, updateUserAppData } = useAuth();
@@ -38,9 +39,18 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (userProfile) {
+      let dobDate: Date | undefined = undefined;
+      if (userProfile.dob) {
+        if (userProfile.dob instanceof Timestamp) {
+          dobDate = userProfile.dob.toDate();
+        } else {
+          dobDate = userProfile.dob as Date;
+        }
+      }
+
       form.reset({
         name: userProfile.name || user?.displayName || "",
-        dob: userProfile.dob ? userProfile.dob.toDate() : undefined,
+        dob: dobDate,
         language: "EN",
       });
     }

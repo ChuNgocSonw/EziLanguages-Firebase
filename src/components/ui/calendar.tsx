@@ -42,14 +42,31 @@ function Calendar({
         head_cell:
           "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
         row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+      
+        // <<< cell: không đặt bg hay rounded ở đây nữa >>>
+        cell: cn(
+          "h-9 w-9 text-center text-sm p-0 relative overflow-visible",
+          "focus-within:relative focus-within:z-20"
+        ),
+      
         day: cn(
           buttonVariants({ variant: "ghost" }),
           "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
         ),
-        day_range_end: "day-range-end",
-        day_selected:
-          "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground rounded-md",
+      
+        // Đặt background + rounding trực tiếp lên day
+        day_selected: cn(
+          "bg-accent text-accent-foreground",
+          "hover:bg-accent hover:text-accent-foreground",
+          "focus:bg-accent focus:text-accent-foreground",
+          "!rounded-md" // ép bo góc cho single-day
+        ),
+      
+        // Range endpoints bo góc ở chính day
+        day_range_start: cn("!rounded-l-md"),
+        day_range_end: cn("!rounded-r-md"),
+      
+        // Các trạng thái khác
         day_today: "bg-accent text-accent-foreground rounded-md",
         day_outside:
           "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:text-accent-foreground",
@@ -59,7 +76,7 @@ function Calendar({
         day_hidden: "invisible",
         caption_dropdowns: "flex gap-1 justify-center",
         ...classNames,
-      }}
+      }}         
       components={{
         IconLeft: () => null,
         IconRight: () => null,
