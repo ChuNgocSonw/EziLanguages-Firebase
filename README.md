@@ -13,12 +13,7 @@ To get started with the project, follow these steps:
     ```
 
 2.  **Set Up Environment Variables:**
-    The project requires Firebase configuration keys to connect to your Firebase project.
-    - Copy the example environment file:
-      ```bash
-      cp .env.example .env
-      ```
-    - Open the newly created `.env` file and fill in the values for your Firebase project. You can find these in your Firebase project settings.
+    Create a `.env` file in the root of the project and add the necessary Firebase configuration keys to connect to your Firebase project. You can find these in your Firebase project settings.
 
 3.  **Run the Development Server:**
     Once the installation and setup are complete, run the development server:
