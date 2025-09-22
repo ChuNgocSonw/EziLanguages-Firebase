@@ -306,7 +306,7 @@ export default function TeacherFeedbackPage() {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <Button type="submit" disabled={isSending} className="bg-accent hover:bg-accent/90">
+                            <Button type="submit" disabled={isSending} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                                 {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Send Feedback to {selectedStudentIds.length} Student(s) <Send className="ml-2 h-4 w-4" />
                             </Button>
