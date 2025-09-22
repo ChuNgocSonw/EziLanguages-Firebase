@@ -134,7 +134,7 @@ export default function ContentManagementPage() {
                         </div>
                     </AccordionTrigger>
                     <div className="flex items-center gap-1 shrink-0 ml-4">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(lesson)}>
+                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(lesson)} className="hover:bg-muted">
                             <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
                         <AlertDialog>
