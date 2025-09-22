@@ -176,88 +176,6 @@ function ReviewStudentAssignmentsDialog({ student, classId }: { student: AdminUs
     );
 }
 
-function ReviewStudentLessonsDialog({ student }: { student: AdminUserView }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [lessonProgress, setLessonProgress] = useState<any[]>([]);
-    const { getStudentLessonProgress } = useAuth();
-
-    useEffect(() => {
-        if (isOpen) {
-            const fetchProgress = async () => {
-                setIsLoading(true);
-                try {
-                    const progress = await getStudentLessonProgress(student.uid);
-                    setLessonProgress(progress);
-                } catch (error) {
-                    console.error("Failed to fetch lesson progress:", error);
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-            fetchProgress();
-        }
-    }, [isOpen, student.uid, getStudentLessonProgress]);
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <BookOpen className="mr-2 h-4 w-4" /> Review Lessons
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                    <DialogTitle>Lesson Practice Progress for {student.name}</DialogTitle>
-                    <DialogDescription>
-                        This shows the student's progress on self-practice lessons.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 max-h-[70vh] overflow-y-auto pr-4">
-                    {isLoading ? (
-                         <div className="flex justify-center items-center h-48">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : lessonProgress.length > 0 ? (
-                        <div className="space-y-4">
-                            {lessonProgress.map(lesson => (
-                                <Card key={lesson.id}>
-                                    <CardHeader>
-                                        <CardTitle>{lesson.unit}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-3">
-                                        {lesson.readingProgress !== null && (
-                                            <div>
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <p className="text-sm font-medium">Reading Sentences</p>
-                                                    <p className="text-sm text-primary font-semibold">{Math.round(lesson.readingProgress)}%</p>
-                                                </div>
-                                                <Progress value={lesson.readingProgress} />
-                                            </div>
-                                        )}
-                                        {lesson.listeningProgress !== null && (
-                                            <div>
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <p className="text-sm font-medium">Listening Exercises</p>
-                                                    <p className="text-sm text-primary font-semibold">{Math.round(lesson.listeningProgress)}%</p>
-                                                </div>
-                                                <Progress value={lesson.listeningProgress} />
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                         <p className="text-center text-muted-foreground py-8">This student has not completed any practice lessons yet.</p>
-                    )}
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-
 function StudentStatisticsTable({ students, totalAssignments, classId }: { students: AdminUserView[], totalAssignments: number, classId: string }) {
     if (students.length === 0) {
         return (
@@ -280,7 +198,6 @@ function StudentStatisticsTable({ students, totalAssignments, classId }: { stude
                         <TableHead className="text-center">Streak</TableHead>
                         <TableHead className="text-center">Badges</TableHead>
                         <TableHead className="text-center">Assignments Completed</TableHead>
-                        <TableHead className="text-center">Review Progress</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -324,9 +241,6 @@ function StudentStatisticsTable({ students, totalAssignments, classId }: { stude
                                      </div>
                                      <ReviewStudentAssignmentsDialog student={student} classId={classId} />
                                 </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                                <ReviewStudentLessonsDialog student={student} />
                             </TableCell>
                         </TableRow>
                     )})}

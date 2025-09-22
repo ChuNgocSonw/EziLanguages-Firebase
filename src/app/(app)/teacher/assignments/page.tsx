@@ -34,13 +34,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
-function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assignment; onAssignmentAssigned: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => void; }) {
+function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assignment; onAssignmentAssigned: (assignmentId: string, assignedClasses: string[]) => void; }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAssigning, setIsAssigning] = useState(false);
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>(() => 
-    (assignment.assignedClasses || []).map(c => c.classId)
+    (assignment.assignedClasses || [])
   );
   const { getTeacherClasses, assignAssignmentToClasses } = useAuth();
   const { toast } = useToast();
@@ -65,12 +65,8 @@ function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assign
   const handleAssign = async () => {
     setIsAssigning(true);
     try {
-      const newAssignedClasses = classes
-        .filter(c => selectedClasses.includes(c.id))
-        .map(c => ({ classId: c.id, className: c.className }));
-        
-      await assignAssignmentToClasses(assignment.id, newAssignedClasses);
-      onAssignmentAssigned(assignment.id, newAssignedClasses);
+      await assignAssignmentToClasses(assignment.id, selectedClasses);
+      onAssignmentAssigned(assignment.id, selectedClasses);
       toast({ title: "Success", description: "Assignment has been assigned." });
       setIsOpen(false);
     } catch (error: any) {
@@ -139,31 +135,36 @@ function AssignDialog({ assignment, onAssignmentAssigned }: { assignment: Assign
 
 export default function TeacherAssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const { getTeacherAssignments, deleteAssignment } = useAuth();
+  const { getTeacherAssignments, deleteAssignment, getTeacherClasses } = useAuth();
   const { toast } = useToast();
 
-  const fetchAssignments = useCallback(async () => {
+  const fetchAssignmentsAndClasses = useCallback(async () => {
     setIsLoading(true);
     try {
-      const teacherAssignments = await getTeacherAssignments();
+      const [teacherAssignments, teacherClasses] = await Promise.all([
+        getTeacherAssignments(),
+        getTeacherClasses()
+      ]);
       setAssignments(teacherAssignments);
+      setClasses(teacherClasses);
     } catch (error: any) {
-      console.error("Failed to fetch assignments:", error);
+      console.error("Failed to fetch data:", error);
       toast({
         title: "Error",
-        description: `Failed to fetch assignments. ${error.message}`,
+        description: `Failed to fetch data. ${error.message}`,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }, [getTeacherAssignments, toast]);
+  }, [getTeacherAssignments, getTeacherClasses, toast]);
 
   useEffect(() => {
-    fetchAssignments();
-  }, [fetchAssignments]);
+    fetchAssignmentsAndClasses();
+  }, [fetchAssignmentsAndClasses]);
 
   const handleDeleteAssignment = async (assignmentId: string) => {
     setIsDeleting(assignmentId);
@@ -178,7 +179,7 @@ export default function TeacherAssignmentsPage() {
     }
   };
 
-  const handleAssignmentUpdated = useCallback((assignmentId: string, newAssignedClasses: Assignment['assignedClasses']) => {
+  const handleAssignmentUpdated = useCallback((assignmentId: string, newAssignedClasses: string[]) => {
     setAssignments(prev => prev.map(a => 
       a.id === assignmentId ? { ...a, assignedClasses: newAssignedClasses } : a
     ));
@@ -231,6 +232,10 @@ export default function TeacherAssignmentsPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {assignments.map((assignment) => {
                 const Icon = getAssignmentIcon(assignment.assignmentType);
+                const assignedClassNames = (assignment.assignedClasses || [])
+                  .map(classId => classes.find(c => c.id === classId)?.className)
+                  .filter(Boolean);
+
                 return (
                     <Card key={assignment.id} className="flex flex-col">
                     <CardHeader>
@@ -238,12 +243,12 @@ export default function TeacherAssignmentsPage() {
                             <Icon className="h-5 w-5 text-primary" />
                             {assignment.title}
                         </CardTitle>
-                        {assignment.assignedClasses && assignment.assignedClasses.length > 0 && (
+                        {assignedClassNames.length > 0 && (
                             <div className="pt-2">
                                 <p className="text-xs font-medium text-muted-foreground mb-1">Assigned to:</p>
                                 <div className="flex flex-wrap gap-1">
-                                    {assignment.assignedClasses.map(c => (
-                                        <Badge key={c.classId} variant="secondary">{c.className}</Badge>
+                                    {assignedClassNames.map(name => (
+                                        <Badge key={name} variant="secondary">{name}</Badge>
                                     ))}
                                 </div>
                             </div>

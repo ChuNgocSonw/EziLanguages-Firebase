@@ -1,95 +1,78 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // =================================
-    // Helper Functions
-    // =================================
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function getRole(userId) {
+      return getUserData(userId).data.role;
+    }
+
+    function isAdmin() {
+      let role = getRole(request.auth.uid);
+      return isSignedIn() && (role == 'admin' || role == 'superadmin');
+    }
+
+    function isTeacher() {
+      return isSignedIn() && getRole(request.auth.uid) == 'teacher';
     }
 
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-    
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
+
+    function isTeacherOfStudent(studentId) {
+      let studentClassId = getUserData(studentId).data.classId;
+      return studentClassId != null && get(/databases/$(database)/documents/classes/$(studentClassId)).data.teacherId == request.auth.uid;
     }
 
-    function getRequestingUserRole() {
-      return getUserData(request.auth.uid).role;
-    }
-
-    function isAdmin() {
-      let role = getRequestingUserRole();
-      return role == 'admin' || role == 'superadmin';
-    }
-    
-    function isTeacher() {
-      return getRequestingUserRole() == 'teacher';
-    }
-    
-    // Checks if the requesting user is the teacher of the student being accessed.
-    function isTeacherOfStudent(studentUserId) {
-      let studentData = getUserData(studentUserId);
-      if (!('classId' in studentData)) {
-        return false;
-      }
-      let classId = studentData.classId;
-      let classData = get(/databases/$(database)/documents/classes/$(classId)).data;
-      return classData.teacherId == request.auth.uid;
-    }
-    
-    // Checks if an assignment is assigned to the requesting student's class
-    function isAssignedToStudent(assignment) {
-      let studentData = getUserData(request.auth.uid);
-      if (!('classId' in studentData) || !('assignedClasses' in assignment.data)) {
-        return false;
-      }
-      // Check if any of the assigned classes match the student's classId
-      return assignment.data.assignedClasses.exists(c => c.classId == studentData.classId);
-    }
-    
-    // =================================
-    // Collection Rules
-    // =================================
-    
-    // Users Collection
+    // Rules for collections
     match /users/{userId} {
-      allow read: if isSignedIn() && (isOwner(userId) || isAdmin() || isTeacherOfStudent(userId));
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin() || (isTeacher() && isTeacherOfStudent(userId)));
       allow write: if isSignedIn() && (isOwner(userId) || isAdmin());
     }
 
-    // Classes Collection
     match /classes/{classId} {
-      allow read, write: if isSignedIn() && (isTeacher() || isAdmin());
-    }
-    
-    // Assignments Collection
-    match /assignments/{assignmentId} {
-      allow read: if isSignedIn() && (isTeacher() || isAdmin() || isAssignedToStudent(resource));
-      allow write: if isSignedIn() && (isTeacher() || isAdmin());
-    }
-    
-    // Lessons Collection
-    match /lessons/{lessonId} {
-      allow read: if isSignedIn(); // All signed-in users can read lessons
-      allow create, update, delete: if isSignedIn() && isAdmin(); // Only admins can manage lessons
+      allow read: if isSignedIn() && (isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid));
+      allow write: if isSignedIn() && (isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid));
+      allow create: if isSignedIn() && (isTeacher() || isAdmin());
+      allow delete: if isSignedIn() && (isTeacher() && resource.data.teacherId == request.auth.uid || isAdmin());
     }
 
-    // Feedback Collection
-    match /feedback/{feedbackId} {
-        allow read, create, update, delete: if isSignedIn() && 
-            (isAdmin() || 
-            (isTeacher() && resource.data.teacherId == request.auth.uid) ||
-            (resource.data.studentId == request.auth.uid));
+    match /assignments/{assignmentId} {
+      allow create, update, delete: if isSignedIn() && (isTeacher() || isAdmin());
+      // A student can read an assignment if their classId is in the assignment's list of assigned classes
+      allow read: if isSignedIn() && (
+        (isTeacher() && resource.data.teacherId == request.auth.uid) || 
+        isAdmin() ||
+        (getUserData(request.auth.uid).data.classId in resource.data.assignedClasses)
+      );
     }
     
-    // Subcollections for users
+    match /lessons/{lessonId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+    }
+
+    match /feedback/{feedbackId} {
+      allow create: if isTeacher() || isAdmin();
+      allow read: if isSignedIn() && (resource.data.studentId == request.auth.uid || resource.data.teacherId == request.auth.uid || isAdmin());
+      allow update(data): if isSignedIn() && resource.data.studentId == request.auth.uid && data.keys().hasOnly(['isRead']);
+      allow delete: if (isTeacher() || isAdmin()) && resource.data.teacherId == request.auth.uid;
+    }
+
+    // User-specific subcollections
     match /users/{userId}/{collection}/{docId} {
-        allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
   }
 }

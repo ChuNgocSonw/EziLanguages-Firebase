@@ -84,7 +84,7 @@ export interface Assignment {
   listeningExercises: ListeningExercise[];
   teacherId: string;
   createdAt: Timestamp;
-  assignedClasses?: { classId: string; className: string }[];
+  assignedClasses?: string[];
 }
 
 export interface Feedback {

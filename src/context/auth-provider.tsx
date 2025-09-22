@@ -57,7 +57,7 @@ export interface AuthContextType {
   getTeacherAssignments: () => Promise<Assignment[]>;
   getAssignmentDetails: (assignmentId: string) => Promise<Assignment | null>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
-  assignAssignmentToClasses: (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => Promise<void>;
+  assignAssignmentToClasses: (assignmentId: string, classIds: string[]) => Promise<void>;
   getStudentAssignments: (userProfile?: UserProfile | null) => Promise<Assignment[]>;
   getAssignmentAttempt: (assignmentId: string) => Promise<QuizAttempt | null>;
   getStudentCompletedAttempts: () => Promise<QuizAttempt[]>;
@@ -618,7 +618,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!classDetails) return { students: [], totalAssignments: 0 };
       
       const assignmentsRef = collection(db, "assignments");
-      const qAssignments = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: classDetails.id, className: classDetails.className }));
+      const qAssignments = query(assignmentsRef, where("assignedClasses", "array-contains", classDetails.id));
       const assignmentsSnapshot = await getDocs(qAssignments);
       const totalAssignments = assignmentsSnapshot.size;
 
@@ -788,14 +788,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await batch.commit();
   }, []);
 
-  const assignAssignmentToClasses = useCallback(async (assignmentId: string, assignedClasses: Assignment['assignedClasses']) => {
+  const assignAssignmentToClasses = useCallback(async (assignmentId: string, classIds: string[]) => {
     if (!auth.currentUser) throw new Error("Not authenticated");
     const assignmentRef = doc(db, "assignments", assignmentId);
     const docSnap = await getDoc(assignmentRef);
     if (!docSnap.exists() || docSnap.data().teacherId !== auth.currentUser.uid) {
       throw new Error("Permission denied or assignment not found.");
     }
-    await updateDoc(assignmentRef, { assignedClasses: assignedClasses || [] });
+    await updateDoc(assignmentRef, { assignedClasses: classIds || [] });
   }, []);
 
   const getStudentAssignments = useCallback(async (userProfileParam?: UserProfile | null): Promise<Assignment[]> => {
@@ -806,11 +806,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const assignmentsRef = collection(db, "assignments");
     
-    const querySnapshot = await getDocs(query(assignmentsRef));
+    const q = query(assignmentsRef, where("assignedClasses", "array-contains", profile.classId));
+    const querySnapshot = await getDocs(q);
 
     const allAssignments = querySnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as Assignment))
-      .filter(assignment => assignment.assignedClasses?.some(c => c.classId === profile.classId));
+      .map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
     
     allAssignments.sort((a, b) => {
         if (a.createdAt && b.createdAt) {
@@ -844,12 +844,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const getStudentAssignmentAttemptsForClass = useCallback(async (studentId: string, classId: string): Promise<QuizAttempt[]> => {
     if (!auth.currentUser) throw new Error("Not authenticated");
-
-    const classDetails = await getClassDetails(classId);
-    if (!classDetails) return [];
     
     const assignmentsRef = collection(db, "assignments");
-    const qAssignments = query(assignmentsRef, where("assignedClasses", "array-contains", { classId: classDetails.id, className: classDetails.className }));
+    const qAssignments = query(assignmentsRef, where("assignedClasses", "array-contains", classId));
     const assignmentsSnapshot = await getDocs(qAssignments);
     const classAssignmentIds = assignmentsSnapshot.docs.map(doc => doc.id);
 
@@ -860,7 +857,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const attemptsSnapshot = await getDocs(qAttempts);
 
     return attemptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
-  }, [getClassDetails]);
+  }, []);
 
   const sendFeedback = useCallback(async (classId: string, students: { studentId: string, studentName: string }[], title: string, content: string) => {
     if (!auth.currentUser || !userProfile) throw new Error("Not authenticated");
