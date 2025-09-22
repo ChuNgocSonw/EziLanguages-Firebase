@@ -66,8 +66,10 @@ function Calendar({
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
         Dropdown: (props: DropdownProps) => {
-          const { fromDate, toDate, fromMonth, toMonth, fromYear, toYear } =
-            props;
+          const { fromDate, toDate, fromMonth, toMonth } = props;
+          const fromYear = fromDate?.getFullYear();
+          const toYear = toDate?.getFullYear();
+
           const { onMonthChange, onYearChange } = props;
           const months: { value: string; label: string }[] = [];
           if (fromMonth && toMonth) {
