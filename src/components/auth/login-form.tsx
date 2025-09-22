@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -12,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { loginSchema, LoginFormData } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { FirebaseError } from "firebase/app";
 
 export function LoginForm() {
   const { logIn } = useAuth();
@@ -32,11 +34,18 @@ export function LoginForm() {
     try {
       await logIn(data);
     } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+        let description = "An unexpected error occurred. Please try again.";
+        if (error instanceof FirebaseError && error.code === 'auth/invalid-credential') {
+            description = "Invalid email or password. Please check your credentials and try again.";
+        } else if (error.message) {
+            description = error.message;
+        }
+
+        toast({
+            title: "Login Failed",
+            description: description,
+            variant: "destructive",
+        });
     } finally {
       setIsLoading(false);
     }
