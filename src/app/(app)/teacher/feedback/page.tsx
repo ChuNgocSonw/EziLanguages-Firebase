@@ -330,8 +330,8 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-center">
-                                        <AccordionTrigger className="font-medium transition-all flex-1 hover:no-underline p-4 text-left [&>svg]:hidden">
-                                            <div className="grid grid-cols-1 w-full">
+                                        <AccordionTrigger className="font-medium transition-all flex-1 hover:no-underline p-4 text-left">
+                                            <div className="grid grid-cols-1 w-full gap-1">
                                                 <p className="font-semibold truncate col-span-full">{fb.title}</p>
                                                 <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full mt-1">
                                                     <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 truncate">
@@ -352,7 +352,7 @@ export default function TeacherFeedbackPage() {
                                                 </div>
                                             </div>
                                         </AccordionTrigger>
-                                        <div className="flex items-center pr-4">
+                                        <div className="pr-4">
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
