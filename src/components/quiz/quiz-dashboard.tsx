@@ -128,7 +128,7 @@ export default function QuizDashboard() {
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Quiz
             </Button>
-            <Button onClick={handleStartRandomQuiz} className="bg-accent hover:bg-accent/90 w-full">
+            <Button onClick={handleStartRandomQuiz} className="bg-accent hover:bg-accent/90 w-full text-white">
                 <Wand2 className="mr-2 h-4 w-4" />
                 Start Random Quiz
             </Button>
