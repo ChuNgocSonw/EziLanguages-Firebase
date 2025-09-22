@@ -34,8 +34,8 @@ const allNavItems = [
   { href: '/reading', icon: Mic, label: 'Reading', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/listening', icon: Headphones, label: 'Listening', roles: ['student', 'teacher', 'admin', 'superadmin'] },
   { href: '/quizzes', icon: ClipboardList, label: 'Quizzes', roles: ['student', 'teacher', 'admin', 'superadmin'] },
-  { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student'] },
   { href: '/feedback', icon: Send, label: 'Feedback', roles: ['student'] },
+  { href: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['student'] },
   { href: '/teacher', icon: School, label: 'Teacher', roles: ['teacher', 'admin', 'superadmin'] },
   { href: '/admin', icon: ShieldCheck, label: 'Admin', roles: ['admin', 'superadmin'] },
 ];
