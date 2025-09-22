@@ -113,7 +113,7 @@ export default function TeacherClassesPage() {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-accent hover:bg-accent/90">
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Create New Class
               </Button>
