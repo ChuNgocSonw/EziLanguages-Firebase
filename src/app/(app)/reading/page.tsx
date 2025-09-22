@@ -230,7 +230,7 @@ export function ReadingAssignmentSession({ assignment, onFinish }: { assignment:
                 </ul>
             </CardContent>
             <CardFooter>
-                <Button onClick={handleFinishAssignment} className="w-full bg-accent hover:bg-accent/90" disabled={isFinishing}>
+                <Button onClick={handleFinishAssignment} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isFinishing}>
                     {isFinishing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Mark as Complete & Finish
                 </Button>
