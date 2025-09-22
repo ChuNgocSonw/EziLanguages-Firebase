@@ -331,19 +331,23 @@ export default function TeacherFeedbackPage() {
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-center justify-between">
                                         <AccordionTrigger className="flex-1 hover:no-underline">
-                                            <div className="grid grid-cols-[1fr_auto] w-full items-start gap-x-4 text-left mr-2">
-                                                {/* Row 1 */}
-                                                <p className="font-semibold truncate">{fb.title}</p>
+                                            <div className="grid grid-cols-[1fr_auto_auto] w-full items-center gap-x-4 text-left mr-2">
+                                                {/* Column 1: Title and Recipient */}
+                                                <div className="flex flex-col">
+                                                    <p className="font-semibold truncate">{fb.title}</p>
+                                                    <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 truncate">
+                                                        <User className="h-3 w-3 shrink-0" />
+                                                        <span>To: {fb.studentName}</span>
+                                                    </p>
+                                                </div>
+
+                                                {/* Column 2: Status */}
                                                 <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
-                                                     {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
+                                                    {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
                                                     <span>{fb.isRead ? "Read" : "Sent"}</span>
                                                 </div>
 
-                                                {/* Row 2 */}
-                                                <p className="text-sm text-muted-foreground font-normal flex items-center gap-1 truncate">
-                                                    <User className="h-3 w-3 shrink-0" />
-                                                    <span>To: {fb.studentName}</span>
-                                                </p>
+                                                {/* Column 3: Date */}
                                                 <div className="text-sm text-muted-foreground font-normal flex items-center justify-end gap-1">
                                                    <Calendar className="h-3 w-3" />
                                                     <span>
@@ -385,6 +389,5 @@ export default function TeacherFeedbackPage() {
         </TabsContent>
       </Tabs>
     </>
-  );
+    );
 }
-
