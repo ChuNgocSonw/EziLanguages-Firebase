@@ -373,11 +373,9 @@ export default function TeacherFeedbackPage() {
                                         </div>
                                     </div>
                                     <AccordionContent>
-                                        <ScrollArea className="max-h-60">
-                                            <div className="p-2 bg-muted/50 rounded-md">
-                                                <div className="whitespace-pre-wrap break-words">{fb.content}</div>
-                                            </div>
-                                        </ScrollArea>
+                                        <div className="p-2 bg-muted/50 rounded-md">
+                                            <div className="whitespace-pre-wrap break-words">{fb.content}</div>
+                                        </div>
                                     </AccordionContent>
                                 </AccordionItem>
                             ))}
