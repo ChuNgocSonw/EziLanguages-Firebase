@@ -5,10 +5,10 @@ import { useState, useEffect, useCallback } from "react";
 import PageHeader from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, ArrowRight, School, BookCopy, BookOpen, Loader2, Users2 } from "lucide-react";
+import { Users, ArrowRight, School, BookCopy, Loader2, Users2 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
-import { Pie, PieChart, ResponsiveContainer, Legend, Cell } from "recharts";
+import { Pie, PieChart, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import type { AdminUserView } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -40,6 +40,12 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { getAllUsers, getAllClasses, getAllAssignments } = useAuth();
   const isMobile = useIsMobile();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This ensures the chart only renders on the client side, preventing SSR issues with recharts.
+    setIsClient(true);
+  }, []);
 
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
@@ -87,7 +93,7 @@ export default function AdminDashboardPage() {
         description="Access tools to manage users, content, and application settings."
       />
       
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -125,24 +131,22 @@ export default function AdminDashboardPage() {
             </CardTitle>
         </CardHeader>
         <CardContent>
-            {isLoading ? (
+            {isLoading || !isClient ? (
                  <div className="flex justify-center items-center h-[300px]">
                     <Skeleton className="h-full w-full" />
                  </div>
                ) : (
                 <div className="h-[300px] w-full">
                     <ChartContainer config={chartConfig} className="h-full w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={pieRadius.innerRadius} outerRadius={pieRadius.outerRadius} paddingAngle={5}>
-                                    {stats?.roleDistribution.map((entry) => (
-                                        <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                    ))}
-                                </Pie>
-                                <ChartLegend layout="vertical" verticalAlign="bottom" align="center" content={<ChartLegendContent />} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        <PieChart>
+                            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                            <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={pieRadius.innerRadius} outerRadius={pieRadius.outerRadius} paddingAngle={5}>
+                                {stats?.roleDistribution.map((entry) => (
+                                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                ))}
+                            </Pie>
+                            <ChartLegend layout="vertical" verticalAlign="bottom" align="center" content={<ChartLegendContent />} />
+                        </PieChart>
                     </ChartContainer>
                 </div>
                )}
@@ -151,7 +155,7 @@ export default function AdminDashboardPage() {
 
 
       <h2 className="text-xl font-bold tracking-tight mb-2">Management Tools</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>User Management</CardTitle>
