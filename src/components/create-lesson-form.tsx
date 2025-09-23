@@ -15,7 +15,7 @@ import { Separator } from "./ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { useAuth } from "@/hooks/use-auth";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { Lesson } from "@/lib/types";
 
 const readingSchema = z.object({
