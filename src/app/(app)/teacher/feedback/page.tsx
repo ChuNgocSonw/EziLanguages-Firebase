@@ -200,7 +200,7 @@ export default function TeacherFeedbackPage() {
         title="Send Feedback"
         description="Provide personalized feedback to your students."
       />
-      <Tabs defaultValue="send">
+      <Tabs defaultValue="send" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="send"><Send className="mr-2 h-4 w-4"/>Send Feedback</TabsTrigger>
             <TabsTrigger value="history"><MessageSquare className="mr-2 h-4 w-4"/>Sent History</TabsTrigger>
@@ -330,8 +330,8 @@ export default function TeacherFeedbackPage() {
                         <Accordion type="single" collapsible className="w-full">
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
-                                    <div className="flex w-full items-center justify-between">
-                                        <AccordionTrigger className="group flex-1 font-medium transition-all hover:no-underline p-4 text-left [&>svg]:ml-auto">
+                                    <div className="flex w-full items-start justify-between p-4 border-b">
+                                        <AccordionTrigger className="group flex-1 font-medium transition-all hover:no-underline text-left p-0">
                                             <div className="w-full space-y-2">
                                                 <p className="font-semibold truncate group-hover:underline">{fb.title}</p>
                                                 <div className="flex flex-col items-start gap-y-1 text-sm text-muted-foreground font-normal sm:flex-row sm:items-center sm:gap-x-4">
@@ -350,7 +350,7 @@ export default function TeacherFeedbackPage() {
                                                 </div>
                                             </div>
                                         </AccordionTrigger>
-                                        <div className="pr-4">
+                                        <div className="pl-4">
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
@@ -375,7 +375,7 @@ export default function TeacherFeedbackPage() {
                                     <AccordionContent>
                                         <ScrollArea className="max-h-60">
                                             <div className="p-2 bg-muted/50 rounded-md">
-                                                <p className="whitespace-pre-wrap break-words">{fb.content}</p>
+                                                <div className="whitespace-pre-wrap break-words">{fb.content}</div>
                                             </div>
                                         </ScrollArea>
                                     </AccordionContent>
