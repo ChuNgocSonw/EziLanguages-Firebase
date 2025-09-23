@@ -194,7 +194,7 @@ export default function ProfilePage() {
                     </div>
                     </CardContent>
                     <CardFooter>
-                    <Button type="submit" disabled={isLoading} className="bg-accent hover:bg-accent/90">
+                    <Button type="submit" disabled={isLoading} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save Changes
                     </Button>
