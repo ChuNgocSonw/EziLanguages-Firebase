@@ -331,15 +331,15 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-start justify-between p-4 border-b">
-                                        <AccordionTrigger className="group flex-1 font-medium transition-all hover:no-underline text-left p-0">
+                                        <AccordionTrigger className="flex-1 font-medium transition-all hover:no-underline text-left p-0 [&>svg]:hidden">
                                             <div className="w-full space-y-2">
-                                                <p className="font-semibold truncate group-hover:underline">{fb.title}</p>
+                                                <p className="font-semibold truncate hover:underline">{fb.title}</p>
                                                 <div className="flex flex-col items-start gap-y-1 text-sm text-muted-foreground font-normal sm:flex-row sm:items-center sm:gap-x-4">
-                                                    <div className="flex items-center gap-1 truncate group-hover:underline">
+                                                    <div className="flex items-center gap-1 truncate hover:underline">
                                                         <User className="h-3 w-3 shrink-0" />
                                                         <span>To: {fb.studentName}</span>
                                                     </div>
-                                                     <div className="flex items-center gap-1 group-hover:underline">
+                                                     <div className="flex items-center gap-1 hover:underline">
                                                         <Calendar className="h-3 w-3" />
                                                         <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
                                                     </div>
