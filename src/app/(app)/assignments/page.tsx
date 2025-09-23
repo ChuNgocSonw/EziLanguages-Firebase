@@ -21,14 +21,14 @@ function ReviewQuizAssignmentView({ attempt, onBack }: { attempt: QuizAttempt, o
     return (
       <Card>
         <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <CardTitle className="font-headline text-2xl">Review Assignment: {attempt.topic}</CardTitle>
                     <CardDescription>
                         Completed on {format(attempt.completedAt.toDate(), 'PPP')}
                     </CardDescription>
                 </div>
-                 <Button variant="ghost" size="sm" onClick={onBack}>
+                 <Button variant="ghost" size="sm" onClick={onBack} className="w-full sm:w-auto">
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Back to Assignments
                 </Button>
@@ -62,14 +62,14 @@ function ReviewReadingAssignmentView({ assignment, userScores, onBack }: { assig
     return (
       <Card>
         <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <CardTitle className="font-headline text-2xl">Review Assignment: {assignment.title}</CardTitle>
                     <CardDescription>
                         A review of your pronunciation on this reading assignment.
                     </CardDescription>
                 </div>
-                 <Button variant="ghost" size="sm" onClick={onBack}>
+                 <Button variant="ghost" size="sm" onClick={onBack} className="w-full sm:w-auto">
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Back to Assignments
                 </Button>
@@ -105,14 +105,14 @@ function ReviewListeningAssignmentView({ assignment, userScores, onBack }: { ass
     return (
       <Card>
         <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <CardTitle className="font-headline text-2xl">Review Assignment: {assignment.title}</CardTitle>
                     <CardDescription>
                         A review of your performance on this listening assignment.
                     </CardDescription>
                 </div>
-                 <Button variant="ghost" size="sm" onClick={onBack}>
+                 <Button variant="ghost" size="sm" onClick={onBack} className="w-full sm:w-auto">
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Back to Assignments
                 </Button>
