@@ -88,7 +88,7 @@ export default function AdminDashboardPage() {
         description="Access tools to manage users, content, and application settings."
       />
       
-      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-3">
+      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
@@ -149,7 +149,7 @@ export default function AdminDashboardPage() {
 
 
       <h2 className="text-xl font-bold tracking-tight mb-2">Management Tools</h2>
-      <div className="grid gap-6 grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>User Management</CardTitle>
