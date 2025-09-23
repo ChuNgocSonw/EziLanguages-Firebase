@@ -35,6 +35,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,6 +94,10 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     if (!name) return "U";
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
+  
+  const handleMobileLinkClick = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <ScrollContext.Provider value={scrollAreaRef}>
@@ -129,7 +134,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
       </div>
       <div className="flex flex-col max-h-screen overflow-hidden">
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 shrink-0 lg:h-[60px] lg:px-6">
-          <Sheet>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="shrink-0 md:hidden">
                 <Menu className="h-5 w-5" />
@@ -138,7 +143,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
               <SheetHeader>
-                 <SheetTitle className="sr-only">Menu</SheetTitle>
+                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
@@ -148,7 +153,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                   <Logo width={40} height={40} />
                   <span>Ezi Languages</span>
                 </Link>
-                <MainNav isMobile userRole={userProfile?.role}/>
+                <MainNav isMobile userRole={userProfile?.role} onLinkClick={handleMobileLinkClick}/>
               </nav>
             </SheetContent>
           </Sheet>

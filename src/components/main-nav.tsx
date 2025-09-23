@@ -44,9 +44,10 @@ interface MainNavProps {
     isMobile?: boolean;
     isCollapsed?: boolean;
     userRole?: UserRole;
+    onLinkClick?: () => void;
 }
 
-export function MainNav({ isMobile = false, isCollapsed = false, userRole }: MainNavProps) {
+export function MainNav({ isMobile = false, isCollapsed = false, userRole, onLinkClick }: MainNavProps) {
   const navClass = isMobile ? "" : "grid items-start px-2 text-sm font-medium lg:px-4";
 
   let navItems = allNavItems.filter(item => userRole && item.roles.includes(userRole));
@@ -103,7 +104,7 @@ export function MainNav({ isMobile = false, isCollapsed = false, userRole }: Mai
   return (
     <nav className={navClass}>
       {navItems.map((item) => (
-        <NavLink key={item.href} href={item.href} icon={item.icon} isMobile={isMobile}>
+        <NavLink key={item.href} href={item.href} icon={item.icon} isMobile={isMobile} onClick={onLinkClick}>
           {item.label}
         </NavLink>
       ))}

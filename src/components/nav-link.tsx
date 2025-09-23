@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -11,15 +12,17 @@ interface NavLinkProps {
   children: React.ReactNode;
   isMobile?: boolean;
   isCollapsed?: boolean;
+  onClick?: () => void;
 }
 
-export default function NavLink({ href, icon: Icon, children, isMobile = false, isCollapsed = false }: NavLinkProps) {
+export default function NavLink({ href, icon: Icon, children, isMobile = false, isCollapsed = false, onClick }: NavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href;
 
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
         isActive && "bg-sidebar-accent text-primary font-semibold",
