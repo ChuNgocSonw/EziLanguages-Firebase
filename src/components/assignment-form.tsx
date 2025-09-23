@@ -743,10 +743,7 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
                         <CardContent className="space-y-3">
                             {renderSelectedContent()}
                         </CardContent>
-                        <CardFooter className="justify-between">
-                            <Button type="button" variant="outline" onClick={handleBackToDetails} disabled={isSaving || isEditMode}>
-                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Details
-                            </Button>
+                        <CardFooter className="justify-end">
                             <Button type="submit" disabled={isSaving}>
                                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                 {isSaving ? "Saving..." : `${isEditMode ? "Update" : "Save"} Assignment`}
