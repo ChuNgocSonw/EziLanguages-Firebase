@@ -206,7 +206,7 @@ export function ReadingAssignmentSession({ assignment, onFinish }: { assignment:
     return (
         <Card>
             <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                    <CardTitle>Reading Assignment: {assignment.title}</CardTitle>
                     <Button variant="outline" onClick={onFinish}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Assignments</Button>
                 </div>
