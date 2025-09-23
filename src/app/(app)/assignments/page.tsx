@@ -272,7 +272,7 @@ export default function StudentAssignmentsPage() {
                                     const isCompleted = userProfile?.completedAssignments?.includes(assignment.id);
                                     const score = completedScores[assignment.id];
                                     return (
-                                        <div key={assignment.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
+                                        <div key={assignment.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border gap-4">
                                             <div>
                                                 <h4 className="font-semibold">{assignment.title}</h4>
                                                 <p className="text-sm text-muted-foreground mt-1 capitalize">
@@ -320,7 +320,7 @@ export default function StudentAssignmentsPage() {
                         ) : completedAssignments.length > 0 ? (
                             <div className="space-y-3">
                                 {completedAssignments.map((assignment) => (
-                                    <div key={assignment.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border hover:bg-muted gap-4">
+                                    <div key={assignment.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-md border gap-4">
                                         <div>
                                             <h4 className="font-semibold">{assignment.title}</h4>
                                             <p className="text-sm text-muted-foreground mt-1 capitalize">
