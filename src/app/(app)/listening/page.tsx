@@ -148,9 +148,11 @@ export function ListeningAssignmentSession({ assignment, onFinish }: { assignmen
     return (
         <Card>
             <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <CardTitle>Listening Assignment: {assignment.title}</CardTitle>
-                     <Button variant="outline" onClick={onFinish}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Assignments</Button>
+                    <Button variant="outline" size="sm" onClick={onFinish} className="w-full sm:w-auto">
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Assignments
+                    </Button>
                 </div>
                 <CardDescription>Exercise {currentIndex + 1} of {assignment.listeningExercises?.length}</CardDescription>
                 <Progress value={((currentIndex + 1) / (assignment.listeningExercises?.length || 1)) * 100} />
