@@ -145,7 +145,7 @@ export default function QuizDashboard() {
           {quizHistory.length > 0 ? (
             <div className="space-y-3">
               {displayedHistory.map((quiz) => (
-                <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted">
+                <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border">
                   <div>
                     <h4 className="font-semibold">{quiz.topic}</h4>
                     <p className="text-sm text-muted-foreground">
