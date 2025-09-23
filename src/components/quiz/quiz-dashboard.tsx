@@ -145,15 +145,15 @@ export default function QuizDashboard() {
           {quizHistory.length > 0 ? (
             <div className="space-y-3">
               {displayedHistory.map((quiz) => (
-                <div key={quiz.id} className="flex items-center justify-between p-3 rounded-md border">
-                  <div>
+                <div key={quiz.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border gap-4">
+                  <div className="flex-1">
                     <h4 className="font-semibold">{quiz.topic}</h4>
                     <p className="text-sm text-muted-foreground">
                       Completed on {format(quiz.completedAt.toDate(), 'PPP')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <Badge variant={quiz.percentage > 70 ? "default" : "secondary"} className={cn(quiz.percentage <= 70 && "bg-yellow-500 text-black", quiz.percentage < 50 && "bg-destructive text-destructive-foreground")}>{quiz.percentage}%</Badge>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <Badge variant={quiz.percentage > 70 ? "default" : "secondary"} className={cn("w-16 justify-center", quiz.percentage <= 70 && "bg-yellow-500 text-black", quiz.percentage < 50 && "bg-destructive text-destructive-foreground")}>{quiz.percentage}%</Badge>
                     <Button variant="outline" size="sm" onClick={() => handleReviewQuiz(quiz)}>
                       <BookOpen className="mr-2 h-4 w-4" />
                       Review
