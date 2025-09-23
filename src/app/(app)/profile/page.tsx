@@ -40,6 +40,7 @@ export default function ProfilePage() {
     },
   });
   
+  const { isDirty } = form.formState;
   const dobValue = form.watch("dob");
   const [month, setMonth] = useState<Date | undefined>(dobValue);
 
@@ -258,7 +259,7 @@ export default function ProfilePage() {
                     </div>
                     </CardContent>
                     <CardFooter>
-                    <Button type="submit" disabled={isLoading} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Button type="submit" disabled={isLoading || !isDirty} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save Changes
                     </Button>
@@ -324,3 +325,5 @@ export default function ProfilePage() {
     </>
   );
 }
+
+    
