@@ -89,30 +89,33 @@ export default function AdminDashboardPage() {
       />
       
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Loading...</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            statCards.map(stat => (
-              <Card key={stat.title}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  <stat.icon className="h-5 w-5 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{stat.value ?? 0}</div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /> : <div className="text-3xl font-bold">{stats?.userCount ?? 0}</div>}
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
+            <School className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /> : <div className="text-3xl font-bold">{stats?.classCount ?? 0}</div>}
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Assignments</CardTitle>
+            <BookCopy className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /> : <div className="text-3xl font-bold">{stats?.assignmentCount ?? 0}</div>}
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="mb-6">
