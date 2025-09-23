@@ -88,7 +88,7 @@ export default function AdminDashboardPage() {
         description="Access tools to manage users, content, and application settings."
       />
       
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
@@ -124,16 +124,16 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
             {isLoading ? (
-                 <div className="flex justify-center items-center h-[350px]">
+                 <div className="flex justify-center items-center h-[300px]">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                  </div>
                ) : (
-                <div className="h-[350px]">
+                <div className="h-[300px]">
                     <ChartContainer config={chartConfig} className="h-full w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={80} outerRadius={120} paddingAngle={5}>
+                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} paddingAngle={5}>
                                     {stats?.roleDistribution.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
@@ -149,7 +149,7 @@ export default function AdminDashboardPage() {
 
 
       <h2 className="text-xl font-bold tracking-tight mb-2">Management Tools</h2>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>User Management</CardTitle>
