@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { profileSchema, ProfileFormData } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CalendarIcon } from "lucide-react";
+import { Loader2, CalendarIcon, Camera } from "lucide-react";
 import { badgeCategories } from "@/lib/badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -22,11 +22,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function ProfilePage() {
-  const { user, userProfile, updateUserProfile, updateUserAppData } = useAuth();
+  const { user, userProfile, updateUserProfile, updateUserAppData, updateUserProfilePicture } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -104,6 +107,37 @@ export default function ProfilePage() {
     }
   }
 
+  const getInitials = (name?: string | null) => {
+    if (!name) return "U";
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  }
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setIsUploading(true);
+      try {
+        await updateUserProfilePicture(file);
+        toast({
+          title: "Avatar Updated",
+          description: "Your new profile picture has been saved.",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Upload Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -113,8 +147,38 @@ export default function ProfilePage() {
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
                 <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Update your display name and date of birth.</CardDescription>
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="relative group">
+                            <Avatar className="h-24 w-24 border-4 border-primary/20">
+                                <AvatarImage src={user?.photoURL || ""} alt={user?.displayName || ""} />
+                                <AvatarFallback className="text-3xl">
+                                    {getInitials(user?.displayName)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <button
+                                onClick={handleAvatarClick}
+                                disabled={isUploading}
+                                className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                {isUploading ? (
+                                    <Loader2 className="h-8 w-8 text-white animate-spin" />
+                                ) : (
+                                    <Camera className="h-8 w-8 text-white" />
+                                )}
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept="image/png, image/jpeg"
+                            />
+                        </div>
+                        <div className="text-center">
+                            <CardTitle>Personal Information</CardTitle>
+                            <CardDescription>Update your display name and date of birth.</CardDescription>
+                        </div>
+                    </div>
                 </CardHeader>
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>

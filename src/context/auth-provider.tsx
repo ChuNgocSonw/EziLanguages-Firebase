@@ -13,8 +13,9 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, storage } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment, Feedback, GenerateFeedbackInput, Lesson, PerformanceQuizAttempt } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
@@ -29,6 +30,7 @@ export interface AuthContextType {
   logIn: (data: LoginFormData) => Promise<void>;
   logOut: () => Promise<void>;
   updateUserProfile: (displayName: string) => Promise<void>;
+  updateUserProfilePicture: (file: File) => Promise<void>;
   updateUserAppData: (data: Partial<UserProfile>) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   getChatList: () => Promise<ChatSession[]>;
@@ -257,6 +259,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({ ...auth.currentUser });
       setUserProfile((prev) => prev ? { ...prev, name: displayName } : null);
     }
+  }, []);
+
+  const updateUserProfilePicture = useCallback(async (file: File) => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+
+    const storageRef = ref(storage, `profilePictures/${auth.currentUser.uid}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    const photoURL = await getDownloadURL(snapshot.ref);
+
+    await updateProfile(auth.currentUser, { photoURL });
+    const userDocRef = doc(db, "users", auth.currentUser.uid);
+    await updateDoc(userDocRef, { photoURL });
+
+    setUser({ ...auth.currentUser });
+    setUserProfile((prev) => prev ? { ...prev, photoURL } : null);
   }, []);
 
   const updateUserAppData = useCallback(async (data: Partial<UserProfile>) => {
@@ -1098,6 +1115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logIn,
     logOut,
     updateUserProfile,
+    updateUserProfilePicture,
     updateUserAppData,
     sendPasswordReset,
     getChatList,
@@ -1154,7 +1172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getTeacherAssignments, getAllAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
       getAssignmentAttempt, getStudentCompletedAttempts, getStudentAssignmentAttemptsForClass, sendFeedback,
       getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback, getStudentPerformanceDataForFeedback,
-      createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson, getStudentLessonProgress, updateUserProfile,
+      createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson, getStudentLessonProgress, updateUserProfile, updateUserProfilePicture
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
