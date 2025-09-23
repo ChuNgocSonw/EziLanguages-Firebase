@@ -123,37 +123,6 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <Users2 className="h-5 w-5 text-muted-foreground" />
-                User Role Distribution
-            </CardTitle>
-        </CardHeader>
-        <CardContent>
-            {isLoading || !isClient ? (
-                 <div className="flex justify-center items-center h-[300px]">
-                    <Skeleton className="h-full w-full" />
-                 </div>
-               ) : (
-                <div className="h-[300px] w-full">
-                    <ChartContainer config={chartConfig} className="h-full w-full">
-                        <PieChart>
-                            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                            <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={pieRadius.innerRadius} outerRadius={pieRadius.outerRadius} paddingAngle={5}>
-                                {stats?.roleDistribution.map((entry) => (
-                                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                ))}
-                            </Pie>
-                            <ChartLegend layout="vertical" verticalAlign="bottom" align="center" content={<ChartLegendContent />} />
-                        </PieChart>
-                    </ChartContainer>
-                </div>
-               )}
-        </CardContent>
-      </Card>
-
-
       <h2 className="text-xl font-bold tracking-tight mb-2">Management Tools</h2>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card className="flex flex-col">
