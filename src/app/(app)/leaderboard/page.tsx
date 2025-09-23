@@ -3,15 +3,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 import PageHeader from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { LeaderboardEntry } from "@/lib/types";
 import { Loader2, Trophy, Award, Flame, Star, UserCircle } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type LeaderboardCategory = "badges" | "weekly-xp" | "streak";
+
+const leaderboardOptions: { value: LeaderboardCategory; label: string; icon: React.ElementType; unit: string }[] = [
+    { value: "badges", label: "All-Time Badges", icon: Award, unit: "Badges" },
+    { value: "weekly-xp", label: "Weekly XP", icon: Star, unit: "XP" },
+    { value: "streak", label: "Daily Streak", icon: Flame, unit: "Days" },
+];
 
 function LeaderboardTable({ data, unit }: { data: LeaderboardEntry[] | null, unit: string }) {
     const { user } = useAuth();
@@ -34,7 +40,7 @@ function LeaderboardTable({ data, unit }: { data: LeaderboardEntry[] | null, uni
     }
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-3 mt-4">
             {data.map((entry, index) => {
                 const isCurrentUser = user?.uid === entry.userId;
                 return (
@@ -70,7 +76,7 @@ function LeaderboardTable({ data, unit }: { data: LeaderboardEntry[] | null, uni
 }
 
 export default function LeaderboardPage() {
-    const [activeTab, setActiveTab] = useState<LeaderboardCategory>("badges");
+    const [activeCategory, setActiveCategory] = useState<LeaderboardCategory>("badges");
     const [leaderboardData, setLeaderboardData] = useState<Record<LeaderboardCategory, LeaderboardEntry[] | null>>({
         badges: null,
         "weekly-xp": null,
@@ -79,27 +85,29 @@ export default function LeaderboardPage() {
     const { getLeaderboard } = useAuth();
 
     const fetchLeaderboard = useCallback(async (category: LeaderboardCategory) => {
+        // No need to refetch if data already exists
         if (leaderboardData[category] !== null) return;
         
         try {
+            let data: LeaderboardEntry[] = [];
             if (category === "badges") {
-                const data = await getLeaderboard('badgeCount');
-                setLeaderboardData(prev => ({ ...prev, badges: data }));
+                data = await getLeaderboard('badgeCount');
             } else if (category === "streak") {
-                const data = await getLeaderboard('streak');
-                setLeaderboardData(prev => ({ ...prev, streak: data }));
+                data = await getLeaderboard('streak');
             } else if (category === "weekly-xp") {
-                const data = await getLeaderboard('weeklyXP');
-                setLeaderboardData(prev => ({ ...prev, "weekly-xp": data }));
+                data = await getLeaderboard('weeklyXP');
             }
+            setLeaderboardData(prev => ({ ...prev, [category]: data }));
         } catch (error) {
             console.error(`Failed to fetch ${category} leaderboard:`, error);
         }
     }, [getLeaderboard, leaderboardData]);
 
     useEffect(() => {
-        fetchLeaderboard(activeTab);
-    }, [activeTab, fetchLeaderboard]);
+        fetchLeaderboard(activeCategory);
+    }, [activeCategory, fetchLeaderboard]);
+    
+    const selectedOption = leaderboardOptions.find(opt => opt.value === activeCategory);
 
     return (
         <>
@@ -110,33 +118,29 @@ export default function LeaderboardPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Rankings</CardTitle>
+                     <CardDescription>Select a category to view the leaderboard.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as LeaderboardCategory)}>
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="badges">
-                                <Award className="mr-0 sm:mr-2 h-5 w-5 text-blue-500" />
-                                <span className="hidden sm:inline">All-Time Badges</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="weekly-xp">
-                                <Star className="mr-0 sm:mr-2 h-5 w-5 text-yellow-500" /> 
-                                <span className="hidden sm:inline">Weekly XP</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="streak">
-                                <Flame className="mr-0 sm:mr-2 h-5 w-5 text-orange-500" /> 
-                                <span className="hidden sm:inline">Daily Streak</span>
-                            </TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="badges" className="mt-4">
-                            <LeaderboardTable data={leaderboardData.badges} unit="Badges" />
-                        </TabsContent>
-                        <TabsContent value="weekly-xp" className="mt-4">
-                             <LeaderboardTable data={leaderboardData["weekly-xp"]} unit="XP" />
-                        </TabsContent>
-                        <TabsContent value="streak" className="mt-4">
-                            <LeaderboardTable data={leaderboardData.streak} unit="Days" />
-                        </TabsContent>
-                    </Tabs>
+                    <Select value={activeCategory} onValueChange={(value) => setActiveCategory(value as LeaderboardCategory)}>
+                        <SelectTrigger className="w-full md:w-[280px]">
+                            <SelectValue placeholder="Select a leaderboard..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {leaderboardOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    <div className="flex items-center gap-2">
+                                        <option.icon className="h-5 w-5" />
+                                        <span>{option.label}</span>
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    
+                    {selectedOption && (
+                        <LeaderboardTable data={leaderboardData[activeCategory]} unit={selectedOption.unit} />
+                    )}
+
                 </CardContent>
             </Card>
         </>
