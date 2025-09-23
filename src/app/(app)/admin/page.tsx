@@ -88,7 +88,7 @@ export default function AdminDashboardPage() {
         description="Access tools to manage users, content, and application settings."
       />
       
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-3">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <Card key={i}>
