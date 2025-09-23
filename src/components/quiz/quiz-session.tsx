@@ -315,7 +315,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
       numberOfQuestions: number;
       setNumberOfQuestions: (n: number) => void;
   }) => (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
             <Label>Difficulty</Label>
             <RadioGroup 
@@ -570,7 +570,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
   return (
     <Card>
         <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <CardTitle className="font-headline">Generate a New Quiz</CardTitle>
                     <CardDescription>
