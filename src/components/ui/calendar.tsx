@@ -102,7 +102,7 @@ function Calendar({
                 <SelectValue>{selected?.props?.children}</SelectValue>
               </SelectTrigger>
               <SelectContent position="popper">
-                <ScrollArea className={cn("h-80", props.name === 'years' && 'h-56' )}>
+                <ScrollArea className={cn("h-80", props.name === 'months' && 'h-56' )}>
                   {options.map((option, id: number) => (
                     <SelectItem
                       key={`${option.props.value}-${id}`}
