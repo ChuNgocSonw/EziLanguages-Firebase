@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Pie, PieChart, ResponsiveContainer, Legend, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import type { AdminUserView } from "@/lib/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 interface RoleDistribution {
@@ -37,6 +38,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { getAllUsers, getAllClasses, getAllAssignments } = useAuth();
+  const isMobile = useIsMobile();
 
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
@@ -74,6 +76,8 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  const pieRadius = isMobile ? { innerRadius: 40, outerRadius: 60 } : { innerRadius: 60, outerRadius: 80 };
 
   return (
     <>
@@ -130,7 +134,7 @@ export default function AdminDashboardPage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={80} paddingAngle={5}>
+                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={pieRadius.innerRadius} outerRadius={pieRadius.outerRadius} paddingAngle={5}>
                                     {stats?.roleDistribution.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
