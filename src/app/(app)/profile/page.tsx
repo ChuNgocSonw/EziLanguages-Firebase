@@ -36,6 +36,14 @@ export default function ProfilePage() {
       language: "EN",
     },
   });
+  
+  const dobValue = form.watch("dob");
+  const [month, setMonth] = useState<Date | undefined>(dobValue);
+
+  useEffect(() => {
+    setMonth(dobValue);
+  }, [dobValue]);
+
 
   useEffect(() => {
     if (userProfile) {
@@ -154,7 +162,8 @@ export default function ProfilePage() {
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                month={field.value}
+                                month={month}
+                                onMonthChange={setMonth}
                                 disabled={(date) =>
                                   date > new Date() || date < new Date("1900-01-01")
                                 }
