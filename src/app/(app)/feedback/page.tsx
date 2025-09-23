@@ -73,13 +73,16 @@ export default function StudentFeedbackPage() {
                             {feedbackList.map(feedback => (
                                 <AccordionItem value={feedback.id} key={feedback.id}>
                                     <AccordionTrigger className="hover:no-underline group">
-                                        <div className="flex items-center justify-between w-full pr-4">
-                                            <div className="flex items-center gap-3 text-left">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full pr-4 text-left">
+                                            <div className="flex items-center gap-3 mb-2 sm:mb-0">
                                                 {!feedback.isRead && <Badge className="bg-accent text-accent-foreground">New</Badge>}
                                                 <span className="font-semibold group-hover:underline">{feedback.title}</span>
                                             </div>
-                                            <div className="text-sm text-muted-foreground font-normal flex items-center gap-4">
-                                                <span className="group-hover:underline">From: {feedback.teacherName}</span>
+                                            <div className="text-sm text-muted-foreground font-normal flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 sm:ml-auto">
+                                                <span className="flex items-center gap-1 group-hover:underline">
+                                                    <User className="h-3 w-3" />
+                                                    From: {feedback.teacherName}
+                                                </span>
                                                 <span className="flex items-center gap-1 group-hover:underline">
                                                     <Calendar className="h-3 w-3" />
                                                     {format(feedback.createdAt.toDate(), 'PPP')}
