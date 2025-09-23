@@ -166,7 +166,7 @@ export default function TeacherClassesPage() {
                       {c.studentIds.length} student(s)
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 self-end sm:self-center">
+                  <div className="flex items-center gap-2 sm:self-center">
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/teacher/classes/${c.id}`}>
                         Manage <ArrowRight className="ml-2 h-4 w-4" />
