@@ -13,9 +13,8 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { auth, db, storage } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, increment, Timestamp, arrayUnion, limit, where, arrayRemove, deleteField, deleteDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { LoginFormData, SignupFormData, UserProfile, ChatMessage, ChatSession, PronunciationAttempt, QuizAttempt, LeaderboardEntry, LastActivity, Class, AdminUserView, UserRole, Assignment, Feedback, GenerateFeedbackInput, Lesson, PerformanceQuizAttempt } from '@/lib/types';
 import { differenceInCalendarDays, startOfWeek } from 'date-fns';
 import { allBadges, Badge } from '@/lib/badges';
@@ -264,17 +263,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUserProfilePicture = useCallback(async (file: File) => {
     if (!auth.currentUser) throw new Error("User not authenticated");
 
-    const storageRef = ref(storage, `profilePictures/${auth.currentUser.uid}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    const photoURL = await getDownloadURL(snapshot.ref);
+    return new Promise((resolve, reject) => {
+        // Check file size (e.g., 500KB limit)
+        if (file.size > 500 * 1024) {
+            reject(new Error("Image is too large. Please use an image under 500KB."));
+            return;
+        }
 
-    await updateProfile(auth.currentUser, { photoURL });
-    const userDocRef = doc(db, "users", auth.currentUser.uid);
-    await updateDoc(userDocRef, { photoURL });
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            try {
+                const photoURL = reader.result as string;
 
-    setUser({ ...auth.currentUser });
-    setUserProfile((prev) => prev ? { ...prev, photoURL } : null);
+                // Update Firebase Auth profile
+                await updateProfile(auth.currentUser!, { photoURL });
+                
+                // Update Firestore document
+                const userDocRef = doc(db, "users", auth.currentUser!.uid);
+                await updateDoc(userDocRef, { photoURL });
+
+                // Update local state
+                setUser({ ...auth.currentUser! });
+                setUserProfile((prev) => (prev ? { ...prev, photoURL } : null));
+                
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        };
+        reader.onerror = (error) => {
+            reject(error);
+        };
+    });
   }, []);
+
 
   const updateUserAppData = useCallback(async (data: Partial<UserProfile>) => {
     if (auth.currentUser) {
