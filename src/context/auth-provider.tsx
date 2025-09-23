@@ -43,6 +43,7 @@ export interface AuthContextType {
   getLeaderboard: (category: 'badgeCount' | 'streak' | 'weeklyXP') => Promise<LeaderboardEntry[]>;
   createClass: (className: string) => Promise<void>;
   getTeacherClasses: () => Promise<Class[]>;
+  getAllClasses: () => Promise<Class[]>;
   deleteClass: (classId: string) => Promise<void>;
   getAllUsers: () => Promise<AdminUserView[]>;
   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
@@ -55,6 +56,7 @@ export interface AuthContextType {
   createAssignment: (assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt'>) => Promise<void>;
   updateAssignment: (assignmentId: string, assignmentData: Omit<Assignment, 'id' | 'teacherId' | 'createdAt' | 'assignedClasses'>) => Promise<void>;
   getTeacherAssignments: () => Promise<Assignment[]>;
+  getAllAssignments: () => Promise<Assignment[]>;
   getAssignmentDetails: (assignmentId: string) => Promise<Assignment | null>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
   assignAssignmentToClasses: (assignmentId: string, classIds: string[]) => Promise<void>;
@@ -579,6 +581,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
   }, []);
+
+  const getAllClasses = useCallback(async (): Promise<Class[]> => {
+    const classesRef = collection(db, "classes");
+    const q = query(classesRef, orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
+  }, []);
   
   const deleteClass = useCallback(async (classId: string) => {
     if (!auth.currentUser) throw new Error("User not authenticated");
@@ -786,6 +795,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
   }, []);
   
+  const getAllAssignments = useCallback(async (): Promise<Assignment[]> => {
+    const assignmentsRef = collection(db, "assignments");
+    const q = query(assignmentsRef, orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Assignment));
+  }, []);
+
   const getAssignmentDetails = useCallback(async (assignmentId: string): Promise<Assignment | null> => {
     if (!auth.currentUser) throw new Error("Not authenticated");
     const assignmentRef = doc(db, "assignments", assignmentId);
@@ -1096,6 +1112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getLeaderboard,
     createClass,
     getTeacherClasses,
+    getAllClasses,
     deleteClass,
     getAllUsers,
     updateUserRole,
@@ -1108,6 +1125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     createAssignment,
     updateAssignment,
     getTeacherAssignments,
+    getAllAssignments,
     getAssignmentDetails,
     deleteAssignment,
     assignAssignmentToClasses,
@@ -1131,9 +1149,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user, userProfile, loading, signUp, logIn, logOut, updateUserAppData, sendPasswordReset,
       getChatList, getChatMessages, saveChatMessage, deleteChatSession, savePronunciationAttempt,
       saveListeningScore, saveQuizAttempt, completeAssignment, getQuizHistory, getLeaderboard, createClass, getTeacherClasses,
-      deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement, getStudentsForClass,
+      getAllClasses, deleteClass, getAllUsers, updateUserRole, getClassDetails, getStudentsForClassManagement, getStudentsForClass,
       addStudentToClass, removeStudentFromClass, searchStudentsByEmail, createAssignment, updateAssignment,
-      getTeacherAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
+      getTeacherAssignments, getAllAssignments, getAssignmentDetails, deleteAssignment, assignAssignmentToClasses, getStudentAssignments,
       getAssignmentAttempt, getStudentCompletedAttempts, getStudentAssignmentAttemptsForClass, sendFeedback,
       getSentFeedback, getReceivedFeedback, markFeedbackAsRead, deleteFeedback, getStudentPerformanceDataForFeedback,
       createLesson, getLessons, getLessonDetails, updateLesson, deleteLesson, getStudentLessonProgress, updateUserProfile,

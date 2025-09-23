@@ -36,14 +36,14 @@ const chartConfig = {
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { getAllUsers, getTeacherClasses, getTeacherAssignments } = useAuth();
+  const { getAllUsers, getAllClasses, getAllAssignments } = useAuth();
 
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
     try {
       const users = await getAllUsers();
-      const classes = await getTeacherClasses(); 
-      const assignments = await getTeacherAssignments(); 
+      const classes = await getAllClasses(); 
+      const assignments = await getAllAssignments(); 
 
       const roles = users.reduce((acc, user) => {
         const roleKey = user.role.toLowerCase();
@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [getAllUsers, getTeacherClasses, getTeacherAssignments]);
+  }, [getAllUsers, getAllClasses, getAllAssignments]);
 
   useEffect(() => {
     fetchStats();
