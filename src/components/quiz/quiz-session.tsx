@@ -477,7 +477,7 @@ export default function QuizSession({ onQuizFinish, assignment = null, isRandomQ
     return (
         <Card>
             <CardHeader>
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                     <div>
                         <CardTitle className="font-headline">Random Quiz</CardTitle>
                         <CardDescription>
