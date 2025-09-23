@@ -202,7 +202,7 @@ export default function TeacherFeedbackPage() {
       />
       <Tabs defaultValue="send">
         <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="send"><Send className="mr-2 h-4 w-4"/>Send New Feedback</TabsTrigger>
+            <TabsTrigger value="send"><Send className="mr-2 h-4 w-4"/>Send Feedback</TabsTrigger>
             <TabsTrigger value="history"><MessageSquare className="mr-2 h-4 w-4"/>Sent History</TabsTrigger>
         </TabsList>
         <TabsContent value="send" className="mt-4">
@@ -396,3 +396,5 @@ export default function TeacherFeedbackPage() {
     </>
   );
 }
+
+    
