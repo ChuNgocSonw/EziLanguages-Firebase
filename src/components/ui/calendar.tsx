@@ -74,7 +74,7 @@ function Calendar({
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
-        caption_dropdowns: "flex gap-1 justify-center",
+        caption_dropdowns: "flex gap-1 justify-center w-full",
         ...classNames,
       }}         
       components={{
@@ -98,11 +98,14 @@ function Calendar({
                 handleChange(value)
               }}
             >
-              <SelectTrigger className="pr-1.5 focus:ring-0 w-fit">
+              <SelectTrigger className={cn(
+                "pr-1.5 focus:ring-0",
+                props.name === 'months' ? 'w-[60%] justify-between' : 'w-[40%]'
+              )}>
                 <SelectValue>{selected?.props?.children}</SelectValue>
               </SelectTrigger>
               <SelectContent position="popper">
-                <ScrollArea className={cn(['months', 'years'].includes(props.name || '') && 'h-56' )}>
+                <ScrollArea className={cn((props.name === 'months' || props.name === 'years') && 'h-56' )}>
                   {options.map((option, id: number) => (
                     <SelectItem
                       key={`${option.props.value}-${id}`}
