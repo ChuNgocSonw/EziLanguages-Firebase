@@ -159,6 +159,39 @@ export default function AdminDashboardPage() {
              </Button>
           </CardFooter>
         </Card>
+         <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users2 className="h-5 w-5" />
+              User Role Distribution
+            </CardTitle>
+            <CardDescription>A breakdown of user roles across the platform.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              {isLoading || !isClient ? (
+                <Skeleton className="h-full w-full" />
+              ) : (
+                <ChartContainer config={chartConfig} className="h-full w-full">
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="value" hideLabel />} />
+                    <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" {...pieRadius}>
+                      {stats?.roleDistribution.map((entry) => (
+                        <Cell key={entry.name} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <ChartLegend
+                      content={<ChartLegendContent />}
+                      layout="vertical"
+                      verticalAlign="bottom"
+                      align="center"
+                    />
+                  </PieChart>
+                </ChartContainer>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </>
   );
