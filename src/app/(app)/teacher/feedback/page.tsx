@@ -24,6 +24,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { generateFeedback } from "@/lib/actions";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 const feedbackSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters."),
@@ -331,17 +332,18 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex items-center">
-                                        <AccordionTrigger className="flex-1 hover:no-underline [&_svg.lucide-chevron-down]:hidden">
+                                        <AccordionTrigger className="flex-1 hover:no-underline group">
                                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full pr-4 text-left">
                                                 <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                                                    <span className="font-semibold">{fb.title}</span>
+                                                    {!fb.isRead && <Badge className="bg-accent text-accent-foreground">New</Badge>}
+                                                    <span className="font-semibold group-hover:underline">{fb.title}</span>
                                                 </div>
                                                 <div className="text-sm text-muted-foreground font-normal flex flex-wrap items-center gap-x-4 gap-y-1 sm:ml-auto">
-                                                    <span className="flex items-center gap-1">
+                                                    <span className="flex items-center gap-1 group-hover:underline">
                                                         <User className="h-3 w-3" />
                                                         To: {fb.studentName}
                                                     </span>
-                                                    <span className="flex items-center gap-1">
+                                                    <span className="flex items-center gap-1 group-hover:underline">
                                                         <Calendar className="h-3 w-3" />
                                                         {format(fb.createdAt.toDate(), 'PPP')}
                                                     </span>
