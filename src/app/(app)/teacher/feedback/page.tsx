@@ -331,20 +331,19 @@ export default function TeacherFeedbackPage() {
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
                                     <div className="flex w-full items-center justify-between">
-                                        <AccordionTrigger className="group font-medium transition-all hover:no-underline p-4 text-left [&>svg]:hidden">
-                                            <div className="w-full space-y-1">
+                                        <AccordionTrigger className="group flex-1 font-medium transition-all hover:no-underline p-4 text-left [&>svg]:ml-auto">
+                                            <div className="w-full space-y-2">
                                                 <p className="font-semibold truncate group-hover:underline">{fb.title}</p>
-                                                <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 w-full text-sm text-muted-foreground font-normal">
+                                                <div className="flex flex-col items-start gap-y-1 text-sm text-muted-foreground font-normal sm:flex-row sm:items-center sm:gap-x-4">
                                                     <div className="flex items-center gap-1 truncate group-hover:underline">
                                                         <User className="h-3 w-3 shrink-0" />
                                                         <span>To: {fb.studentName}</span>
                                                     </div>
-                                                    <div className="flex-grow"></div>
-                                                     <div className="flex items-center justify-end gap-1 group-hover:underline">
+                                                     <div className="flex items-center gap-1 group-hover:underline">
                                                         <Calendar className="h-3 w-3" />
                                                         <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
                                                     </div>
-                                                    <div className="flex items-center justify-end gap-1">
+                                                    <div className="flex items-center gap-1">
                                                         {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
                                                         <span>{fb.isRead ? "Read" : "Sent"}</span>
                                                     </div>
@@ -375,8 +374,8 @@ export default function TeacherFeedbackPage() {
                                     </div>
                                     <AccordionContent>
                                         <ScrollArea className="max-h-60">
-                                            <div className="prose dark:prose-invert max-w-none p-2 bg-muted/50 rounded-md">
-                                                <p style={{ whiteSpace: 'pre-wrap' }}>{fb.content}</p>
+                                            <div className="p-2 bg-muted/50 rounded-md">
+                                                <p className="whitespace-pre-wrap break-words">{fb.content}</p>
                                             </div>
                                         </ScrollArea>
                                     </AccordionContent>
@@ -396,5 +395,3 @@ export default function TeacherFeedbackPage() {
     </>
   );
 }
-
-    
