@@ -123,7 +123,7 @@ export default function QuizDashboard() {
               <CardTitle>AI Quiz Generator</CardTitle>
               <CardDescription>Generate a new quiz on any topic or try a random one.</CardDescription>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
              <Button onClick={handleStartNewQuiz} variant="outline" className="w-full">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Quiz
