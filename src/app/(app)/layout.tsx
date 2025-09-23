@@ -146,7 +146,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
                   <Logo width={40} height={40} />
-                  <span className="sr-only">Ezi Languages</span>
+                  <span>Ezi Languages</span>
                 </Link>
                 <MainNav isMobile userRole={userProfile?.role}/>
               </nav>
