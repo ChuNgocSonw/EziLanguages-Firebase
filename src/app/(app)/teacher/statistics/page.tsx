@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -23,6 +22,7 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 // Helper to create a Firestore-safe key from a sentence
 const createSafeKey = (sentence: string) => sentence.replace(/[.#$[\]/]/g, '_');
@@ -190,7 +190,9 @@ function StudentStatisticsTable({ students, totalAssignments, totalLessons, sele
             <p className="text-sm text-muted-foreground mb-4">
                 This class has <span className="font-semibold text-primary">{totalAssignments}</span> assigned {totalAssignments === 1 ? 'assignment' : 'assignments'} and <span className="font-semibold text-primary">{totalLessons}</span> available {totalLessons === 1 ? 'lesson' : 'lessons'}.
             </p>
-            <Table>
+            
+            {/* Desktop View: Table */}
+            <Table className="hidden md:table">
                 <TableHeader>
                     <TableRow>
                         <TableHead>Student</TableHead>
@@ -203,8 +205,7 @@ function StudentStatisticsTable({ students, totalAssignments, totalLessons, sele
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {students.map((student) => {
-                        return (
+                    {students.map((student) => (
                         <TableRow key={student.uid}>
                             <TableCell>
                                 <div className="flex items-center gap-3">
@@ -257,9 +258,54 @@ function StudentStatisticsTable({ students, totalAssignments, totalLessons, sele
                                 </div>
                             </TableCell>
                         </TableRow>
-                    )})}
+                    ))}
                 </TableBody>
             </Table>
+            
+            {/* Mobile View: Cards */}
+            <div className="md:hidden space-y-4">
+                {students.map((student) => (
+                    <Card key={student.uid}>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <CardTitle className="text-base">{student.name}</CardTitle>
+                                    <CardDescription className="text-xs">{student.email}</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm">
+                            <Separator />
+                             <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2">
+                                <div className="flex items-center gap-2"><Star className="h-4 w-4 text-yellow-500" /> XP: <span className="font-semibold">{student.xp}</span></div>
+                                <div className="flex items-center gap-2"><Flame className="h-4 w-4 text-orange-500" /> Streak: <span className="font-semibold">{student.streak}</span></div>
+                                <div className="flex items-center gap-2"><Award className="h-4 w-4 text-blue-500" /> Badges: <span className="font-semibold">{student.badgeCount}</span></div>
+                            </div>
+                            <Separator />
+                             <div className="space-y-2 pt-1">
+                                <div className="flex items-center justify-between">
+                                    <span className="flex items-center gap-2"><Mic className="h-4 w-4 text-indigo-500" /> Reading Units</span>
+                                    <span className="font-semibold">{student.readingUnitsCompleted} / {totalLessons}</span>
+                                </div>
+                                 <div className="flex items-center justify-between">
+                                    <span className="flex items-center gap-2"><Headphones className="h-4 w-4 text-cyan-500" /> Listening Units</span>
+                                    <span className="font-semibold">{student.listeningUnitsCompleted} / {totalLessons}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> Assignments</span>
+                                    <span className="font-semibold">{student.assignmentsCompletedCount} / {totalAssignments}</span>
+                                </div>
+                             </div>
+                        </CardContent>
+                        <CardFooter>
+                            <ReviewStudentAssignmentsDialog student={student} classId={selectedClassId!} />
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
         </>
     );
 }
@@ -364,6 +410,3 @@ export default function TeacherStatisticsPage() {
     );
 }
 
-    
-
-    
