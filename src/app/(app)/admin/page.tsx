@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
 
 
       <h2 className="text-xl font-bold tracking-tight mb-2">Management Tools</h2>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>User Management</CardTitle>
