@@ -179,6 +179,7 @@ export interface UserProfile {
   classId?: string;
   completedAssignments?: string[];
   completedAssignmentDetails?: CompletedAssignmentDetail[];
+  photoURL?: string | null;
 }
 
 export interface AdminUserView extends UserProfile {
@@ -194,6 +195,7 @@ export interface LeaderboardEntry {
     userId: string;
     name: string;
     value: number;
+    photoURL?: string | null;
 }
 
 export interface ChatSession {

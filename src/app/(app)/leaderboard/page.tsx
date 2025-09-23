@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useAuth } from "@/hooks/use-auth";
 import { LeaderboardEntry } from "@/lib/types";
 import { Loader2, Trophy, Award, Flame, Star, UserCircle } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -38,6 +38,11 @@ function LeaderboardTable({ data, unit }: { data: LeaderboardEntry[] | null, uni
             </div>
         );
     }
+    
+    const getInitials = (name?: string | null) => {
+      if (!name) return "U";
+      return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
 
     return (
         <div className="space-y-3 mt-4">
@@ -56,7 +61,8 @@ function LeaderboardTable({ data, unit }: { data: LeaderboardEntry[] | null, uni
                                 {entry.rank}
                             </span>
                             <Avatar className="h-9 w-9">
-                                <AvatarFallback><UserCircle className="h-6 w-6 text-muted-foreground"/></AvatarFallback>
+                                <AvatarImage src={entry.photoURL || ""} alt={entry.name} />
+                                <AvatarFallback>{getInitials(entry.name)}</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col">
                                 <h4 className={cn("font-semibold", isCurrentUser && "text-primary")}>

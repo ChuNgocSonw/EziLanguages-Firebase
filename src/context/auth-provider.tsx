@@ -596,6 +596,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             userId: doc.id,
             name: data.name,
             value: data[category] || 0,
+            photoURL: data.photoURL || null,
         };
     });
   }, []);
@@ -1200,5 +1201,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-    
