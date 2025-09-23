@@ -15,7 +15,7 @@ export default function LandingHeader() {
             <Button variant="ghost" asChild>
               <Link href="/login">Log In</Link>
             </Button>
-            <Button className="bg-accent hover:bg-accent/90" asChild>
+            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
               <Link href="/signup">Sign Up</Link>
             </Button>
           </div>
