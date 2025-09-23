@@ -47,7 +47,7 @@ export default function LandingPage() {
                             Start your journey to fluency today.
                         </p>
                         <div className="mt-8 flex justify-center gap-4">
-                            <Button size="lg" className="bg-accent hover:bg-accent/90" asChild>
+                            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
                                 <Link href="/signup">Get Started for Free <ArrowRight className="ml-2 h-5 w-5" /></Link>
                             </Button>
                         </div>
