@@ -76,14 +76,14 @@ export default function QuizDashboard() {
     return (
       <Card>
         <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <CardTitle className="font-headline text-2xl">Review Quiz: {selectedQuiz.topic}</CardTitle>
                     <CardDescription>
                         Completed on {format(selectedQuiz.completedAt.toDate(), 'PPP')}
                     </CardDescription>
                 </div>
-                 <Button variant="ghost" size="sm" onClick={handleBackToDashboard}>
+                 <Button variant="ghost" size="sm" onClick={handleBackToDashboard} className="w-full sm:w-auto">
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Back to History
                 </Button>
