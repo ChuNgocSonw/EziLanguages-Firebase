@@ -30,54 +30,64 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
 
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Current Role</TableHead>
-          <TableHead>Change Role</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {users.length > 0 ? (
-          users.map((user) => (
-          <TableRow key={user.uid}>
-            <TableCell className="font-medium">{user.name}</TableCell>
-            <TableCell>{user.email}</TableCell>
-            <TableCell>
-              <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize pointer-events-none">
-                {user.role === 'superadmin' ? 'Super Admin' : user.role}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              <Select
-                defaultValue={user.role}
-                onValueChange={(newRole: UserRole) => onRoleChange(user.uid, newRole)}
-                disabled={user.uid === currentUser?.uid || !canChangeRole(user.role)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="superadmin">Super Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </TableCell>
-          </TableRow>
-        ))
-        ) : (
-           <TableRow>
-              <TableCell colSpan={4} className="h-24 text-center">
-                No users found for this filter.
-              </TableCell>
+    <div className="overflow-x-auto">
+        <Table>
+          <TableHeader className="hidden md:table-header-group">
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Current Role</TableHead>
+              <TableHead>Change Role</TableHead>
             </TableRow>
-        )}
-      </TableBody>
-    </Table>
+          </TableHeader>
+          <TableBody>
+            {users.length > 0 ? (
+              users.map((user) => (
+              <TableRow key={user.uid} className="flex flex-col md:table-row mb-4 md:mb-0 border md:border-none rounded-lg p-2 md:p-0">
+                <TableCell className="font-medium flex justify-between items-center md:table-cell p-2 md:p-4">
+                  <span className="md:hidden font-semibold">Name</span>
+                  <span>{user.name}</span>
+                </TableCell>
+                <TableCell className="flex justify-between items-center md:table-cell p-2 md:p-4">
+                    <span className="md:hidden font-semibold">Email</span>
+                    <span className="truncate">{user.email}</span>
+                </TableCell>
+                <TableCell className="flex justify-between items-center md:table-cell p-2 md:p-4">
+                    <span className="md:hidden font-semibold">Current Role</span>
+                    <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize pointer-events-none">
+                    {user.role === 'superadmin' ? 'Super Admin' : user.role}
+                    </Badge>
+                </TableCell>
+                <TableCell className="flex justify-between items-center md:table-cell p-2 md:p-4">
+                    <span className="md:hidden font-semibold">Change Role</span>
+                    <Select
+                        defaultValue={user.role}
+                        onValueChange={(newRole: UserRole) => onRoleChange(user.uid, newRole)}
+                        disabled={user.uid === currentUser?.uid || !canChangeRole(user.role)}
+                    >
+                        <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="teacher">Teacher</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="superadmin">Super Admin</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </TableCell>
+              </TableRow>
+            ))
+            ) : (
+               <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No users found for this filter.
+                  </TableCell>
+                </TableRow>
+            )}
+          </TableBody>
+        </Table>
+    </div>
   );
 }
 
@@ -194,7 +204,7 @@ export default function UserManagementPage() {
           <CardDescription>View, filter, and assign roles to all registered users.</CardDescription>
           <div className="pt-2">
              <Select value={filter} onValueChange={handleFilterChange}>
-              <SelectTrigger className="w-[220px]">
+              <SelectTrigger className="w-full md:w-[220px]">
                 <SelectValue placeholder="Filter by role..." />
               </SelectTrigger>
               <SelectContent>
