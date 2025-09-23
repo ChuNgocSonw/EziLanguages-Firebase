@@ -328,9 +328,9 @@ export default function ReadingPage() {
                                             const safeKey = createSafeKey(sentence.text);
                                             const bestAttempt = userProfile?.pronunciationScores?.[safeKey];
                                             return (
-                                                <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
-                                                    <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">{sentence.text}</p>
-                                                    <div className="flex items-center gap-4">
+                                                <li key={sIndex} className="flex flex-col p-2 rounded-md hover:bg-muted">
+                                                    <p className="flex-1 mr-4 text-muted-foreground mb-2">{sentence.text}</p>
+                                                    <div className="flex items-center gap-2 self-end">
                                                         {bestAttempt ? (
                                                             <div className="flex items-center gap-2">
                                                                 <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100">
@@ -342,7 +342,7 @@ export default function ReadingPage() {
                                                                     </Badge>
                                                                 )}
                                                             </div>
-                                                        ) : <div className="w-[180px] md:w-[170px]"></div>}
+                                                        ) : <div className="w-1 md:w-auto"></div>}
                                                         <Button variant="outline" size="sm" onClick={() => handleSelectSentence(sentence)}>
                                                             <BookCheck className="mr-2 h-4 w-4" /> {bestAttempt ? "Improve" : "Practice"}
                                                         </Button>
