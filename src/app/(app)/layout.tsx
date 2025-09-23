@@ -170,7 +170,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Avatar>
-                  <AvatarImage src={user.photoURL ?? "https://picsum.photos/seed/user/40/40"} alt={user.displayName ?? ""} />
+                  <AvatarImage src={user.photoURL || ""} alt={user.displayName ?? ""} />
                   <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>
