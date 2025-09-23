@@ -133,12 +133,12 @@ export default function AdminDashboardPage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} paddingAngle={5}>
+                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={80} paddingAngle={5}>
                                     {stats?.roleDistribution.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
                                 </Pie>
-                                <ChartLegend content={<ChartLegendContent />} />
+                                <ChartLegend layout="vertical" verticalAlign="bottom" align="center" content={<ChartLegendContent />} />
                             </PieChart>
                         </ResponsiveContainer>
                     </ChartContainer>
