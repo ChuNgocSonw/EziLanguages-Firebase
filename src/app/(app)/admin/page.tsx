@@ -12,6 +12,7 @@ import { Pie, PieChart, ResponsiveContainer, Legend, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import type { AdminUserView } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 interface RoleDistribution {
@@ -126,7 +127,7 @@ export default function AdminDashboardPage() {
         <CardContent>
             {isLoading ? (
                  <div className="flex justify-center items-center h-[300px]">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Skeleton className="h-full w-full" />
                  </div>
                ) : (
                 <div className="h-[300px] w-full">
