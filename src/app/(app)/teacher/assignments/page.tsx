@@ -214,7 +214,7 @@ export default function TeacherAssignmentsPage() {
         description="Create, view, and manage quizzes for your classes."
       />
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Assignment List</CardTitle>
             <CardDescription>All the assignments you have created.</CardDescription>
@@ -232,7 +232,7 @@ export default function TeacherAssignmentsPage() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : assignments.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-4 md:space-y-0 md:grid md:gap-4 md:grid-cols-2 lg:grid-cols-3">
               {assignments.map((assignment) => {
                 const Icon = getAssignmentIcon(assignment.assignmentType);
                 const assignedClassNames = (assignment.assignedClasses || [])
