@@ -330,50 +330,50 @@ export default function TeacherFeedbackPage() {
                         <Accordion type="single" collapsible className="w-full">
                             {sentFeedback.map(fb => (
                                 <AccordionItem value={fb.id} key={fb.id}>
-                                    <div className="flex w-full items-start justify-between p-4 border-b">
-                                        <AccordionTrigger className="flex-1 font-medium transition-all hover:no-underline text-left p-0 [&>svg]:hidden">
-                                            <div className="w-full space-y-2">
-                                                <p className="font-semibold truncate hover:underline">{fb.title}</p>
-                                                <div className="flex flex-col items-start gap-y-1 text-sm text-muted-foreground font-normal sm:flex-row sm:items-center sm:gap-x-4">
-                                                    <div className="flex items-center gap-1 truncate hover:underline">
-                                                        <User className="h-3 w-3 shrink-0" />
-                                                        <span>To: {fb.studentName}</span>
-                                                    </div>
-                                                     <div className="flex items-center gap-1 hover:underline">
+                                    <div className="flex items-center">
+                                        <AccordionTrigger className="flex-1 hover:no-underline [&_svg.lucide-chevron-down]:hidden">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full pr-4 text-left">
+                                                <div className="flex items-center gap-3 mb-2 sm:mb-0">
+                                                    <span className="font-semibold">{fb.title}</span>
+                                                </div>
+                                                <div className="text-sm text-muted-foreground font-normal flex flex-wrap items-center gap-x-4 gap-y-1 sm:ml-auto">
+                                                    <span className="flex items-center gap-1">
+                                                        <User className="h-3 w-3" />
+                                                        To: {fb.studentName}
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
                                                         <Calendar className="h-3 w-3" />
-                                                        <span>Sent: {format(fb.createdAt.toDate(), 'PPP')}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
+                                                        {format(fb.createdAt.toDate(), 'PPP')}
+                                                    </span>
+                                                     <span className="flex items-center gap-1">
                                                         {fb.isRead ? <Check className="h-4 w-4 text-green-600"/> : <ChevronRight className="h-4 w-4"/>}
-                                                        <span>{fb.isRead ? "Read" : "Sent"}</span>
-                                                    </div>
+                                                        {fb.isRead ? "Read" : "Sent"}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </AccordionTrigger>
-                                        <div className="pl-4">
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
-                                                        {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This will permanently delete this feedback. The student will no longer be able to see it.</AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                                                            Yes, delete
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" disabled={isDeleting === fb.id} className="shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                                                    {isDeleting === fb.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>This will permanently delete this feedback. The student will no longer be able to see it.</AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteFeedback(fb.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                                                        Yes, delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                     <AccordionContent>
-                                        <div className="p-2 bg-muted/50 rounded-md">
+                                        <div className="p-4 bg-muted/50 rounded-md">
                                             <div className="whitespace-pre-wrap break-words">{fb.content}</div>
                                         </div>
                                     </AccordionContent>
