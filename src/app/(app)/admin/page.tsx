@@ -123,43 +123,8 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      <h2 className="text-xl font-bold tracking-tight mb-2">Management Tools</h2>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>User Management</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <p className="text-sm text-muted-foreground">
-              View, edit, and assign roles to all users in the system.
-            </p>
-          </CardContent>
-          <CardFooter>
-             <Button className="w-full" asChild>
-                <Link href="/admin/user-management">
-                    Manage Users <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-             </Button>
-          </CardFooter>
-        </Card>
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Content Management</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <p className="text-sm text-muted-foreground">
-              View and manage all learning content like lessons and exercises.
-            </p>
-          </CardContent>
-          <CardFooter>
-             <Button className="w-full" asChild>
-                <Link href="/admin/content-management">
-                    Manage Content <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-             </Button>
-          </CardFooter>
-        </Card>
-         <Card className="md:col-span-2">
+      <div className="grid grid-cols-1 gap-6">
+         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users2 className="h-5 w-5" />
@@ -192,6 +157,46 @@ export default function AdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold tracking-tight">Management Tools</h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Card className="flex flex-col">
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <p className="text-sm text-muted-foreground">
+                  View, edit, and assign roles to all users in the system.
+                </p>
+              </CardContent>
+              <CardFooter>
+                <Button className="w-full" asChild>
+                    <Link href="/admin/user-management">
+                        Manage Users <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+            <Card className="flex flex-col">
+              <CardHeader>
+                <CardTitle>Content Management</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <p className="text-sm text-muted-foreground">
+                  View and manage all learning content like lessons and exercises.
+                </p>
+              </CardContent>
+              <CardFooter>
+                <Button className="w-full" asChild>
+                    <Link href="/admin/content-management">
+                        Manage Content <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
       </div>
     </>
   );
