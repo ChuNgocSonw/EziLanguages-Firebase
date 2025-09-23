@@ -106,7 +106,7 @@ export default function TeacherClassesPage() {
         description="Create and manage your classes here."
       />
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Class List</CardTitle>
             <CardDescription>All the classes you have created.</CardDescription>
@@ -159,14 +159,14 @@ export default function TeacherClassesPage() {
           ) : classes.length > 0 ? (
             <div className="space-y-3">
               {classes.map((c) => (
-                <div key={c.id} className="flex items-center justify-between p-3 rounded-md border">
-                  <div>
+                <div key={c.id} className="flex flex-col items-start gap-3 p-3 rounded-md border sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex-1">
                     <h4 className="font-semibold">{c.className}</h4>
                     <p className="text-sm text-muted-foreground">
                       {c.studentIds.length} student(s)
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-center">
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/teacher/classes/${c.id}`}>
                         Manage <ArrowRight className="ml-2 h-4 w-4" />
