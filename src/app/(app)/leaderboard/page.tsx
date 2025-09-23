@@ -52,14 +52,14 @@ function LeaderboardTable({ data, unit }: { data: LeaderboardEntry[] | null, uni
                             <Avatar className="h-9 w-9">
                                 <AvatarFallback><UserCircle className="h-6 w-6 text-muted-foreground"/></AvatarFallback>
                             </Avatar>
-                            <div>
+                            <div className="flex flex-col">
                                 <h4 className={cn("font-semibold", isCurrentUser && "text-primary")}>
                                     {entry.name || (isCurrentUser ? user.displayName : 'Anonymous User')}
                                     {isCurrentUser && " (You)"}
                                 </h4>
                             </div>
                         </div>
-                        <div className="font-bold text-lg">
+                        <div className="font-bold text-lg text-right">
                             {entry.value} {unit}
                         </div>
                     </div>
@@ -115,13 +115,16 @@ export default function LeaderboardPage() {
                     <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as LeaderboardCategory)}>
                         <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="badges">
-                                <Award className="mr-2 h-5 w-5 text-blue-500" /> All-Time Badges
+                                <Award className="mr-0 sm:mr-2 h-5 w-5 text-blue-500" />
+                                <span className="hidden sm:inline">All-Time Badges</span>
                             </TabsTrigger>
                             <TabsTrigger value="weekly-xp">
-                                <Star className="mr-2 h-5 w-5 text-yellow-500" /> Weekly XP
+                                <Star className="mr-0 sm:mr-2 h-5 w-5 text-yellow-500" /> 
+                                <span className="hidden sm:inline">Weekly XP</span>
                             </TabsTrigger>
                             <TabsTrigger value="streak">
-                                <Flame className="mr-2 h-5 w-5 text-orange-500" /> Daily Streak
+                                <Flame className="mr-0 sm:mr-2 h-5 w-5 text-orange-500" /> 
+                                <span className="hidden sm:inline">Daily Streak</span>
                             </TabsTrigger>
                         </TabsList>
                         <TabsContent value="badges" className="mt-4">
