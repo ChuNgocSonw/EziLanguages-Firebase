@@ -90,7 +90,7 @@ export default function ContentManagementPage() {
         description="Create, view, and manage all lesson content in the application."
       />
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Lesson Library</CardTitle>
             <CardDescription>
