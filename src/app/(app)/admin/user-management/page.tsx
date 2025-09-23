@@ -31,8 +31,9 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
 
   return (
     <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="hidden md:table-header-group">
+        {/* Desktop View: Table */}
+        <Table className="hidden md:table">
+          <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
@@ -43,23 +44,15 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
           <TableBody>
             {users.length > 0 ? (
               users.map((user) => (
-              <TableRow key={user.uid} className="flex flex-col md:table-row mb-4 md:mb-0 border md:border-none rounded-lg p-2 md:p-0">
-                <TableCell className="font-medium flex justify-between items-center md:table-cell p-2 md:p-4">
-                  <span className="md:hidden font-semibold">Name</span>
-                  <span>{user.name}</span>
-                </TableCell>
-                <TableCell className="flex justify-between items-center md:table-cell p-2 md:p-4">
-                    <span className="md:hidden font-semibold">Email</span>
-                    <span className="truncate">{user.email}</span>
-                </TableCell>
-                <TableCell className="flex justify-between items-center md:table-cell p-2 md:p-4">
-                    <span className="md:hidden font-semibold">Current Role</span>
+              <TableRow key={user.uid}>
+                <TableCell className="font-medium">{user.name}</TableCell>
+                <TableCell className="truncate">{user.email}</TableCell>
+                <TableCell>
                     <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize pointer-events-none">
                     {user.role === 'superadmin' ? 'Super Admin' : user.role}
                     </Badge>
                 </TableCell>
-                <TableCell className="flex justify-between items-center md:table-cell p-2 md:p-4">
-                    <span className="md:hidden font-semibold">Change Role</span>
+                <TableCell>
                     <Select
                         defaultValue={user.role}
                         onValueChange={(newRole: UserRole) => onRoleChange(user.uid, newRole)}
@@ -87,6 +80,54 @@ function UserTable({ users, onRoleChange, getRoleBadgeVariant }: { users: AdminU
             )}
           </TableBody>
         </Table>
+        
+        {/* Mobile View: Cards */}
+        <div className="block md:hidden space-y-4">
+             {users.length > 0 ? (
+              users.map((user) => (
+                <Card key={user.uid}>
+                    <CardContent className="p-4 space-y-3">
+                        <div className="flex justify-between items-center">
+                            <span className="font-semibold text-muted-foreground">Name</span>
+                            <span className="font-medium">{user.name}</span>
+                        </div>
+                         <div className="flex justify-between items-center">
+                            <span className="font-semibold text-muted-foreground">Email</span>
+                            <span className="truncate">{user.email}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="font-semibold text-muted-foreground">Current Role</span>
+                             <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize pointer-events-none">
+                                {user.role === 'superadmin' ? 'Super Admin' : user.role}
+                            </Badge>
+                        </div>
+                        <div className="space-y-2 pt-2">
+                             <span className="font-semibold text-muted-foreground">Change Role</span>
+                            <Select
+                                defaultValue={user.role}
+                                onValueChange={(newRole: UserRole) => onRoleChange(user.uid, newRole)}
+                                disabled={user.uid === currentUser?.uid || !canChangeRole(user.role)}
+                            >
+                                <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select a role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="student">Student</SelectItem>
+                                    <SelectItem value="teacher">Teacher</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="superadmin">Super Admin</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </CardContent>
+                </Card>
+              ))
+            ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                    No users found for this filter.
+                </div>
+            )}
+        </div>
     </div>
   );
 }
