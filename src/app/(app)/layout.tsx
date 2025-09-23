@@ -143,7 +143,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
               <SheetHeader>
-                 <SheetTitle>Menu</SheetTitle>
+                 
               </SheetHeader>
               <nav className="grid gap-2 text-lg font-medium">
                 <Link
