@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, UseFormReturn, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import PageHeader from "@/components/page-header";
@@ -118,6 +118,255 @@ type ManualListeningFormData = z.infer<typeof manualListeningSchema>;
 interface AssignmentFormProps {
     existingAssignment?: Assignment;
 }
+
+
+// --- SUB-COMPONENTS FOR CONTENT CREATION (MOVED OUTSIDE) ---
+
+const QuizBuilder = ({ generationForm, isGenerating, onGenerate, onAddManual, onAddFromAvailable, onRemoveFromSelected, availableQuestions, selectedQuestions }: {
+    generationForm: UseFormReturn<GenerationFormData>;
+    isGenerating: boolean;
+    onGenerate: (data: GenerationFormData) => void;
+    onAddManual: (question: QuizQuestion) => void;
+    onAddFromAvailable: (index: number) => void;
+    onRemoveFromSelected: (index: number) => void;
+    availableQuestions: QuizQuestion[];
+    selectedQuestions: any[];
+}) => (
+  <>
+      <Card>
+          <Form {...generationForm}>
+              <form>
+                  <CardHeader><CardTitle>Generate with AI</CardTitle></CardHeader>
+                  <CardContent className="space-y-4">
+                      <FormField control={generationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Question Topic</FormLabel><FormControl><Input placeholder="e.g., Common English Idioms" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <FormField control={generationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
+                          <FormField control={generationForm.control} name="questionType" render={({ field }) => (<FormItem><FormLabel>Question Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="multiple-choice">Multiple Choice</SelectItem><SelectItem value="true-false">True/False</SelectItem><SelectItem value="fill-in-the-blank">Fill-in-the-Blank</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
+                          <FormField control={generationForm.control} name="numberOfQuestions" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                      </div>
+                  </CardContent>
+                  <CardFooter><Button type="button" onClick={generationForm.handleSubmit(onGenerate)} disabled={isGenerating} className="bg-accent hover:bg-accent/90 text-accent-foreground">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Questions"}</Button></CardFooter>
+              </form>
+          </Form>
+      </Card>
+      <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
+          <div className="p-4 border rounded-md space-y-3">
+              <h4 className="font-medium text-center mb-2">Available AI-Generated Questions</h4>
+              {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
+              {!isGenerating && availableQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
+              {availableQuestions.map((q, index) => (
+                  <div key={q.id || index} className="p-3 border rounded-md bg-muted/30 relative">
+                      <p className="font-medium pr-8">{q.question}</p>
+                      {q.options && q.options.length > 0 && (
+                          <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
+                              {q.options.map((opt, i) => (
+                                  <li key={i} className={cn(
+                                      "pl-2",
+                                      opt.includes(q.answer) ? "font-semibold text-green-700" : ""
+                                  )}>
+                                     {opt}
+                                  </li>
+                              ))}
+                          </ul>
+                      )}
+                       {q.type !== 'multiple-choice' && <p className="text-sm font-semibold text-green-700 mt-1">Answer: {q.answer}</p>}
+                      <Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => onAddFromAvailable(index)}><PlusCircle className="h-4 w-4" /></Button>
+                  </div>
+              ))}
+          </div>
+          <ManualQuestionForm onAddQuestion={onAddManual} />
+      </div>
+  </>
+);
+
+const ReadingBuilder = ({ generationForm, isGenerating, onGenerate, onAddManual, onAddFromAvailable, availableSentences }: {
+    generationForm: UseFormReturn<ReadingGenerationFormData>;
+    isGenerating: boolean;
+    onGenerate: (data: ReadingGenerationFormData) => void;
+    onAddManual: (sentence: ReadingSentence) => void;
+    onAddFromAvailable: (index: number) => void;
+    availableSentences: ReadingSentence[];
+}) => {
+  const form = useForm<ManualReadingFormData>({ resolver: zodResolver(manualReadingSchema), defaultValues: { unit: "", text: "" } });
+  const handleAdd = (data: ManualReadingFormData) => { onAddManual(data); form.reset(); };
+  return (<>
+      <Card>
+          <Form {...generationForm}>
+              <form>
+                  <CardHeader><CardTitle>Generate with AI</CardTitle></CardHeader>
+                  <CardContent className="space-y-4">
+                      <FormField control={generationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Sentence Topic</FormLabel><FormControl><Input placeholder="e.g., Ordering food at a restaurant" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField control={generationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
+                          <FormField control={generationForm.control} name="numberOfSentences" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                      </div>
+                  </CardContent>
+                  <CardFooter><Button type="button" onClick={generationForm.handleSubmit(onGenerate)} disabled={isGenerating} className="bg-accent hover:bg-accent/90 text-accent-foreground">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Sentences"}</Button></CardFooter>
+              </form>
+          </Form>
+      </Card>
+      <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
+           <div className="p-4 border rounded-md space-y-3">
+              <h4 className="font-medium text-center mb-2">Available AI-Generated Sentences</h4>
+              {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
+              {!isGenerating && availableSentences.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated sentences will appear here.</p></div>)}
+              {availableSentences.map((s, index) => (
+                  <div key={index} className="p-3 border rounded-md bg-muted/30 relative">
+                      <p className="font-medium pr-8">{s.text}</p>
+                      <Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => onAddFromAvailable(index)}><PlusCircle className="h-4 w-4" /></Button>
+                  </div>
+              ))}
+          </div>
+          <Card><CardHeader><CardTitle>Add Reading Sentence Manually</CardTitle><CardDescription>Add sentences one by one for the reading assignment.</CardDescription></CardHeader><Form {...form}><form><CardContent className="space-y-4"><FormField control={form.control} name="unit" render={({ field }) => (<FormItem><FormLabel>Unit / Topic</FormLabel><FormControl><Input placeholder="e.g., Unit 1: Greetings" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence</FormLabel><FormControl><Textarea placeholder="Enter the sentence students will read." {...field} /></FormControl><FormMessage /></FormItem>)} /></CardContent><CardFooter><Button type="button" onClick={form.handleSubmit(handleAdd)} className="bg-accent hover:bg-accent/90 text-accent-foreground"><PlusCircle className="mr-2 h-4 w-4" /> Add Sentence</Button></CardFooter></form></Form></Card>
+      </div>
+  </>);
+};
+
+const ListeningBuilder = ({ generationForm, isGenerating, onGenerate, onAddManual, onAddFromAvailable, availableExercises }: {
+    generationForm: UseFormReturn<ListeningGenerationFormData>;
+    isGenerating: boolean;
+    onGenerate: (data: ListeningGenerationFormData) => void;
+    onAddManual: (exercise: ListeningExercise) => void;
+    onAddFromAvailable: (index: number) => void;
+    availableExercises: ListeningExercise[];
+}) => {
+  const manualForm = useForm<ManualListeningFormData>({ resolver: zodResolver(manualListeningSchema), defaultValues: { type: 'typing', text: "", options: ["", "", ""], answer: "" } });
+  const type = useWatch({ control: manualForm.control, name: 'type' });
+  const options = useWatch({ control: manualForm.control, name: 'options' });
+  const handleAdd = (data: ManualListeningFormData) => { onAddManual(data as ListeningExercise); manualForm.reset(); };
+  
+  return (<>
+      <Card>
+          <Form {...generationForm}>
+              <form>
+                  <CardHeader><CardTitle>Generate with AI</CardTitle></CardHeader>
+                  <CardContent className="space-y-4">
+                      <FormField control={generationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Exercise Topic</FormLabel><FormControl><Input placeholder="e.g., Talking about the weather" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField control={generationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
+                          <FormField control={generationForm.control} name="numberOfExercises" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                      </div>
+                  </CardContent>
+                  <CardFooter><Button type="button" onClick={generationForm.handleSubmit(onGenerate)} disabled={isGenerating} className="bg-accent hover:bg-accent/90 text-accent-foreground">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Exercises"}</Button></CardFooter>
+              </form>
+          </Form>
+      </Card>
+      <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
+          <div className="p-4 border rounded-md space-y-3">
+              <h4 className="font-medium text-center mb-2">Available AI-Generated Exercises</h4>
+              {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
+              {!isGenerating && availableExercises.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated exercises will appear here.</p></div>)}
+              {availableExercises.map((ex, index) => (
+                  <div key={ex.id || index} className="p-3 border rounded-md bg-muted/30 relative">
+                      <p className="font-medium pr-8">{ex.text}</p>
+                      <p className="text-sm text-muted-foreground">Type: {ex.type}</p>
+                      <Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => onAddFromAvailable(index)}><PlusCircle className="h-4 w-4" /></Button>
+                  </div>
+              ))}
+          </div>
+          <Card><CardHeader><CardTitle>Add Listening Exercise Manually</CardTitle></CardHeader><Form {...manualForm}><form><CardContent className="space-y-4"><FormField control={manualForm.control} name="type" render={({ field }) => (<FormItem><FormLabel>Exercise Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="typing">Type what you hear</SelectItem><SelectItem value="mcq">Multiple Choice</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={manualForm.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence to be heard</FormLabel><FormControl><Textarea placeholder="This is the text that will be converted to audio." {...field} /></FormControl><FormMessage /></FormItem>)} />{type === 'mcq' && (<><FormLabel>Options (Provide 3 choices)</FormLabel>{[0, 1, 2].map(i => (<FormField key={i} control={manualForm.control} name={`options.${i}`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`Option ${i + 1}`} {...field} /></FormControl><FormMessage /></FormItem>)} />))}<FormField control={manualForm.control} name="answer" render={({ field }) => (<FormItem><FormLabel>Correct Answer</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value}>{options?.map((opt, i) => opt.trim() && (<FormItem key={i} className="flex items-center space-x-2"><FormControl><RadioGroupItem value={opt} /></FormControl><FormLabel className="font-normal">{opt}</FormLabel></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} /></>)}</CardContent><CardFooter><Button type="button" onClick={manualForm.handleSubmit(handleAdd)} className="bg-accent hover:bg-accent/90 text-accent-foreground"><PlusCircle className="mr-2 h-4 w-4" /> Add Exercise</Button></CardFooter></form></Form></Card>
+      </div>
+  </>);
+};
+
+const ManualQuestionForm = ({ onAddQuestion }: { onAddQuestion: (q: QuizQuestion) => void }) => {
+  const form = useForm<ManualQuestionFormData>({ resolver: zodResolver(manualQuestionSchema), defaultValues: { type: 'multiple-choice', question: "", options: ["", "", "", ""], answer: "" } });
+  const questionType = useWatch({ control: form.control, name: 'type' });
+  const options = useWatch({ control: form.control, name: 'options' });
+  const handleManualSubmit = (data: ManualQuestionFormData) => { const finalQuestion: QuizQuestion = { id: new Date().getTime().toString(), type: data.type, question: data.question, answer: data.answer, options: data.type === 'multiple-choice' ? data.options : [], isAI: false }; onAddQuestion(finalQuestion); form.reset(); };
+  return (
+    <Card>
+      <CardHeader>
+          <CardTitle>Add Question Manually</CardTitle>
+      </CardHeader>
+      <CardContent>
+          <Form {...form}>
+              <form className="space-y-4">
+                  <FormField control={form.control} name="type" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Question Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                              <SelectContent>
+                                  <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
+                                  <SelectItem value="true-false">True/False</SelectItem>
+                                  <SelectItem value="fill-in-the-blank">Fill-in-the-Blank</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+                  <FormField control={form.control} name="question" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Question Text</FormLabel>
+                          <FormControl><Textarea placeholder="Enter the question here..." {...field} /></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+                  {questionType === 'multiple-choice' && (
+                      <>
+                          {[0, 1, 2, 3].map(i => (
+                              <FormField key={i} control={form.control} name={`options.${i}`} render={({ field }) => (
+                                  <FormItem>
+                                      <FormLabel>Option {i + 1}</FormLabel>
+                                      <FormControl><Input {...field} /></FormControl>
+                                  </FormItem>
+                              )}/>
+                          ))}
+                          <FormField control={form.control} name="answer" render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Correct Answer</FormLabel>
+                                  <FormControl>
+                                      <RadioGroup onValueChange={field.onChange} value={field.value}>
+                                          {options?.map((opt, i) => opt.trim() && (
+                                              <FormItem key={i} className="flex items-center space-x-2">
+                                                  <FormControl><RadioGroupItem value={opt} /></FormControl>
+                                                  <FormLabel className="font-normal">{opt}</FormLabel>
+                                              </FormItem>
+                                          ))}
+                                      </RadioGroup>
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )} />
+                      </>
+                  )}
+                  {questionType === 'true-false' && (
+                      <FormField control={form.control} name="answer" render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Correct Answer</FormLabel>
+                              <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
+                                  <FormItem className="flex items-center space-x-2">
+                                      <FormControl><RadioGroupItem value="True" /></FormControl>
+                                      <FormLabel className="font-normal">True</FormLabel>
+                                  </FormItem>
+                                  <FormItem className="flex items-center space-x-2">
+                                      <FormControl><RadioGroupItem value="False" /></FormControl>
+                                      <FormLabel className="font-normal">False</FormLabel>
+                                  </FormItem>
+                              </RadioGroup>
+                              <FormMessage />
+                          </FormItem>
+                      )} />
+                  )}
+                  {questionType === 'fill-in-the-blank' && (
+                      <FormField control={form.control} name="answer" render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Correct Answer</FormLabel>
+                              <FormControl><Input placeholder="Enter the word(s) that fill the blank" {...field} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )} />
+                  )}
+                  <Button type="button" onClick={form.handleSubmit(handleManualSubmit)} className="bg-accent hover:bg-accent/90 text-accent-foreground"><PlusCircle className="mr-2 h-4 w-4" /> Add This Question</Button>
+              </form>
+          </Form>
+      </CardContent>
+    </Card>
+  );
+};
+
+
 
 export default function AssignmentForm({ existingAssignment }: AssignmentFormProps) {
   const router = useRouter();
@@ -355,236 +604,35 @@ export default function AssignmentForm({ existingAssignment }: AssignmentFormPro
        toast({ title: "Save Failed", description: error.message || "An unexpected error occurred.", variant: "destructive" });
     } finally { setIsSaving(false); }
   };
-  
-  // --- SUB-COMPONENTS FOR CONTENT CREATION ---
-
-  const QuizBuilder = () => (
-    <>
-        <Card>
-            <Form {...generationForm}>
-                <form>
-                    <CardHeader><CardTitle>Generate with AI</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <FormField control={generationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Question Topic</FormLabel><FormControl><Input placeholder="e.g., Common English Idioms" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <FormField control={generationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={generationForm.control} name="questionType" render={({ field }) => (<FormItem><FormLabel>Question Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="multiple-choice">Multiple Choice</SelectItem><SelectItem value="true-false">True/False</SelectItem><SelectItem value="fill-in-the-blank">Fill-in-the-Blank</SelectItem></SelectContent></Select><FormMessage /></FormItem>)}/>
-                            <FormField control={generationForm.control} name="numberOfQuestions" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        </div>
-                    </CardContent>
-                    <CardFooter><Button type="button" onClick={generationForm.handleSubmit(handleGenerateQuestions)} disabled={isGenerating} className="bg-accent hover:bg-accent/90 text-accent-foreground">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Questions"}</Button></CardFooter>
-                </form>
-            </Form>
-        </Card>
-        <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
-            <div className="p-4 border rounded-md space-y-3">
-                <h4 className="font-medium text-center mb-2">Available AI-Generated Questions</h4>
-                {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
-                {!isGenerating && availableAiQuestions.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated questions will appear here.</p></div>)}
-                {availableAiQuestions.map((q, index) => (
-                    <div key={q.id || index} className="p-3 border rounded-md bg-muted/30 relative">
-                        <p className="font-medium pr-8">{q.question}</p>
-                        {q.options && q.options.length > 0 && (
-                            <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
-                                {q.options.map((opt, i) => (
-                                    <li key={i} className={cn(
-                                        "pl-2",
-                                        opt.includes(q.answer) ? "font-semibold text-green-700" : ""
-                                    )}>
-                                       {opt}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                         {q.type !== 'multiple-choice' && <p className="text-sm font-semibold text-green-700 mt-1">Answer: {q.answer}</p>}
-                        <Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddQuestionToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
-                    </div>
-                ))}
-            </div>
-            <ManualQuestionForm onAddQuestion={handleAddManualQuestion} />
-        </div>
-    </>
-  );
-
-  const ReadingBuilder = () => {
-    const form = useForm<ManualReadingFormData>({ resolver: zodResolver(manualReadingSchema), defaultValues: { unit: "", text: "" } });
-    const handleAdd = (data: ManualReadingFormData) => { handleAddManualReading(data); form.reset(); };
-    return (<>
-        <Card>
-            <Form {...readingGenerationForm}>
-                <form>
-                    <CardHeader><CardTitle>Generate with AI</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <FormField control={readingGenerationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Sentence Topic</FormLabel><FormControl><Input placeholder="e.g., Ordering food at a restaurant" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField control={readingGenerationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={readingGenerationForm.control} name="numberOfSentences" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        </div>
-                    </CardContent>
-                    <CardFooter><Button type="button" onClick={readingGenerationForm.handleSubmit(handleGenerateSentences)} disabled={isGenerating} className="bg-accent hover:bg-accent/90 text-accent-foreground">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Sentences"}</Button></CardFooter>
-                </form>
-            </Form>
-        </Card>
-        <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
-             <div className="p-4 border rounded-md space-y-3">
-                <h4 className="font-medium text-center mb-2">Available AI-Generated Sentences</h4>
-                {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
-                {!isGenerating && availableAiSentences.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated sentences will appear here.</p></div>)}
-                {availableAiSentences.map((s, index) => (
-                    <div key={index} className="p-3 border rounded-md bg-muted/30 relative">
-                        <p className="font-medium pr-8">{s.text}</p>
-                        <Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddSentenceToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
-                    </div>
-                ))}
-            </div>
-            <Card><CardHeader><CardTitle>Add Reading Sentence Manually</CardTitle><CardDescription>Add sentences one by one for the reading assignment.</CardDescription></CardHeader><Form {...form}><form><CardContent className="space-y-4"><FormField control={form.control} name="unit" render={({ field }) => (<FormItem><FormLabel>Unit / Topic</FormLabel><FormControl><Input placeholder="e.g., Unit 1: Greetings" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence</FormLabel><FormControl><Textarea placeholder="Enter the sentence students will read." {...field} /></FormControl><FormMessage /></FormItem>)} /></CardContent><CardFooter><Button type="button" onClick={form.handleSubmit(handleAdd)} className="bg-accent hover:bg-accent/90 text-accent-foreground"><PlusCircle className="mr-2 h-4 w-4" /> Add Sentence</Button></CardFooter></form></Form></Card>
-        </div>
-    </>);
-  };
-
-  const ListeningBuilder = () => {
-    const manualForm = useForm<ManualListeningFormData>({ resolver: zodResolver(manualListeningSchema), defaultValues: { type: 'typing', text: "", options: ["", "", ""], answer: "" } });
-    const type = useWatch({ control: manualForm.control, name: 'type' });
-    const options = useWatch({ control: manualForm.control, name: 'options' });
-    const handleAdd = (data: ManualListeningFormData) => { handleAddManualListening(data as ListeningExercise); manualForm.reset(); };
-    
-    return (<>
-        <Card>
-            <Form {...listeningGenerationForm}>
-                <form>
-                    <CardHeader><CardTitle>Generate with AI</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <FormField control={listeningGenerationForm.control} name="topic" render={({ field }) => (<FormItem><FormLabel>Exercise Topic</FormLabel><FormControl><Input placeholder="e.g., Talking about the weather" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField control={listeningGenerationForm.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex items-center space-x-4"><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Easy" /></FormControl><FormLabel className="font-normal">Easy</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Medium" /></FormControl><FormLabel className="font-normal">Medium</FormLabel></FormItem><FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="Hard" /></FormControl><FormLabel className="font-normal">Hard</FormLabel></FormItem></RadioGroup></FormControl><FormMessage /></FormItem>)}/>
-                            <FormField control={listeningGenerationForm.control} name="numberOfExercises" render={({ field }) => (<FormItem><FormLabel>Number to Generate</FormLabel><FormControl><Input type="number" min="1" max="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                        </div>
-                    </CardContent>
-                    <CardFooter><Button type="button" onClick={listeningGenerationForm.handleSubmit(handleGenerateExercises)} disabled={isGenerating} className="bg-accent hover:bg-accent/90 text-accent-foreground">{isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGenerating ? "Generating..." : "Generate Exercises"}</Button></CardFooter>
-                </form>
-            </Form>
-        </Card>
-        <div className="grid md:grid-cols-2 gap-6 items-start mt-6">
-            <div className="p-4 border rounded-md space-y-3">
-                <h4 className="font-medium text-center mb-2">Available AI-Generated Exercises</h4>
-                {isGenerating && <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}
-                {!isGenerating && availableAiExercises.length === 0 && (<div className="text-center text-muted-foreground pt-12"><Wand2 className="mx-auto h-8 w-8 mb-2" /><p>Generated exercises will appear here.</p></div>)}
-                {availableAiExercises.map((ex, index) => (
-                    <div key={ex.id || index} className="p-3 border rounded-md bg-muted/30 relative">
-                        <p className="font-medium pr-8">{ex.text}</p>
-                        <p className="text-sm text-muted-foreground">Type: {ex.type}</p>
-                        <Button type="button" size="icon" variant="ghost" className="absolute top-2 right-2 h-7 w-7 text-green-600 hover:bg-[#2E7D32] hover:text-white" onClick={() => handleAddExerciseToSelection(index)}><PlusCircle className="h-4 w-4" /></Button>
-                    </div>
-                ))}
-            </div>
-            <Card><CardHeader><CardTitle>Add Listening Exercise Manually</CardTitle></CardHeader><Form {...manualForm}><form><CardContent className="space-y-4"><FormField control={manualForm.control} name="type" render={({ field }) => (<FormItem><FormLabel>Exercise Type</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="typing">Type what you hear</SelectItem><SelectItem value="mcq">Multiple Choice</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} /><FormField control={manualForm.control} name="text" render={({ field }) => (<FormItem><FormLabel>Sentence to be heard</FormLabel><FormControl><Textarea placeholder="This is the text that will be converted to audio." {...field} /></FormControl><FormMessage /></FormItem>)} />{type === 'mcq' && (<><FormLabel>Options (Provide 3 choices)</FormLabel>{[0, 1, 2].map(i => (<FormField key={i} control={manualForm.control} name={`options.${i}`} render={({ field }) => (<FormItem><FormControl><Input placeholder={`Option ${i + 1}`} {...field} /></FormControl><FormMessage /></FormItem>)} />))}<FormField control={manualForm.control} name="answer" render={({ field }) => (<FormItem><FormLabel>Correct Answer</FormLabel><FormControl><RadioGroup onValueChange={field.onChange} value={field.value}>{options?.map((opt, i) => opt.trim() && (<FormItem key={i} className="flex items-center space-x-2"><FormControl><RadioGroupItem value={opt} /></FormControl><FormLabel className="font-normal">{opt}</FormLabel></FormItem>))}</RadioGroup></FormControl><FormMessage /></FormItem>)} /></>)}</CardContent><CardFooter><Button type="button" onClick={manualForm.handleSubmit(handleAdd)} className="bg-accent hover:bg-accent/90 text-accent-foreground"><PlusCircle className="mr-2 h-4 w-4" /> Add Exercise</Button></CardFooter></form></Form></Card>
-        </div>
-    </>);
-  };
-
-  const ManualQuestionForm = ({ onAddQuestion }: { onAddQuestion: (q: QuizQuestion) => void }) => {
-    const form = useForm<ManualQuestionFormData>({ resolver: zodResolver(manualQuestionSchema), defaultValues: { type: 'multiple-choice', question: "", options: ["", "", "", ""], answer: "" } });
-    const questionType = useWatch({ control: form.control, name: 'type' });
-    const options = useWatch({ control: form.control, name: 'options' });
-    const handleManualSubmit = (data: ManualQuestionFormData) => { const finalQuestion: QuizQuestion = { id: new Date().getTime().toString(), type: data.type, question: data.question, answer: data.answer, options: data.type === 'multiple-choice' ? data.options : [], isAI: false }; onAddQuestion(finalQuestion); form.reset(); };
-    return (
-      <Card>
-        <CardHeader>
-            <CardTitle>Add Question Manually</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <Form {...form}>
-                <form className="space-y-4">
-                    <FormField control={form.control} name="type" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Question Type</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                                    <SelectItem value="true-false">True/False</SelectItem>
-                                    <SelectItem value="fill-in-the-blank">Fill-in-the-Blank</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
-                    <FormField control={form.control} name="question" render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Question Text</FormLabel>
-                            <FormControl><Textarea placeholder="Enter the question here..." {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
-                    {questionType === 'multiple-choice' && (
-                        <>
-                            {[0, 1, 2, 3].map(i => (
-                                <FormField key={i} control={form.control} name={`options.${i}`} render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Option {i + 1}</FormLabel>
-                                        <FormControl><Input {...field} /></FormControl>
-                                    </FormItem>
-                                )}/>
-                            ))}
-                            <FormField control={form.control} name="answer" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Correct Answer</FormLabel>
-                                    <FormControl>
-                                        <RadioGroup onValueChange={field.onChange} value={field.value}>
-                                            {options?.map((opt, i) => opt.trim() && (
-                                                <FormItem key={i} className="flex items-center space-x-2">
-                                                    <FormControl><RadioGroupItem value={opt} /></FormControl>
-                                                    <FormLabel className="font-normal">{opt}</FormLabel>
-                                                </FormItem>
-                                            ))}
-                                        </RadioGroup>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                        </>
-                    )}
-                    {questionType === 'true-false' && (
-                        <FormField control={form.control} name="answer" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Correct Answer</FormLabel>
-                                <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
-                                    <FormItem className="flex items-center space-x-2">
-                                        <FormControl><RadioGroupItem value="True" /></FormControl>
-                                        <FormLabel className="font-normal">True</FormLabel>
-                                    </FormItem>
-                                    <FormItem className="flex items-center space-x-2">
-                                        <FormControl><RadioGroupItem value="False" /></FormControl>
-                                        <FormLabel className="font-normal">False</FormLabel>
-                                    </FormItem>
-                                </RadioGroup>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                    )}
-                    {questionType === 'fill-in-the-blank' && (
-                        <FormField control={form.control} name="answer" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Correct Answer</FormLabel>
-                                <FormControl><Input placeholder="Enter the word(s) that fill the blank" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                    )}
-                    <Button type="button" onClick={form.handleSubmit(handleManualSubmit)} className="bg-accent hover:bg-accent/90 text-accent-foreground"><PlusCircle className="mr-2 h-4 w-4" /> Add This Question</Button>
-                </form>
-            </Form>
-        </CardContent>
-      </Card>
-    );
-  };
-
 
   const renderContentBuilder = () => {
       switch (assignmentDetails?.assignmentType) {
-          case 'quiz': return <QuizBuilder />;
-          case 'reading': return <ReadingBuilder />;
-          case 'listening': return <ListeningBuilder />;
+          case 'quiz': return <QuizBuilder 
+            generationForm={generationForm}
+            isGenerating={isGenerating}
+            onGenerate={handleGenerateQuestions}
+            onAddManual={handleAddManualQuestion}
+            onAddFromAvailable={handleAddQuestionToSelection}
+            onRemoveFromSelected={handleRemoveQuestionFromSelection}
+            availableQuestions={availableAiQuestions}
+            selectedQuestions={quizFields}
+          />;
+          case 'reading': return <ReadingBuilder 
+            generationForm={readingGenerationForm}
+            isGenerating={isGenerating}
+            onGenerate={handleGenerateSentences}
+            onAddManual={handleAddManualReading}
+            onAddFromAvailable={handleAddSentenceToSelection}
+            availableSentences={availableAiSentences}
+          />;
+          case 'listening': return <ListeningBuilder 
+            generationForm={listeningGenerationForm}
+            isGenerating={isGenerating}
+            onGenerate={handleGenerateExercises}
+            onAddManual={handleAddManualListening}
+            onAddFromAvailable={handleAddExerciseToSelection}
+            availableExercises={availableAiExercises}
+          />;
           default: return <p>Please select an assignment type.</p>;
       }
   }
