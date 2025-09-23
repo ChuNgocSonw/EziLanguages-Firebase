@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import type { Class, AdminUserView, Feedback, PerformanceQuizAttempt } from "@/lib/types";
-import { Loader2, Send, Check, User, ChevronRight, MessageSquare, Trash2, Wand2, Calendar, ChevronDown } from "lucide-react";
+import { Loader2, Send, Check, User, ChevronRight, MessageSquare, Trash2, Wand2, Calendar } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
@@ -335,7 +335,6 @@ export default function TeacherFeedbackPage() {
                                         <AccordionTrigger className="flex-1 hover:no-underline group">
                                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full pr-4 text-left">
                                                 <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                                                    {!fb.isRead && <Badge className="bg-accent text-accent-foreground">New</Badge>}
                                                     <span className="font-semibold group-hover:underline">{fb.title}</span>
                                                 </div>
                                                 <div className="text-sm text-muted-foreground font-normal flex flex-wrap items-center gap-x-4 gap-y-1 sm:ml-auto">
@@ -395,3 +394,5 @@ export default function TeacherFeedbackPage() {
     </>
   );
 }
+
+    
