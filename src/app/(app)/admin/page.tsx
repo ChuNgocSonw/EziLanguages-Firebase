@@ -75,12 +75,6 @@ export default function AdminDashboardPage() {
     fetchStats();
   }, [fetchStats]);
 
-  const statCards = [
-    { title: "Total Users", value: stats?.userCount, icon: Users },
-    { title: "Total Classes", value: stats?.classCount, icon: School },
-    { title: "Total Assignments", value: stats?.assignmentCount, icon: BookCopy },
-  ];
-
   return (
     <>
       <PageHeader
@@ -131,12 +125,12 @@ export default function AdminDashboardPage() {
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                  </div>
                ) : (
-                <div className="h-[300px]">
+                <div className="h-[300px] w-full">
                     <ChartContainer config={chartConfig} className="h-full w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={50} outerRadius={70} paddingAngle={5}>
+                                <Pie data={stats?.roleDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={80} paddingAngle={5}>
                                     {stats?.roleDistribution.map((entry) => (
                                         <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                     ))}
