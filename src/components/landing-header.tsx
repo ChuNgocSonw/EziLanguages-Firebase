@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { Logo } from './icons';
-import { ThemeSwitcher } from './theme-switcher';
 
 export default function LandingHeader() {
   return (
@@ -12,7 +11,6 @@ export default function LandingHeader() {
           <span className="whitespace-nowrap">Ezi Languages</span>
         </Link>
         <div className="flex items-center gap-2">
-          <ThemeSwitcher />
           <div className="flex items-center gap-2">
             <Button variant="ghost" asChild>
               <Link href="/login">Log In</Link>
