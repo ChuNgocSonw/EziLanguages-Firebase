@@ -313,7 +313,7 @@ export default function ReadingPage() {
                         const progress = getUnitProgress(readingSentences);
                         return (
                             <AccordionItem value={`item-${index}`} key={lesson.unit}>
-                                <AccordionTrigger>
+                                <AccordionTrigger className="hover:no-underline">
                                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full pr-4">
                                         <span className="text-left">{lesson.unit}</span>
                                         <div className="flex items-center gap-2 mt-2 md:mt-0 w-full md:w-48">
