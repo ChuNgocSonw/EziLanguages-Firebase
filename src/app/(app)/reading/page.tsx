@@ -328,9 +328,9 @@ export default function ReadingPage() {
                                             const safeKey = createSafeKey(sentence.text);
                                             const bestAttempt = userProfile?.pronunciationScores?.[safeKey];
                                             return (
-                                                <li key={sIndex} className="flex flex-col p-2 rounded-md hover:bg-muted">
-                                                    <p className="flex-1 mr-4 text-muted-foreground mb-2">{sentence.text}</p>
-                                                    <div className="flex items-center gap-2 self-end">
+                                                <li key={sIndex} className="flex flex-col md:flex-row justify-between md:items-center p-2 rounded-md hover:bg-muted">
+                                                    <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">{sentence.text}</p>
+                                                    <div className="flex items-center gap-2 self-start md:self-center">
                                                         {bestAttempt ? (
                                                             <div className="flex items-center gap-2">
                                                                 <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100">

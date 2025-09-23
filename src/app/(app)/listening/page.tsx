@@ -302,11 +302,11 @@ export default function ListeningPage() {
                                             {listeningExercises.map((exercise, sIndex) => {
                                                 const xpEarned = userProfile?.listeningScores?.[exercise.id];
                                                 return (
-                                                <li key={sIndex} className="flex flex-col md:flex-row justify-between items-start md:items-center p-2 rounded-md hover:bg-muted">
+                                                <li key={sIndex} className="flex flex-col md:flex-row justify-between md:items-center p-2 rounded-md hover:bg-muted">
                                                     <p className="flex-1 mr-4 text-muted-foreground mb-2 md:mb-0">
                                                         Exercise {sIndex + 1}: {exercise.type === 'mcq' ? 'Multiple Choice' : 'Type the sentence'}
                                                     </p>
-                                                    <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-4 self-start md:self-center">
                                                         {xpEarned ? (
                                                             <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
                                                                 <Star className="mr-1 h-3 w-3" /> +{xpEarned} XP
